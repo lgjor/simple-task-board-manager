@@ -1,39 +1,52 @@
-ago. 28, 2024 5:26:53 PM liquibase.changelog
+ago. 28, 2024 6:09:48 PM liquibase.changelog
 INFORMAÇÕES: Reading resource: db/changelog/migrations/db.changelog-202408191938.sql
-ago. 28, 2024 5:26:53 PM liquibase.changelog
+ago. 28, 2024 6:09:48 PM liquibase.changelog
 INFORMAÇÕES: Reading resource: db/changelog/migrations/db.changelog-202408210954.sql
-ago. 28, 2024 5:26:53 PM liquibase.changelog
+ago. 28, 2024 6:09:48 PM liquibase.changelog
 INFORMAÇÕES: Reading resource: db/changelog/migrations/db.changelog-202408211004.sql
-ago. 28, 2024 5:26:53 PM liquibase.changelog
+ago. 28, 2024 6:09:48 PM liquibase.changelog
 INFORMAÇÕES: Reading resource: db/changelog/migrations/db.changelog-202408211005.sql
-ago. 28, 2024 5:26:53 PM liquibase.changelog
+ago. 28, 2024 6:09:48 PM liquibase.changelog
+INFORMAÇÕES: Reading resource: db/changelog/migrations/db.changelog-202408281807.sql
+ago. 28, 2024 6:09:48 PM liquibase.changelog
 INFORMAÇÕES: Reading from board.DATABASECHANGELOG
-Database is up to date, no changesets to execute
-ago. 28, 2024 5:26:53 PM liquibase.changelog
+ago. 28, 2024 6:09:48 PM liquibase.lockservice
+INFORMAÇÕES: Successfully acquired change log lock
+ago. 28, 2024 6:09:48 PM liquibase.command
+INFORMAÇÕES: Using deploymentId: 4879388217
+ago. 28, 2024 6:09:48 PM liquibase.changelog
 INFORMAÇÕES: Reading from board.DATABASECHANGELOG
+Running Changeset: db/changelog/migrations/db.changelog-202408281807.sql::202408191938::junior
+ago. 28, 2024 6:09:48 PM liquibase.changelog
+INFORMAÇÕES: Custom SQL executed
+ago. 28, 2024 6:09:48 PM liquibase.changelog
+INFORMAÇÕES: ChangeSet db/changelog/migrations/db.changelog-202408281807.sql::202408191938::junior ran successfully in 43ms
 
 UPDATE SUMMARY
-Run:                          0
+Run:                          1
 Previously run:               4
 Filtered out:                 0
 -------------------------------
-Total change sets:            4
+Total change sets:            5
 
-ago. 28, 2024 5:26:53 PM liquibase.util
+ago. 28, 2024 6:09:48 PM liquibase.util
 INFORMAÇÕES: UPDATE SUMMARY
-ago. 28, 2024 5:26:53 PM liquibase.util
-INFORMAÇÕES: Run:                          0
-ago. 28, 2024 5:26:53 PM liquibase.util
+ago. 28, 2024 6:09:48 PM liquibase.util
+INFORMAÇÕES: Run:                          1
+ago. 28, 2024 6:09:48 PM liquibase.util
 INFORMAÇÕES: Previously run:               4
-ago. 28, 2024 5:26:53 PM liquibase.util
+ago. 28, 2024 6:09:48 PM liquibase.util
 INFORMAÇÕES: Filtered out:                 0
-ago. 28, 2024 5:26:53 PM liquibase.util
+ago. 28, 2024 6:09:48 PM liquibase.util
 INFORMAÇÕES: -------------------------------
-ago. 28, 2024 5:26:53 PM liquibase.util
-INFORMAÇÕES: Total change sets:            4
-ago. 28, 2024 5:26:53 PM liquibase.util
+ago. 28, 2024 6:09:48 PM liquibase.util
+INFORMAÇÕES: Total change sets:            5
+ago. 28, 2024 6:09:48 PM liquibase.util
 INFORMAÇÕES: Update summary generated
-ago. 28, 2024 5:26:53 PM liquibase.lockservice
+ago. 28, 2024 6:09:48 PM liquibase.command
+INFORMAÇÕES: Update command completed successfully.
+Liquibase: Update has been successful. Rows affected: 1
+ago. 28, 2024 6:09:48 PM liquibase.lockservice
 INFORMAÇÕES: Successfully released change log lock
-ago. 28, 2024 5:26:53 PM liquibase.command
+ago. 28, 2024 6:09:48 PM liquibase.command
 INFORMAÇÕES: Command execution complete
