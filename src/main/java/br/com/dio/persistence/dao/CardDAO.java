@@ -50,7 +50,7 @@ public class CardDAO {
                     ON c.id = b.card_id
                    AND b.unblocked_at IS NULL
                  INNER JOIN BOARDS_COLUMNS bc
-                     ON bc.id = c.board_column_id
+                    ON bc.id = c.board_column_id
                   WHERE c.id = ?;
                 """;
         try(var statement = connection.prepareStatement(sql)){

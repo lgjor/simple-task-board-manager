@@ -64,10 +64,7 @@ public class BoardMenu {
         card.setTitle(scanner.next());
         System.out.println("Informe a descrição do card");
         card.setDescription(scanner.next());
-        var selectedColumn = entity.getBoardColumns().stream()
-                .filter(bc -> bc.getKind().equals(INITIAL))
-                .findFirst().orElseThrow();
-        card.setBoardColumn(selectedColumn);
+        card.setBoardColumn(entity.getInitialColumn());
         try(var connection = getConnection()){
             new CardService(connection).create(card);
         }
