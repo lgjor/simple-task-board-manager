@@ -28,3 +28,76 @@ Essas buscas devem retornar tutoriais, exemplos de código e até mesmo projetos
 - [Código para criar quadro Kanban com persistência em MySQL](https://www.google.com/search?q=%22C%C3%B3digo+para+criar+quadro+Kanban+com+persist%C3%AAncia+em+MySQL%22&sca_esv=177fae3e0b1a050b&sxsrf=AHTn8zqS5WcUG44gYsSTAECMfcJ7E-lhkQ%3A1746709085833&ei=XaocaLDWMrrR1sQP9Z7qsAQ&ved=0ahUKEwjw-Ni09pONAxW6qJUCHXWPGkYQ4dUDCBA&uact=5&oq=%22C%C3%B3digo+para+criar+quadro+Kanban+com+persist%C3%AAncia+em+MySQL%22&gs_lp=Egxnd3Mtd2l6LXNlcnAiPSJDw7NkaWdvIHBhcmEgY3JpYXIgcXVhZHJvIEthbmJhbiBjb20gcGVyc2lzdMOqbmNpYSBlbSBNeVNRTCIyBRAhGKABSOsJUABY1QdwAHgBkAEAmAGuAaABsgKqAQMwLjK4AQPIAQD4AQL4AQGYAgGgAq8BmAMAkgcDMC4xoAetBbIHAzAuMbgHrwE&sclient=gws-wiz-serp)
 - [Aplicação de acompanhamento de tarefas com menu e banco de dados](https://www.google.com/search?q=%22Aplica%C3%A7%C3%A3o+de+acompanhamento+de+tarefas+com+menu+e+banco+de+dados%22&sca_esv=177fae3e0b1a050b&sxsrf=AHTn8zrZN-D7QHA92LeHAQQvPlCTl1Bw9A%3A1746709101659&ei=baocaNSAKNnT1sQP0Y7J4QY&ved=0ahUKEwiU65689pONAxXZqZUCHVFHMmwQ4dUDCBA&uact=5&oq=%22Aplica%C3%A7%C3%A3o+de+acompanhamento+de+tarefas+com+menu+e+banco+de+dados%22&gs_lp=Egxnd3Mtd2l6LXNlcnAiRCJBcGxpY2HDp8OjbyBkZSBhY29tcGFuaGFtZW50byBkZSB0YXJlZmFzIGNvbSBtZW51IGUgYmFuY28gZGUgZGFkb3MiSLoHULgBWLgBcAF4AZABAJgBvQGgAb0BqgEDMC4xuAEDyAEA-AEC-AEBmAIBoAIDwgIKEAAYsAMY1gQYR5gDAIgGAZAGCJIHATGgB3qyBwC4BwA&sclient=gws-wiz-serp)
 
+## Diagrama UML inicial
+
+```mermaid
+classDiagram
+class Board {
++Long id
++String name
+}
+
+class BoardColumn {
+    +Long id
+    +String name
+    +Integer order
+    +String kind
+    +Long boardId
+}
+
+class Card {
+    +Long id
+    +String title
+    +String description
+    +Long boardColumnId
+}
+
+class Block {
+    +Long id
+    +DateTime blockedAt
+    +String blockReason
+    +DateTime unblockedAt
+    +String unblockReason
+    +Long cardId
+}
+
+class BoardRepository {
+    <<interface>>
+    +Board findById(Long id)
+    +List<Board> findAll()
+    +void save(Board board)
+    +void delete(Board board)
+}
+
+class BoardColumnRepository {
+    <<interface>>
+    +BoardColumn findById(Long id)
+    +List<BoardColumn> findByBoardIdOrderByOrder(Long boardId)
+    +void save(BoardColumn boardColumn)
+    +void delete(BoardColumn boardColumn)
+}
+
+class CardRepository {
+    <<interface>>
+    +Card findById(Long id)
+    +List<Card> findByBoardColumnId(Long boardColumnId)
+    +void save(Card card)
+    +void delete(Card card)
+}
+
+class BlockRepository {
+    <<interface>>
+    +Block findById(Long id)
+    +List<Block> findByCardId(Long cardId)
+    +void save(Block block)
+}
+
+Board "1" -- "*" BoardColumn : has
+BoardColumn "1" -- "*" Card : has
+Card "1" -- "*" Block : has
+
+Board --|> BoardRepository : uses
+BoardColumn --|> BoardColumnRepository : uses
+Card --|> CardRepository : uses
+Block --|> BlockRepository : uses
+```
