@@ -8,6 +8,7 @@ import br.com.dio.ui.components.BoardAccordion;
 import br.com.dio.ui.components.BoardUI;
 import javafx.application.Platform;
 import javafx.application.Application;
+import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -29,6 +30,7 @@ import javafx.scene.control.Separator;
 import java.sql.SQLException;
 import java.util.Objects;
 import javafx.scene.layout.Priority;
+import br.com.dio.service.BoardStatusService;
 
 import static br.com.dio.persistence.config.ConnectionConfig.getConnection;
 
@@ -121,7 +123,14 @@ public class JavaFXApp extends Application {
         TableColumn<BoardEntity, String> nameColumn = new TableColumn<>("Nome");
         nameColumn.setCellValueFactory(data -> data.getValue().nameProperty());
 
-        tableView.getColumns().addAll(idColumn, nameColumn); // Adiciona as colunas à tabela
+        // Coluna de status
+        TableColumn<BoardEntity, String> statusColumn = new TableColumn<>("Status");
+        statusColumn.setCellValueFactory(data -> {
+            BoardEntity board = data.getValue();
+            return new ReadOnlyStringWrapper(BoardStatusService.determineBoardStatus(board));
+        });
+
+        tableView.getColumns().addAll(idColumn, nameColumn, statusColumn); // Adiciona as colunas à tabela
         tableView.setItems(boardList);
 
         return tableView;
@@ -289,6 +298,19 @@ public class JavaFXApp extends Application {
                             if (updatedColumnId.equals(targetColumnId)) {
                                 // Atualiza a interface gráfica na thread do JavaFX
                                 Platform.runLater(() -> refreshBoardView(board.getId()));
+
+                                // Atualiza o status na tabela
+                                BoardQueryService queryService = new BoardQueryService(newConnection);
+                                queryService.findById(board.getId()).ifPresent(updatedBoard -> {
+                                    // Encontra e atualiza o item na TableView
+                                    for (int i = 0; i < boardList.size(); i++) {
+                                        if (boardList.get(i).getId().equals(board.getId())) {
+                                            boardList.set(i, updatedBoard);
+                                            break;
+                                        }
+                                    }
+                                    tableView.refresh();
+                                });
                             } else {
                                 System.err.println("Falha na atualização: o card não foi movido para a coluna correta");
                             }
@@ -318,23 +340,165 @@ public class JavaFXApp extends Application {
         return columnBox;
     }
 
-
-
     private VBox createCardBox(CardEntity card) {
         VBox cardBox = new VBox();
         cardBox.setId("card-" + card.getId());
         cardBox.setStyle("-fx-border-color: #DDDDDD; -fx-background-color: white; -fx-padding: 8; " +
                 "-fx-spacing: 3; -fx-border-radius: 3; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 3, 0, 0, 1);");
 
-        // Título do card
+        // Título do card (inicialmente como Label)
         Label titleLabel = new Label(card.getTitle());
         titleLabel.setStyle("-fx-font-weight: bold;");
         cardBox.getChildren().add(titleLabel);
 
-        // Descrição do card
+        // Descrição do card (inicialmente como Label)
         Label descLabel = new Label(card.getDescription());
         descLabel.setWrapText(true); // Permite quebra de linha
         cardBox.getChildren().add(descLabel);
+
+        // Adiciona evento de duplo clique para editar o card inline
+        cardBox.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                // Impede que o evento de drag seja acionado durante a edição
+                event.consume();
+
+                // Substitui o Label do título por um TextField
+                TextField titleField = new TextField(card.getTitle());
+                titleField.setStyle("-fx-font-weight: bold;");
+                cardBox.getChildren().set(cardBox.getChildren().indexOf(titleLabel), titleField);
+
+                // Substitui o Label da descrição por um TextArea
+                TextArea descArea = new TextArea(card.getDescription());
+                descArea.setWrapText(true);
+                descArea.setPrefRowCount(3);
+                cardBox.getChildren().set(cardBox.getChildren().indexOf(descLabel), descArea);
+
+                // Adiciona botões de salvar e cancelar
+                HBox buttons = new HBox(5);
+                Button saveButton = new Button("Salvar");
+                Button cancelButton = new Button("Cancelar");
+                buttons.getChildren().addAll(saveButton, cancelButton);
+                cardBox.getChildren().add(buttons);
+
+                // Dá foco ao campo de título
+                Platform.runLater(titleField::requestFocus);
+
+                // Ação do botão Salvar
+                saveButton.setOnAction(e -> {
+                    String newTitle = titleField.getText().trim();
+                    String newDescription = descArea.getText().trim();
+
+                    if (newTitle.isEmpty() || newDescription.isEmpty()) {
+                        showErrorAlert("Campos inválidos", "Título e descrição não podem estar vazios.");
+                        return;
+                    }
+
+                    // Atualiza o card no banco de dados
+                    Connection connection = null;
+                    try {
+                        connection = getConnection();
+
+                        // Desativa o autocommit para controlar a transação manualmente
+                        boolean originalAutoCommit = connection.getAutoCommit();
+                        connection.setAutoCommit(false);
+
+                        // Imprime informações de debug
+                        System.out.println("Atualizando card ID: " + card.getId());
+                        System.out.println("Novo título: " + newTitle);
+                        System.out.println("Nova descrição: " + newDescription);
+
+                        // Salva as alterações no banco de dados usando SQL direto
+                        String sql = "UPDATE CARDS SET title = ?, description = ? WHERE id = ?";
+                        try (var preparedStatement = connection.prepareStatement(sql)) {
+                            preparedStatement.setString(1, newTitle);
+                            preparedStatement.setString(2, newDescription);
+                            preparedStatement.setLong(3, card.getId());
+
+                            int rowsAffected = preparedStatement.executeUpdate();
+                            System.out.println("Linhas afetadas: " + rowsAffected);
+
+                            if (rowsAffected > 0) {
+                                // Confirma a transação
+                                connection.commit();
+
+                                // Atualiza o objeto card
+                                card.setTitle(newTitle);
+                                card.setDescription(newDescription);
+
+                                // Atualiza os labels com os novos valores
+                                titleLabel.setText(newTitle);
+                                descLabel.setText(newDescription);
+
+                                // Restaura os Labels com os novos valores
+                                cardBox.getChildren().set(cardBox.getChildren().indexOf(titleField), titleLabel);
+                                cardBox.getChildren().set(cardBox.getChildren().indexOf(descArea), descLabel);
+
+                                // Remove os botões
+                                cardBox.getChildren().remove(buttons);
+
+                                System.out.println("Card atualizado com sucesso no banco de dados.");
+
+                                // Atualiza a visualização do board para refletir as mudanças
+                                BoardEntity selectedBoard = tableView.getSelectionModel().getSelectedItem();
+                                if (selectedBoard != null) {
+                                    refreshBoardView(selectedBoard.getId());
+                                }
+                            } else {
+                                // Desfaz a transação
+                                connection.rollback();
+
+                                System.err.println("Nenhuma linha afetada ao atualizar o card ID: " + card.getId());
+                                showErrorAlert("Erro ao atualizar", "Nenhum registro foi atualizado no banco de dados.");
+
+                                // Restaura os Labels com os valores originais
+                                cardBox.getChildren().set(cardBox.getChildren().indexOf(titleField), titleLabel);
+                                cardBox.getChildren().set(cardBox.getChildren().indexOf(descArea), descLabel);
+                                cardBox.getChildren().remove(buttons);
+                            }
+
+                            // Restaura o autocommit para o estado original
+                            connection.setAutoCommit(originalAutoCommit);
+                        }
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                        System.err.println("Erro SQL: " + ex.getMessage());
+
+                        // Tenta fazer rollback em caso de erro
+                        if (connection != null) {
+                            try {
+                                connection.rollback();
+                            } catch (SQLException rollbackEx) {
+                                rollbackEx.printStackTrace();
+                            }
+                        }
+
+                        showErrorAlert("Erro ao atualizar card", "Ocorreu um erro ao atualizar o card: " + ex.getMessage());
+
+                        // Restaura os Labels com os valores originais em caso de erro
+                        cardBox.getChildren().set(cardBox.getChildren().indexOf(titleField), titleLabel);
+                        cardBox.getChildren().set(cardBox.getChildren().indexOf(descArea), descLabel);
+                        cardBox.getChildren().remove(buttons);
+                    } finally {
+                        // Fecha a conexão
+                        if (connection != null) {
+                            try {
+                                connection.close();
+                            } catch (SQLException closeEx) {
+                                closeEx.printStackTrace();
+                            }
+                        }
+                    }
+                });
+
+                // Ação do botão Cancelar
+                cancelButton.setOnAction(e -> {
+                    // Restaura os Labels sem alterar os valores
+                    cardBox.getChildren().set(cardBox.getChildren().indexOf(titleField), titleLabel);
+                    cardBox.getChildren().set(cardBox.getChildren().indexOf(descArea), descLabel);
+                    cardBox.getChildren().remove(buttons);
+                });
+            }
+        });
 
         return cardBox;
     }
@@ -471,17 +635,32 @@ public class JavaFXApp extends Application {
         try (var connection = getConnection()) {
             var queryService = new BoardQueryService(connection);
             var boards = queryService.findAll();
+
+            // Para cada board, carregamos as colunas e os cards
             for (BoardEntity board : boards) {
-                // Carrega as colunas do board
+                // Carrega as colunas do board com seus cards
                 var optionalBoard = queryService.findById(board.getId());
-                optionalBoard.ifPresent(fullBoard -> board.setBoardColumns(fullBoard.getBoardColumns()));
+                if (optionalBoard.isPresent()) {
+                    BoardEntity fullBoard = optionalBoard.get();
+                    board.setBoardColumns(fullBoard.getBoardColumns());
+
+                    // Verifica se as colunas foram carregadas corretamente
+                    System.out.println("Board carregado: " + board.getName() +
+                            ", Colunas: " + (board.getBoardColumns() != null ?
+                            board.getBoardColumns().size() : "null"));
+                } else {
+                    System.err.println("Não foi possível carregar o board completo: " + board.getId());
+                }
             }
-            boardList.addAll(boards); // Adiciona todos os boards à lista
-            tableView.refresh(); // Atualiza a tabela
+
+            boardList.addAll(boards);
+            tableView.refresh();
         } catch (SQLException ex) {
             ex.printStackTrace();
+            showErrorAlert("Erro ao carregar boards", "Ocorreu um erro ao carregar os boards: " + ex.getMessage());
         }
     }
+
 
     // Cria card utilizando o board selecionado
     private void createCard(BoardEntity board, TableView<CardEntity> cardTableView, Accordion accordion, VBox columnDisplay) {

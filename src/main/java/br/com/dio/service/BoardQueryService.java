@@ -34,6 +34,8 @@ public class BoardQueryService {
     }
 
     public Optional<BoardEntity> findById(final Long id) throws SQLException {
+        String sql = "SELECT B.id, B.name FROM BOARDS B WHERE B.id = ?";
+
         var dao = new BoardDAO(connection);
         var boardColumnDAO = new BoardColumnDAO(connection);
         var optional = dao.findById(id);
