@@ -13,6 +13,7 @@ Projeto desenvolvido para finalização do Bootcamp Bradesco Java <a href="https
 
 <p align="center">
   <a href="#tecnologias">Tecnologias</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+  <a href="#funcionalidades">Funcionalidades</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
   <a href="#desafio">Desafio</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
   <a href="#requisitos">Requisitos</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
   <a href="#sugestoes">Sugestões de buscas relacionadas</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
@@ -26,6 +27,13 @@ Esse projeto foi desenvolvido com as seguintes tecnologias:
 - Java
 - Mysql
 - JavaFX
+
+## <div id="funcionalidades">Funcionalidades</div>
+
+- Criar e excluir board de tarefas
+- Criar cards
+- Editar título e descrição dos cards com duplo clique do mouse
+- Mover cards entre as colunas não iniciado, em andamento e concluído usando o drag and drop
 
 ## <div id="desafio">Desafio</div>
 
