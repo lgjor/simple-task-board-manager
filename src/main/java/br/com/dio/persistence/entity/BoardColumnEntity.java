@@ -9,14 +9,18 @@ import java.util.List;
 
 @Data
 public class BoardColumnEntity {
-
     private Long id;
     private String name;
     private int order;
     private BoardColumnKindEnum kind;
-    private BoardEntity board = new BoardEntity();
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     private List<CardEntity> cards = new ArrayList<>();
+    private BoardEntity board;
 
+    public void addCard(CardEntity card) {
+        cards.add(card);
+    }
+
+    public void removeCard(CardEntity card) {
+        cards.remove(card);
+    }
 }

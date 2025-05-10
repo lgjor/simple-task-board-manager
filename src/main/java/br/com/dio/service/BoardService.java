@@ -13,24 +13,22 @@ public class BoardService {
 
     private final Connection connection;
 
-    public BoardEntity insert(final BoardEntity entity) throws SQLException {
-        var dao = new BoardDAO(connection);
-        var boardColumnDAO = new BoardColumnDAO(connection);
-        try{
-            dao.insert(entity);
-            var columns = entity.getBoardColumns().stream().map(c -> {
-                c.setBoard(entity);
-                return c;
-            }).toList();
-            for (var column :  columns){
-                boardColumnDAO.insert(column);
+    public void insert(BoardEntity board) throws SQLException {
+        var sql = "INSERT INTO boards (name) VALUES (?)";
+        try (var preparedStatement = connection.prepareStatement(sql, java.sql.Statement.RETURN_GENERATED_KEYS)) {
+            preparedStatement.setString(1, board.getName());
+            preparedStatement.executeUpdate();
+
+            try (var generatedKeys = preparedStatement.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    board.setId(generatedKeys.getLong(1)); // Define o ID gerado no objeto BoardEntity
+                }
             }
-            connection.commit();
+            connection.commit(); // Confirma a transação
         } catch (SQLException e) {
-            connection.rollback();
+            connection.rollback(); // Reverte a transação em caso de erro
             throw e;
         }
-        return entity;
     }
 
     public boolean delete(final Long id) throws SQLException {
