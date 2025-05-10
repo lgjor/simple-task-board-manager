@@ -1,4 +1,4 @@
-# Desafio Dio Board de Tarefas em Java
+# Gerenciador de boards de tarefas
 
 <p align="center">
 Projeto desenvolvido para finalização do Bootcamp Bradesco Java <a href="https://www.dio.me" target="_blank">DIO</a><br/>
