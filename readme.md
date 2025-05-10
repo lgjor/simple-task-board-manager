@@ -1,6 +1,11 @@
 # Gerenciador de boards de tarefas
 
-<img src="../github/preview.png" width="100%" alt="Gerenciador de boards de tarefas">
+<p align="center">
+  <a href="https://github.com/lgjor/desafio-board-dio" target="_blank">
+    <img src=".github/preview.jpg" width="100%" alt=""Gerenciador de boards de tarefas"">
+  </a>
+</p>
+
 
 <p align="center">
 Projeto desenvolvido para finalização do Bootcamp Bradesco Java <a href="https://www.dio.me" target="_blank">DIO</a><br/>
