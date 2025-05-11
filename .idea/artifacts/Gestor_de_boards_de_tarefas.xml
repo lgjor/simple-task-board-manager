@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Gestor de boards de tarefas">
+    <output-path>$PROJECT_DIR$/out/artifacts/Gestor_de_boards_de_tarefas</output-path>
+    <root id="archive" name="Gestor de boards de tarefas.jar">
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$PROJECT_DIR$/META-INF/MANIFEST.MF" />
+      </element>
+    </root>
+  </artifact>
+</component>

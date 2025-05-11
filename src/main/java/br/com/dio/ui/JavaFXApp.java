@@ -31,6 +31,7 @@ import java.sql.SQLException;
 import java.util.Objects;
 import javafx.scene.layout.Priority;
 import br.com.dio.service.BoardStatusService;
+import java.util.List;
 
 import static br.com.dio.persistence.config.ConnectionConfig.getConnection;
 
@@ -130,7 +131,7 @@ public class JavaFXApp extends Application {
             return new ReadOnlyStringWrapper(BoardStatusService.determineBoardStatus(board));
         });
 
-        tableView.getColumns().addAll(idColumn, nameColumn, statusColumn); // Adiciona as colunas à tabela
+        tableView.getColumns().setAll(List.of(idColumn, nameColumn, statusColumn));
         tableView.setItems(boardList);
 
         return tableView;
