@@ -1,7 +1,7 @@
 plugins {
     id("java")
     id("application")
-    id("org.openjfx.javafxplugin") version "0.0.14"
+    id("org.openjfx.javafxplugin") version "0.1.0"
     id("org.beryx.jlink") version "2.26.0"
 }
 
@@ -16,7 +16,9 @@ dependencies {
     implementation("org.liquibase:liquibase-core:4.29.1") {
         exclude(group = "javax.xml.bind", module = "jaxb-api")
     }
-    implementation("mysql:mysql-connector-java:8.0.33")
+    implementation("com.mysql:mysql-connector-j:9.3.0")
+    implementation("org.slf4j:slf4j-api:2.0.13")
+    implementation("ch.qos.logback:logback-classic:1.4.14")
     compileOnly("org.projectlombok:lombok:1.18.38")
     annotationProcessor("org.projectlombok:lombok:1.18.38")
 }
@@ -27,7 +29,7 @@ javafx {
 }
 
 application {
-    mainClass.set("br.com.dio.Main")
+    mainClass.set("br.com.dio.ui.Main")
     mainModule.set("br.com.dio")
 }
 
@@ -59,7 +61,11 @@ jlink {
             "--app-version", "1.0.0"
         )
     }
+
+    tasks.register<JavaExec>("runApp") {
+        classpath = sourceSets["main"].runtimeClasspath
+        mainClass = "br.com.dio.ui.Main"
+    }
 }
-tasks.withType<JavaCompile> {
-    options.compilerArgs.add("-Xlint:unchecked")
-}
+
+

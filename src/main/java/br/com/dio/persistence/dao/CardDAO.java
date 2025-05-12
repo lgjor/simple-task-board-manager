@@ -2,12 +2,13 @@ package br.com.dio.persistence.dao;
 
 import br.com.dio.dto.CardDetailsDTO;
 import br.com.dio.persistence.entity.CardEntity;
-import com.mysql.cj.jdbc.StatementImpl;
 import lombok.AllArgsConstructor;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Optional;
+import java.sql.PreparedStatement;
+import java.sql.Statement;
 
 import static br.com.dio.persistence.converter.OffsetDateTimeConverter.toOffsetDateTime;
 import static java.util.Objects.nonNull;
@@ -19,14 +20,16 @@ public class CardDAO {
 
     public CardEntity insert(final CardEntity entity) throws SQLException {
         var sql = "INSERT INTO CARDS (title, description, board_column_id) values (?, ?, ?);";
-        try(var statement = connection.prepareStatement(sql)){
+        try (var statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             var i = 1;
-            statement.setString(i ++, entity.getTitle());
-            statement.setString(i ++, entity.getDescription());
+            statement.setString(i++, entity.getTitle());
+            statement.setString(i++, entity.getDescription());
             statement.setLong(i, entity.getBoardColumn().getId());
             statement.executeUpdate();
-            if (statement instanceof StatementImpl impl){
-                entity.setId(impl.getLastInsertID());
+            try (var rs = statement.getGeneratedKeys()) {
+                if (rs.next()) {
+                    entity.setId(rs.getLong(1));
+                }
             }
         }
         return entity;

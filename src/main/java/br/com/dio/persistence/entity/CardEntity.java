@@ -1,6 +1,9 @@
 package br.com.dio.persistence.entity;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.LocalDateTime;
 
 @Data
@@ -13,4 +16,10 @@ public class CardEntity {
     private String unblockReason;
     private BoardColumnEntity boardColumn;
     private LocalDateTime creationDate = LocalDateTime.now();
+    @Getter
+    @Setter
+    private LocalDateTime lastUpdateDate;
+    @Getter
+    @Setter
+    private LocalDateTime completionDate;
 }

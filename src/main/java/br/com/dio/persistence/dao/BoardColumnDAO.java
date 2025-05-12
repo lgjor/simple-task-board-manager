@@ -1,12 +1,11 @@
 package br.com.dio.persistence.dao;
 
 import br.com.dio.dto.BoardColumnDTO;
-import br.com.dio.persistence.entity.BoardEntity;
 import br.com.dio.persistence.entity.BoardColumnEntity;
 import br.com.dio.persistence.entity.BoardColumnKindEnum;
 import br.com.dio.persistence.entity.CardEntity;
-import com.mysql.cj.jdbc.StatementImpl;
 import lombok.RequiredArgsConstructor;
+import static br.com.dio.persistence.config.ConnectionConfig.getConnection;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -14,7 +13,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import java.util.concurrent.CompletableFuture;
 import java.util.Optional;
+
+import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static br.com.dio.persistence.entity.BoardColumnKindEnum.findByName;
 import static java.util.Objects.isNull;
@@ -22,20 +29,25 @@ import static java.util.Objects.isNull;
 @RequiredArgsConstructor
 public class BoardColumnDAO {
 
+    private static final Logger logger = LoggerFactory.getLogger(BoardColumnDAO.class);
     private final Connection connection;
     private static final int DEFAULT_BOARD_ID = 1;
+    @Setter
+    private java.util.function.Consumer<Long> refreshBoardCallback;
 
     public BoardColumnEntity insert(final BoardColumnEntity entity) throws SQLException {
         var sql = "INSERT INTO BOARDS_COLUMNS (name, `order`, kind, board_id) VALUES (?, ?, ?, ?);";
-        try(var statement = connection.prepareStatement(sql)){
+        try (var statement = connection.prepareStatement(sql, java.sql.Statement.RETURN_GENERATED_KEYS)) {
             var i = 1;
-            statement.setString(i ++, entity.getName());
-            statement.setInt(i ++, entity.getOrder());
-            statement.setString(i ++, entity.getKind().name());
+            statement.setString(i++, entity.getName());
+            statement.setInt(i++, entity.getOrder());
+            statement.setString(i++, entity.getKind().name());
             statement.setLong(i, entity.getBoard().getId());
             statement.executeUpdate();
-            if (statement instanceof StatementImpl impl){
-                entity.setId(impl.getLastInsertID());
+            try (var rs = statement.getGeneratedKeys()) {
+                if (rs.next()) {
+                    entity.setId(rs.getLong(1));
+                }
             }
             return entity;
         }
@@ -214,47 +226,301 @@ public class BoardColumnDAO {
     }
 
     // Método para atualizar a coluna de um cartão
-    public void updateCardColumn(Long cardId, Long columnId) throws SQLException {
-        String sql = "UPDATE CARDS SET board_column_id = ? WHERE id = ?";
-
-        System.out.println("Executando SQL: " + sql);
-        System.out.println("Parâmetros: columnId=" + columnId + ", cardId=" + cardId);
-
-        boolean originalAutoCommit = connection.getAutoCommit();
+    public void updateCardColumn(Long cardId, Long columnId) {
+        logger.info("Atualizando coluna do card. cardId={}, columnId={}", cardId, columnId);
         try {
-            // Garante que o autocommit está ativado
-            connection.setAutoCommit(true);
+            connection.setAutoCommit(false);
 
-            try (var statement = connection.prepareStatement(sql)) {
-                statement.setLong(1, columnId);
-                statement.setLong(2, cardId);
-
-                int rowsAffected = statement.executeUpdate();
-
-                System.out.println("Linhas afetadas: " + rowsAffected);
-
-                if (rowsAffected == 0) {
-                    throw new SQLException("Falha ao atualizar o card. Nenhuma linha afetada.");
+            // 1. Verifica o card atual (lock)
+            String sql = "SELECT bc.kind FROM CARDS c JOIN BOARDS_COLUMNS bc ON c.board_column_id = bc.id WHERE c.id = ? FOR UPDATE";
+            try (var stmt = connection.prepareStatement(sql)) {
+                stmt.setLong(1, cardId);
+                try (var rs = stmt.executeQuery()) {
+                    if (!rs.next()) {
+                        throw new SQLException("Card não encontrado");
+                    }
                 }
-
-                System.out.println("Card " + cardId + " movido para a coluna " + columnId + " com sucesso!");
             }
-        } finally {
-            // Restaura a configuração original de autocommit
-            connection.setAutoCommit(originalAutoCommit);
+
+            // 2. (Opcional) Verifica o tipo da coluna destino
+            sql = "SELECT kind FROM BOARDS_COLUMNS WHERE id = ? FOR UPDATE";
+            try (var stmt = connection.prepareStatement(sql)) {
+                stmt.setLong(1, columnId);
+                try (var rs = stmt.executeQuery()) {
+                    if (!rs.next()) {
+                        throw new SQLException("Coluna destino não encontrada");
+                    }
+                }
+            }
+
+            // 3. Atualiza o card
+            sql = "UPDATE CARDS SET board_column_id = ?, last_update_date = CURRENT_TIMESTAMP, completion_date = ? WHERE id = ?";
+            try (var stmt = connection.prepareStatement(sql)) {
+                stmt.setLong(1, columnId);
+                stmt.setTimestamp(2, "FINAL".equals(getTargetColumnType(columnId)) ?
+                        new java.sql.Timestamp(System.currentTimeMillis()) : null);
+                stmt.setLong(3, cardId);
+                int updated = stmt.executeUpdate();
+                if (updated != 1) {
+                    throw new SQLException("Falha ao atualizar o card");
+                }
+            }
+
+            // 4. Verifica se o card foi atualizado corretamente
+            sql = "SELECT board_column_id FROM CARDS WHERE id = ? AND board_column_id = ?";
+            try (var stmt = connection.prepareStatement(sql)) {
+                stmt.setLong(1, cardId);
+                stmt.setLong(2, columnId);
+                try (var rs = stmt.executeQuery()) {
+                    if (!rs.next()) {
+                        throw new SQLException("Verificação falhou: card não encontrado na coluna destino");
+                    }
+                }
+            }
+
+            connection.commit();
+            System.out.println("Card " + cardId + " movido com sucesso para coluna " + columnId);
+        } catch (SQLException e) {
+            System.err.println("Erro ao mover card: " + e.getMessage());
+            try {
+                connection.rollback();
+            } catch (SQLException ex) {
+                System.err.println("Erro no rollback: " + ex.getMessage());
+            }
         }
     }
 
-    public Long getBoardIdByColumnId(Long columnId) throws SQLException {
-        String sql = "SELECT board_id FROM BOARD_COLUMNS WHERE id = ?";
-        try (var statement = connection.prepareStatement(sql)) {
+    private void doUpdateCardColumn(Connection conn, Long cardId, Long columnId, String targetType) throws SQLException {
+        // 1. Atualiza o card
+        String sql = """
+        UPDATE CARDS 
+        SET board_column_id = ?,
+            last_update_date = CURRENT_TIMESTAMP,
+            completion_date = ?
+        WHERE id = ?
+    """;
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, columnId);
+            stmt.setTimestamp(2, "FINAL".equals(targetType) ?
+                    new java.sql.Timestamp(System.currentTimeMillis()) : null);
+            stmt.setLong(3, cardId);
+
+            int updated = stmt.executeUpdate();
+            if (updated != 1) {
+                throw new SQLException("Falha ao atualizar o card");
+            }
+        }
+
+        // 2. Verifica se a atualização foi bem sucedida
+        sql = "SELECT board_column_id FROM CARDS WHERE id = ? AND board_column_id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, cardId);
+            stmt.setLong(2, columnId);
+            ResultSet rs = stmt.executeQuery();
+            if (!rs.next()) {
+                throw new SQLException("Verificação falhou: card não encontrado na coluna destino");
+            }
+        }
+
+        // 3. Obtém o boardId
+        Long boardId = getBoardIdFromColumn(conn, columnId);
+        if (boardId == null) {
+            throw new SQLException("Board não encontrado");
+        }
+
+        // 4. Commit
+        conn.commit();
+        System.out.println("Card " + cardId + " movido para coluna " + columnId);
+
+        // 5. Atualiza UI
+        updateBoardView(boardId);
+    }
+
+    private void showConfirmationForFinalMove(Long cardId, Long columnId, String targetColumnType) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Confirmar Movimentação");
+            alert.setHeaderText("Remover Data de Conclusão");
+            alert.setContentText("Este card está marcado como concluído. Ao movê-lo para outra coluna, " +
+                    "a data de conclusão será removida. Deseja continuar?");
+
+            Optional<ButtonType> result = alert.showAndWait();
+            if (result.isPresent() && result.get() == ButtonType.OK) {
+                alert.close(); // Fecha o diálogo explicitamente
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        Connection conn = getConnection();
+                        conn.setAutoCommit(false);
+                        executeColumnUpdateWithConnection(conn, cardId, columnId, targetColumnType);
+                        verifyUpdateWithConnection(conn, cardId, columnId);
+                        conn.commit();
+
+                        Long boardId = getBoardId(conn, columnId);
+                        if (boardId != null) {
+                            updateUI(boardId);
+                        }
+                    } catch (Exception e) {
+                        Platform.runLater(() ->
+                                showErrorAlert("Erro", "Erro ao mover o card: " + e.getMessage())
+                        );
+                    }
+                });
+            } else {
+                alert.close(); // Fecha o diálogo mesmo se cancelar
+            }
+        });
+    }
+
+    private void updateBoardView(Long boardId) {
+        if (refreshBoardCallback != null) {
+            Platform.runLater(() -> {
+                refreshBoardCallback.accept(boardId);
+                System.out.println("Atualização da UI solicitada para board " + boardId);
+            });
+        }
+    }
+
+    // Método auxiliar para verificar se a conexão está fechada
+    private boolean isClosed(Connection connection) {
+        try {
+            return connection.isClosed();
+        } catch (SQLException e) {
+            return true;
+        }
+    }
+
+    private Long getBoardIdFromColumn(Connection conn, Long columnId) throws SQLException {
+        String sql = "SELECT board_id FROM BOARDS_COLUMNS WHERE id = ?";
+        try (var stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, columnId);
+            var rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getLong("board_id");
+            }
+        }
+        return null;
+    }
+
+    // Método auxiliar para obter o boardId
+    private Long getBoardId(Connection conn, Long columnId) throws SQLException {
+        String sql = "SELECT board_id FROM BOARDS_COLUMNS WHERE id = ?";
+        try (var stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, columnId);
+            var rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getLong("board_id");
+            }
+        }
+        return null;
+    }
+
+    // Método auxiliar para mostrar erros
+    private void showErrorAlert(String title, String message) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle(title);
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.showAndWait();
+        });
+    }
+
+    private void updateUI(Long boardId) {
+        try (Connection conn = getConnection()) {
+            // ... (busca dos dados atualizados)
+            List<BoardColumnEntity> updatedColumns = new ArrayList<>();
+            // ... (preenche updatedColumns)
+
+            Platform.runLater(() -> {
+                if (refreshBoardCallback != null) {
+                    refreshBoardCallback.accept(boardId);
+                    System.out.println("UI atualizada para board " + boardId);
+                }
+            });
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            Platform.runLater(() -> {
+                Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+                errorAlert.setTitle("Erro");
+                errorAlert.setHeaderText(null);
+                errorAlert.setContentText("Erro ao atualizar a interface: " + e.getMessage());
+                errorAlert.show();
+            });
+        }
+    }
+
+    private void executeColumnUpdateWithConnection(Connection conn, Long cardId, Long columnId, String targetColumnType)
+            throws SQLException {
+        StringBuilder sql = new StringBuilder("""
+        UPDATE CARDS
+        SET board_column_id = ?,
+            last_update_date = CURRENT_TIMESTAMP,
+            completion_date =
+    """);
+
+        if ("FINAL".equals(targetColumnType)) {
+            sql.append("CURRENT_TIMESTAMP");
+        } else {
+            sql.append("NULL");
+        }
+        sql.append(" WHERE id = ?");
+
+        try (var statement = conn.prepareStatement(sql.toString())) {
             statement.setLong(1, columnId);
-            var resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                return resultSet.getLong("board_id");
+            statement.setLong(2, cardId);
+
+            int rowsAffected = statement.executeUpdate();
+            if (rowsAffected == 0) {
+                throw new SQLException("Falha ao atualizar o card. Nenhuma linha afetada.");
             }
-            return null;
         }
     }
 
+    private void verifyUpdateWithConnection(Connection conn, Long cardId, Long expectedColumnId) throws SQLException {
+        String sql = "SELECT board_column_id FROM CARDS WHERE id = ? FOR UPDATE";
+        try (var statement = conn.prepareStatement(sql)) {
+            statement.setLong(1, cardId);
+            var rs = statement.executeQuery();
+
+            if (!rs.next()) {
+                throw new SQLException("Card não encontrado após atualização");
+            }
+
+            Long actualColumnId = rs.getLong("board_column_id");
+            if (!actualColumnId.equals(expectedColumnId)) {
+                throw new SQLException("Falha na atualização: o card não foi movido para a coluna correta");
+            }
+        }
+    }
+
+    private String getCurrentColumnType(Long cardId) throws SQLException {
+        String sql = """
+        SELECT bc.kind
+        FROM CARDS c
+        JOIN BOARDS_COLUMNS bc ON c.board_column_id = bc.id
+        WHERE c.id = ?
+    """;
+        try (var stmt = connection.prepareStatement(sql)) {
+            stmt.setLong(1, cardId);
+            var rs = stmt.executeQuery();
+            if (!rs.next()) {
+                throw new SQLException("Card não encontrado");
+            }
+            return rs.getString("kind");
+        }
+    }
+
+    private String getTargetColumnType(Long columnId) throws SQLException {
+        String sql = "SELECT kind FROM BOARDS_COLUMNS WHERE id = ?";
+        try (var stmt = connection.prepareStatement(sql)) {
+            stmt.setLong(1, columnId);
+            var rs = stmt.executeQuery();
+            if (!rs.next()) {
+                throw new SQLException("Coluna de destino não encontrada");
+            }
+            return rs.getString("kind");
+        }
+    }
 }

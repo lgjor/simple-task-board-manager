@@ -5,7 +5,6 @@ import br.com.dio.persistence.entity.BoardEntity;
 import br.com.dio.service.BoardQueryService;
 import br.com.dio.service.BoardService;
 import br.com.dio.ui.components.BoardAccordion;
-import br.com.dio.ui.components.BoardUI;
 import javafx.application.Platform;
 import javafx.application.Application;
 import javafx.beans.property.ReadOnlyStringWrapper;
@@ -23,97 +22,81 @@ import br.com.dio.service.CardService;
 import br.com.dio.persistence.dao.BoardColumnDAO;
 import br.com.dio.persistence.entity.BoardColumnEntity;
 import java.sql.Connection;
-import javafx.scene.text.Text;
+import br.com.dio.ui.components.CardDragAndDropListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import br.com.dio.ui.components.CardDragAndDrop;
-import javafx.scene.control.Label;
-import javafx.scene.control.Separator;
+
 import java.sql.SQLException;
 import java.util.Objects;
 import javafx.scene.layout.Priority;
 import br.com.dio.service.BoardStatusService;
 import java.util.List;
+import java.time.format.DateTimeFormatter;
+import java.time.LocalDateTime;
+import java.sql.Timestamp;
 
 import static br.com.dio.persistence.config.ConnectionConfig.getConnection;
 
-public class JavaFXApp extends Application {
+public class Main extends Application {
 
+    private static final Logger logger = LoggerFactory.getLogger(Main.class);
     private final ObservableList<BoardEntity> boardList = FXCollections.observableArrayList();
     private TableView<BoardEntity> tableView;
     private BorderPane root;
 
     @Override
     public void start(Stage primaryStage) {
-        primaryStage.setTitle("Gerenciador de Boards");
+        try (Connection connection = getConnection()) {
+            BoardColumnDAO boardColumnDAO = new BoardColumnDAO(connection);
+            boardColumnDAO.setRefreshBoardCallback(this::refreshBoardView);
 
-        // Layout principal
-        root = new BorderPane(); // Inicializa o campo root
-        root.setPadding(new Insets(10));
+            primaryStage.setTitle("Gerenciador de Boards");
 
-        // Inicializa a tabela de boards
-        tableView = createBoardTable();
-        loadBoards(tableView);
+            // Layout principal
+            root = new BorderPane();
+            root.setPadding(new Insets(10));
 
-        // Botões de ação
-        VBox actionButtons = createActionButtons(tableView);
+            // Inicializa a tabela de boards
+            tableView = createBoardTable();
+            loadBoards(tableView);
 
-        // Exibe as colunas do board selecionado
-        VBox columnDisplay = new VBox();
-        columnDisplay.setId("column-display");
-        columnDisplay.setSpacing(10);
+            // Botões de ação
+            VBox actionButtons = createActionButtons(tableView);
 
-        // Fazer o columnDisplay crescer para ocupar o espaço disponível
-        BorderPane.setMargin(columnDisplay, new Insets(10, 0, 0, 0));
+            // Exibe as colunas do board selecionado
+            VBox columnDisplay = new VBox();
+            columnDisplay.setId("column-display");
+            columnDisplay.setSpacing(10);
 
-        tableView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
-            if (newSelection != null) {
-                try (var connection = getConnection()) {
-                    var queryService = new BoardQueryService(connection);
-                    BoardUI boardUI = new BoardUI(connection);
+            // Configurar o columnDisplay
+            BorderPane.setMargin(columnDisplay, new Insets(10, 0, 0, 0));
 
-                    // Busca as informações atualizadas do board no banco
-                    var refreshedBoardOptional = queryService.findById(newSelection.getId());
-                    if (refreshedBoardOptional.isPresent()) {
-                        var refreshedBoard = refreshedBoardOptional.get();
+            // Configurar o listener da tabela...
+            configureTableViewListener(columnDisplay);
 
-                        // Atualiza a visualização vertical dos cards com drag and drop
-                        columnDisplay.getChildren().clear();
+            // Adiciona componentes ao layout principal
+            root.setCenter(tableView);
+            root.setRight(actionButtons);
+            root.setBottom(columnDisplay);
 
-                        // Cria as colunas com suporte a drag and drop
-                        HBox boardColumns = new HBox(10); // Espaçamento de 10 entre as colunas
-                        boardColumns.setPrefWidth(Double.MAX_VALUE); // Ocupa toda a largura disponível
+            // Cena e exibição
+            Scene scene = new Scene(root, 1024, 800);
+            scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/styles.css")).toExternalForm());
+            primaryStage.setScene(scene);
 
-                        // Fazer o HBox crescer para ocupar o espaço disponível
-                        VBox.setVgrow(boardColumns, Priority.ALWAYS);
-
-                        for (BoardColumnEntity column : refreshedBoard.getBoardColumns()) {
-                            VBox columnBox = createColumnBoxWithDragDrop(column, refreshedBoard, connection);
-                            boardColumns.getChildren().add(columnBox);
-                        }
-
-                        columnDisplay.getChildren().add(boardColumns);
-                        root.setBottom(columnDisplay);
-                    } else {
-                        System.err.println("Board não encontrado no banco.");
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-
-        // Adiciona componentes ao layout principal
-        root.setCenter(tableView);
-        root.setRight(actionButtons);
-        root.setBottom(columnDisplay); // Coloca a visualização de colunas na parte inferior
-
-        // Cena e exibição
-        Scene scene = new Scene(root, 1024, 800); // Aumentar o tamanho inicial da janela
-        scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/styles.css")).toExternalForm());
-        primaryStage.setScene(scene);
-
-        primaryStage.show();
+            primaryStage.show();
+        } catch (SQLException e) {
+            logger.error("Erro ao carregar o board", e);
+            showErrorAlert("Erro de Conexão", "Não foi possível conectar ao banco de dados: " + e.getMessage());
+            Platform.exit();
+        }
     }
 
+    /**
+     * Cria a tabela de boards
+     */
     private TableView<BoardEntity> createBoardTable() {
         TableView<BoardEntity> tableView = new TableView<>();
         tableView.setPlaceholder(new Label("Nenhum board disponível"));
@@ -137,6 +120,44 @@ public class JavaFXApp extends Application {
         return tableView;
     }
 
+    private void configureTableViewListener(VBox columnDisplay) {
+        tableView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+            if (newSelection != null) {
+                try (var connection = getConnection()) {
+                    var queryService = new BoardQueryService(connection);
+                    // Busca as informações atualizadas do board no banco
+                    var refreshedBoardOptional = queryService.findById(newSelection.getId());
+                    if (refreshedBoardOptional.isPresent()) {
+                        var refreshedBoard = refreshedBoardOptional.get();
+
+                        // Atualiza a visualização vertical dos cards com drag and drop
+                        columnDisplay.getChildren().clear();
+
+                        // Cria as colunas com suporte a drag and drop
+                        HBox boardColumns = new HBox(10);
+                        boardColumns.setPrefWidth(Double.MAX_VALUE);
+
+                        // Fazer o HBox crescer para ocupar o espaço disponível
+                        VBox.setVgrow(boardColumns, Priority.ALWAYS);
+
+                        for (BoardColumnEntity column : refreshedBoard.getBoardColumns()) {
+                            VBox columnBox = createColumnBoxWithDragDrop(column, refreshedBoard);
+                            boardColumns.getChildren().add(columnBox);
+                        }
+
+                        columnDisplay.getChildren().add(boardColumns);
+                    }
+                } catch (Exception e) {
+                    logger.error("Erro ao carregar o board", e);
+                    showErrorAlert("Erro", "Erro ao carregar o board: " + e.getMessage());
+                }
+            }
+        });
+    }
+
+    /**
+     * Cria os botões de ação
+     */
     private VBox createActionButtons(TableView<BoardEntity> tableView) {
         Button createBoardButton = new Button("Criar Board");
         createBoardButton.setOnAction(e -> createBoard(tableView));
@@ -147,14 +168,23 @@ public class JavaFXApp extends Application {
         Button refreshButton = new Button("Atualizar");
         refreshButton.setOnAction(e -> loadBoards(tableView));
 
+        Button createCardButton = getCreateCardButton(tableView);
+
+        VBox actionButtons = new VBox(10, createBoardButton, deleteBoardButton, refreshButton, createCardButton);
+        actionButtons.setPadding(new Insets(10));
+
+        return actionButtons;
+    }
+
+    private Button getCreateCardButton(TableView<BoardEntity> tableView) {
         Button createCardButton = new Button("Criar Card");
         createCardButton.setOnAction(e -> {
             BoardEntity selectedBoard = tableView.getSelectionModel().getSelectedItem();
             if (selectedBoard != null) {
-                Accordion accordion = new BoardAccordion().create(selectedBoard);
-                TableView<CardEntity> cardTableView = new TableView<>();
-                VBox columnDisplay = new VBox(); // Certifique-se de inicializar o VBox
-                createCard(selectedBoard, cardTableView, accordion, columnDisplay);
+                new BoardAccordion().create(selectedBoard);
+                new TableView<>();
+                new VBox();// Certifique-se de inicializar o VBox
+                createCard(selectedBoard);
             } else {
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setTitle("Nenhum Board Selecionado");
@@ -163,95 +193,13 @@ public class JavaFXApp extends Application {
                 alert.showAndWait();
             }
         });
-
-        VBox actionButtons = new VBox(10, createBoardButton, deleteBoardButton, refreshButton, createCardButton);
-        actionButtons.setPadding(new Insets(10));
-
-        return actionButtons;
+        return createCardButton;
     }
 
-    private VBox createColumnBox(BoardColumnEntity column, BoardEntity board, Connection connection) {
-        VBox columnBox = new VBox();
-        columnBox.setId("column-" + column.getId());
-        columnBox.setStyle("-fx-border-color: black; -fx-padding: 10; -fx-spacing: 5;");
-        columnBox.getChildren().add(new Text(column.getName()));
-
-        // Cria o gerenciador de drag and drop
-        CardDragAndDrop dragAndDrop = new CardDragAndDrop((cardId, targetColumnId) -> {
-            try (var newConnection = getConnection()) {
-                System.out.println("Atualizando card " + cardId + " para coluna " + targetColumnId);
-
-                // Atualiza o card no banco de dados
-                BoardColumnDAO boardColumnDAO = new BoardColumnDAO(newConnection);
-                boardColumnDAO.updateCardColumn(cardId, targetColumnId);
-
-                // Verifica se a atualização foi bem-sucedida consultando o banco
-                var cardService = new CardService(newConnection);
-                var updatedCard = cardService.findById(cardId);
-
-                if (updatedCard != null && updatedCard.getBoardColumn().getId().equals(targetColumnId)) {
-                    System.out.println("Verificação: Card " + cardId + " agora está na coluna " + updatedCard.getBoardColumn().getId());
-                } else {
-                    System.err.println("Verificação falhou: Card não foi atualizado corretamente no banco de dados");
-                }
-
-                // Atualiza a interface gráfica
-                BoardQueryService queryService = new BoardQueryService(newConnection);
-                var refreshedBoard = queryService.findById(board.getId()).orElseThrow();
-
-                // Atualiza a UI na thread do JavaFX
-                Platform.runLater(() -> {
-                    try (var refreshConnection = getConnection()) {
-                        // Recria a visualização das colunas
-                        VBox columnDisplay = (VBox) root.getBottom();
-                        columnDisplay.getChildren().clear();
-
-                        // Cria as colunas com suporte a drag and drop
-                        HBox boardColumns = new HBox(10); // Espaçamento de 10 entre as colunas
-
-                        for (BoardColumnEntity refreshedColumn : refreshedBoard.getBoardColumns()) {
-                            VBox refreshedColumnBox = createColumnBoxWithDragDrop(refreshedColumn, refreshedBoard, refreshConnection);
-                            boardColumns.getChildren().add(refreshedColumnBox);
-                        }
-
-                        columnDisplay.getChildren().add(boardColumns);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        showErrorAlert("Erro ao atualizar a interface", e.getMessage());
-                    }
-                });
-            } catch (Exception e) {
-                e.printStackTrace();
-                Platform.runLater(() -> {
-                    showErrorAlert("Erro ao mover o card", e.getMessage());
-                });
-            }
-        });
-
-        // Configura a coluna como alvo de drop
-        dragAndDrop.setupDropTarget(columnBox, column.getId());
-
-        // Adiciona os cards à coluna
-        for (CardEntity card : column.getCards()) {
-            VBox cardBox = new VBox();
-            cardBox.setId("card-" + card.getId());
-            cardBox.setStyle("-fx-border-color: gray; -fx-padding: 5; -fx-spacing: 3; -fx-background-color: white;");
-
-            // Adiciona o título e descrição do card
-            cardBox.getChildren().add(new Text("Título: " + card.getTitle()));
-            cardBox.getChildren().add(new Text("Descrição: " + card.getDescription()));
-
-            // Configura o card como fonte de drag
-            dragAndDrop.setupDragSource(cardBox, card.getId());
-
-            // Adiciona o card à coluna
-            columnBox.getChildren().add(cardBox);
-        }
-
-        return columnBox;
-    }
-
-    private VBox createColumnBoxWithDragDrop(BoardColumnEntity column, BoardEntity board, Connection connection) {
+    /**
+     * Cria uma caixa de cards com suporte a drag and drop
+     */
+    private VBox createColumnBoxWithDragDrop(BoardColumnEntity column, BoardEntity board) {
         VBox columnBox = new VBox();
         columnBox.setId("column-" + column.getId());
 
@@ -276,56 +224,13 @@ public class JavaFXApp extends Application {
         VBox.setVgrow(cardsArea, Priority.ALWAYS);
         columnBox.getChildren().add(cardsArea);
 
+        CardDragAndDropListener listener = new CardDragAndDropListener(
+                tableView,
+                this::loadBoards
+        );
+
         // Cria o gerenciador de drag and drop com um novo listener
-        CardDragAndDrop dragAndDrop = new CardDragAndDrop((cardId, targetColumnId) -> {
-            // Importante: Criar uma nova conexão aqui, não usar a conexão passada como parâmetro
-            try (Connection newConnection = getConnection()) {
-                System.out.println("Atualizando card " + cardId + " para coluna " + targetColumnId);
-
-                // Atualiza o card no banco de dados
-                BoardColumnDAO boardColumnDAO = new BoardColumnDAO(newConnection);
-                boardColumnDAO.updateCardColumn(cardId, targetColumnId);
-
-                // Verifica se a atualização foi bem-sucedida
-                String checkSql = "SELECT board_column_id FROM CARDS WHERE id = ?";
-                try (var statement = newConnection.prepareStatement(checkSql)) {
-                    statement.setLong(1, cardId);
-                    try (var resultSet = statement.executeQuery()) {
-                        if (resultSet.next()) {
-                            Long updatedColumnId = resultSet.getLong("board_column_id");
-                            System.out.println("Verificação: Card " + cardId + " agora está na coluna " + updatedColumnId);
-
-                            // Se a atualização foi bem-sucedida, atualiza a UI
-                            if (updatedColumnId.equals(targetColumnId)) {
-                                // Atualiza a interface gráfica na thread do JavaFX
-                                Platform.runLater(() -> refreshBoardView(board.getId()));
-
-                                // Atualiza o status na tabela
-                                BoardQueryService queryService = new BoardQueryService(newConnection);
-                                queryService.findById(board.getId()).ifPresent(updatedBoard -> {
-                                    // Encontra e atualiza o item na TableView
-                                    for (int i = 0; i < boardList.size(); i++) {
-                                        if (boardList.get(i).getId().equals(board.getId())) {
-                                            boardList.set(i, updatedBoard);
-                                            break;
-                                        }
-                                    }
-                                    tableView.refresh();
-                                });
-                            } else {
-                                System.err.println("Falha na atualização: o card não foi movido para a coluna correta");
-                            }
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                System.err.println("Erro ao atualizar o card: " + e.getMessage());
-                e.printStackTrace();
-                Platform.runLater(() -> {
-                    showErrorAlert("Erro ao mover o card", e.getMessage());
-                });
-            }
-        });
+        CardDragAndDrop dragAndDrop = new CardDragAndDrop(listener);
 
         // Configura a área de cards e a coluna como alvos de drop
         dragAndDrop.setupDropTarget(cardsArea, column.getId());
@@ -337,11 +242,44 @@ public class JavaFXApp extends Application {
             dragAndDrop.setupDragSource(cardBox, card.getId());
             cardsArea.getChildren().add(cardBox);
         }
-
         return columnBox;
     }
 
+    /**
+     * Cria uma caixa de card
+     * Adiciona eventos de clique e drag and drop
+     */
     private VBox createCardBox(CardEntity card) {
+        // Define o formatador de data
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+        // Busca as datas atualizadas do banco
+        try (Connection connection = getConnection()) {
+            String sql = "SELECT creation_date, last_update_date, completion_date FROM CARDS WHERE id = ?";
+            try (var preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setLong(1, card.getId());
+                try (var resultSet = preparedStatement.executeQuery()) {
+                    if (resultSet.next()) {
+                        // Atualiza as datas do objeto card
+                        card.setCreationDate(resultSet.getTimestamp("creation_date").toLocalDateTime());
+
+                        Timestamp lastUpdate = resultSet.getTimestamp("last_update_date");
+                        if (lastUpdate != null) {
+                            card.setLastUpdateDate(lastUpdate.toLocalDateTime());
+                        }
+
+                        Timestamp completionDate = resultSet.getTimestamp("completion_date");
+                        if (completionDate != null) {
+                            card.setCompletionDate(completionDate.toLocalDateTime());
+                        }
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            logger.error("Erro ao buscar datas do card", e);
+            System.err.println("Erro ao buscar datas do card: " + e.getMessage());
+        }
+
         VBox cardBox = new VBox();
         cardBox.setId("card-" + card.getId());
         cardBox.setStyle("-fx-border-color: #DDDDDD; -fx-background-color: white; -fx-padding: 8; " +
@@ -356,6 +294,24 @@ public class JavaFXApp extends Application {
         Label descLabel = new Label(card.getDescription());
         descLabel.setWrapText(true); // Permite quebra de linha
         cardBox.getChildren().add(descLabel);
+
+        // Data de criação formatada
+        Label dateLabel = new Label("Criado em: " +
+                card.getCreationDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+        dateLabel.setStyle("-fx-text-fill: #666666; -fx-font-size: 10px;");
+        cardBox.getChildren().add(dateLabel);
+
+        // Label para a última atualização
+        Label lastUpdateLabel = new Label("Última atualização: " +
+                (card.getLastUpdateDate() != null ? card.getLastUpdateDate().format(formatter) : "Não atualizado"));
+        lastUpdateLabel.setStyle("-fx-text-fill: #666666; -fx-font-size: 10px;");
+        cardBox.getChildren().add(lastUpdateLabel);
+
+        // Label para a data de conclusão
+        Label completionLabel = new Label("Concluido em: " +
+                (card.getCompletionDate() != null ? card.getCompletionDate().format(formatter) : "Não concluído"));
+        completionLabel.setStyle("-fx-text-fill: #666666; -fx-font-size: 10px;");
+        cardBox.getChildren().add(completionLabel);
 
         // Adiciona evento de duplo clique para editar o card inline
         cardBox.setOnMouseClicked(event -> {
@@ -398,94 +354,68 @@ public class JavaFXApp extends Application {
                     Connection connection = null;
                     try {
                         connection = getConnection();
-
-                        // Desativa o autocommit para controlar a transação manualmente
                         boolean originalAutoCommit = connection.getAutoCommit();
                         connection.setAutoCommit(false);
 
-                        // Imprime informações de debug
-                        System.out.println("Atualizando card ID: " + card.getId());
-                        System.out.println("Novo título: " + newTitle);
-                        System.out.println("Nova descrição: " + newDescription);
+                        LocalDateTime now = LocalDateTime.now();
+                        String sql = "UPDATE CARDS SET title = ?, description = ?, last_update_date = ? WHERE id = ?";
 
-                        // Salva as alterações no banco de dados usando SQL direto
-                        String sql = "UPDATE CARDS SET title = ?, description = ? WHERE id = ?";
                         try (var preparedStatement = connection.prepareStatement(sql)) {
                             preparedStatement.setString(1, newTitle);
                             preparedStatement.setString(2, newDescription);
-                            preparedStatement.setLong(3, card.getId());
+                            preparedStatement.setTimestamp(3, Timestamp.valueOf(now));
+                            preparedStatement.setLong(4, card.getId());
 
                             int rowsAffected = preparedStatement.executeUpdate();
-                            System.out.println("Linhas afetadas: " + rowsAffected);
 
                             if (rowsAffected > 0) {
-                                // Confirma a transação
                                 connection.commit();
 
                                 // Atualiza o objeto card
                                 card.setTitle(newTitle);
                                 card.setDescription(newDescription);
+                                card.setLastUpdateDate(now);
 
-                                // Atualiza os labels com os novos valores
+                                // Atualiza os labels
                                 titleLabel.setText(newTitle);
                                 descLabel.setText(newDescription);
+                                lastUpdateLabel.setText("Ultima atualizacao: " + now.format(formatter));
 
-                                // Restaura os Labels com os novos valores
-                                cardBox.getChildren().set(cardBox.getChildren().indexOf(titleField), titleLabel);
-                                cardBox.getChildren().set(cardBox.getChildren().indexOf(descArea), descLabel);
+                                // Remove campos de edição e botões
+                                int titleIndex = cardBox.getChildren().indexOf(titleField);
+                                int descIndex = cardBox.getChildren().indexOf(descArea);
+                                int buttonsIndex = cardBox.getChildren().indexOf(buttons);
 
-                                // Remove os botões
-                                cardBox.getChildren().remove(buttons);
+                                if (titleIndex >= 0) cardBox.getChildren().set(titleIndex, titleLabel);
+                                if (descIndex >= 0) cardBox.getChildren().set(descIndex, descLabel);
+                                if (buttonsIndex >= 0) cardBox.getChildren().remove(buttonsIndex);
 
-                                System.out.println("Card atualizado com sucesso no banco de dados.");
-
-                                // Atualiza a visualização do board para refletir as mudanças
-                                BoardEntity selectedBoard = tableView.getSelectionModel().getSelectedItem();
-                                if (selectedBoard != null) {
-                                    refreshBoardView(selectedBoard.getId());
-                                }
+                                refreshBoardView(tableView.getSelectionModel().getSelectedItem().getId());
                             } else {
-                                // Desfaz a transação
                                 connection.rollback();
-
-                                System.err.println("Nenhuma linha afetada ao atualizar o card ID: " + card.getId());
                                 showErrorAlert("Erro ao atualizar", "Nenhum registro foi atualizado no banco de dados.");
-
-                                // Restaura os Labels com os valores originais
-                                cardBox.getChildren().set(cardBox.getChildren().indexOf(titleField), titleLabel);
-                                cardBox.getChildren().set(cardBox.getChildren().indexOf(descArea), descLabel);
-                                cardBox.getChildren().remove(buttons);
+                                restoreOriginalView(cardBox, titleLabel, descLabel, titleField, descArea, buttons);
                             }
 
-                            // Restaura o autocommit para o estado original
                             connection.setAutoCommit(originalAutoCommit);
                         }
                     } catch (SQLException ex) {
-                        ex.printStackTrace();
-                        System.err.println("Erro SQL: " + ex.getMessage());
-
-                        // Tenta fazer rollback em caso de erro
+                        logger.error("Erro ao atualizar o card", ex);
                         if (connection != null) {
                             try {
                                 connection.rollback();
                             } catch (SQLException rollbackEx) {
-                                rollbackEx.printStackTrace();
+                                logger.error("Erro ao realizar rollback da transacao", rollbackEx);
                             }
                         }
-
                         showErrorAlert("Erro ao atualizar card", "Ocorreu um erro ao atualizar o card: " + ex.getMessage());
-
-                        // Restaura os Labels com os valores originais em caso de erro
-                        cardBox.getChildren().set(cardBox.getChildren().indexOf(titleField), titleLabel);
-                        cardBox.getChildren().set(cardBox.getChildren().indexOf(descArea), descLabel);
-                        cardBox.getChildren().remove(buttons);
+                        restoreOriginalView(cardBox, titleLabel, descLabel, titleField, descArea, buttons);
                     } finally {
-                        // Fecha a conexão
                         if (connection != null) {
                             try {
                                 connection.close();
                             } catch (SQLException closeEx) {
-                                closeEx.printStackTrace();
+                                logger.error("Erro ao fechar a conexao", closeEx);
                             }
                         }
                     }
@@ -493,10 +423,7 @@ public class JavaFXApp extends Application {
 
                 // Ação do botão Cancelar
                 cancelButton.setOnAction(e -> {
-                    // Restaura os Labels sem alterar os valores
-                    cardBox.getChildren().set(cardBox.getChildren().indexOf(titleField), titleLabel);
-                    cardBox.getChildren().set(cardBox.getChildren().indexOf(descArea), descLabel);
-                    cardBox.getChildren().remove(buttons);
+                    restoreOriginalView(cardBox, titleLabel, descLabel, titleField, descArea, buttons);
                 });
             }
         });
@@ -504,7 +431,9 @@ public class JavaFXApp extends Application {
         return cardBox;
     }
 
-
+    /**
+     /* Método para criar um novo board
+     */
     private void createBoard(TableView<BoardEntity> tableView) {
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("Criar Board");
@@ -522,16 +451,7 @@ public class JavaFXApp extends Application {
             }
 
             try (var connection = getConnection()) {
-                var boardService = new BoardService(connection);
-                var boardColumnDAO = new BoardColumnDAO(connection);
-                var newBoard = new BoardEntity();
-                newBoard.setName(boardName);
-                boardService.insert(newBoard);
-
-                // Insere as colunas padrão para o novo board
-                boardColumnDAO.insertDefaultColumns(newBoard.getId());
-                // Associa as colunas recém inseridas ao board
-                newBoard.setBoardColumns(boardColumnDAO.findByBoardId(newBoard.getId()));
+                var newBoard = getBoardEntity(boardName, connection);
 
                 boardList.add(newBoard);
                 tableView.refresh();
@@ -541,7 +461,7 @@ public class JavaFXApp extends Application {
                 alert.setContentText("Board criado com sucesso!");
                 alert.showAndWait();
             } catch (SQLException ex) {
-                ex.printStackTrace();
+                logger.error("Erro ao criar o card", ex);
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Erro");
                 alert.setHeaderText(null);
@@ -551,11 +471,43 @@ public class JavaFXApp extends Application {
         });
     }
 
+    private static BoardEntity getBoardEntity(String boardName, Connection connection) throws SQLException {
+        var boardService = new BoardService(connection);
+        var boardColumnDAO = new BoardColumnDAO(connection);
+        var newBoard = new BoardEntity();
+        newBoard.setName(boardName);
+        boardService.insert(newBoard);
+
+        // Insere as colunas padrão para o novo board
+        boardColumnDAO.insertDefaultColumns(newBoard.getId());
+        // Associa as colunas recém inseridas ao board
+        newBoard.setBoardColumns(boardColumnDAO.findByBoardId(newBoard.getId()));
+        return newBoard;
+    }
+
+    private void restoreOriginalView(VBox cardBox, Label titleLabel, Label descLabel,
+                                     TextField titleField, TextArea descArea, HBox buttons) {
+        int titleIndex = cardBox.getChildren().indexOf(titleField);
+        int descIndex = cardBox.getChildren().indexOf(descArea);
+        if (titleIndex >= 0) cardBox.getChildren().set(titleIndex, titleLabel);
+        if (descIndex >= 0) cardBox.getChildren().set(descIndex, descLabel);
+        cardBox.getChildren().remove(buttons);
+    }
+
     /**
      * Atualiza a visualização do board com o ID especificado
      */
     private void refreshBoardView(Long boardId) {
+        // Pequeno delay para garantir que a transação foi finalizada
+        try {
+            Thread.sleep(200);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
         try (Connection connection = getConnection()) {
+            connection.setAutoCommit(false);  // Garante consistência da leitura
+
             // Busca o board atualizado
             BoardQueryService queryService = new BoardQueryService(connection);
             var boardOptional = queryService.findById(boardId);
@@ -563,36 +515,53 @@ public class JavaFXApp extends Application {
             if (boardOptional.isPresent()) {
                 BoardEntity refreshedBoard = boardOptional.get();
 
-                // Obtém a área de exibição das colunas
-                VBox columnDisplay = (VBox) root.getBottom();
-                if (columnDisplay != null) {
-                    columnDisplay.getChildren().clear();
+                // Garante que a atualização da UI ocorra na thread do JavaFX
+                Platform.runLater(() -> {
+                    // Obtém a área de exibição das colunas
+                    VBox columnDisplay = (VBox) root.getBottom();
+                    if (columnDisplay != null) {
+                        columnDisplay.getChildren().clear();
 
-                    // Cria as colunas com suporte a drag and drop
-                    HBox boardColumns = new HBox(10);
-                    boardColumns.setPrefWidth(Double.MAX_VALUE);
-                    VBox.setVgrow(boardColumns, Priority.ALWAYS);
+                        // Cria as colunas com suporte a drag and drop
+                        HBox boardColumns = new HBox(10);
+                        boardColumns.setPrefWidth(Double.MAX_VALUE);
+                        VBox.setVgrow(boardColumns, Priority.ALWAYS);
 
-                    for (BoardColumnEntity column : refreshedBoard.getBoardColumns()) {
-                        VBox columnBox = createColumnBoxWithDragDrop(column, refreshedBoard, connection);
-                        boardColumns.getChildren().add(columnBox);
+                        try {
+                            // Nova conexão para operações dentro do Platform.runLater
+                            getConnection();
+                            for (BoardColumnEntity column : refreshedBoard.getBoardColumns()) {
+                                VBox columnBox = createColumnBoxWithDragDrop(column, refreshedBoard);
+                                boardColumns.getChildren().add(columnBox);
+                            }
+                            columnDisplay.getChildren().add(boardColumns);
+
+                            // Força atualização da TableView
+                            tableView.refresh();
+
+                            System.out.println("Visualização do board atualizada com sucesso");
+                        } catch (SQLException e) {
+                            System.err.println("Erro ao criar colunas: " + e.getMessage());
+                            logger.error("Erro ao criar colunas", e);
+                        }
+                    } else {
+                        System.err.println("Área de exibição das colunas não encontrada");
                     }
+                });
 
-                    columnDisplay.getChildren().add(boardColumns);
-                    System.out.println("Visualização do board atualizada com sucesso");
-                } else {
-                    System.err.println("Área de exibição das colunas não encontrada");
-                }
+                connection.commit();
             } else {
                 System.err.println("Board não encontrado: " + boardId);
             }
         } catch (Exception e) {
             System.err.println("Erro ao atualizar a visualização do board: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Erro ao atualizar a visualização do board", e);
         }
     }
 
-
+    /**
+     * Exclui o board selecionado
+     */
     private void deleteSelectedBoard(TableView<BoardEntity> tableView) {
         BoardEntity selectedBoard = tableView.getSelectionModel().getSelectedItem();
         if (selectedBoard != null) {
@@ -615,7 +584,7 @@ public class JavaFXApp extends Application {
                     alert.showAndWait();
                 }
             } catch (SQLException ex) {
-                ex.printStackTrace();
+                logger.error("Erro ao excluir o board", ex);
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Erro");
                 alert.setHeaderText(null);
@@ -631,8 +600,16 @@ public class JavaFXApp extends Application {
         }
     }
 
+    /**
+     * Carrega os boards na tabela
+     */
     private void loadBoards(TableView<BoardEntity> tableView) {
+        // Salva o ID do board selecionado antes de limpar a lista
+        BoardEntity selectedBefore = tableView.getSelectionModel().getSelectedItem();
+        Long selectedId = selectedBefore != null ? selectedBefore.getId() : null;
+        // Limpa a lista de boards
         boardList.clear();
+
         try (var connection = getConnection()) {
             var queryService = new BoardQueryService(connection);
             var boards = queryService.findAll();
@@ -656,15 +633,33 @@ public class JavaFXApp extends Application {
 
             boardList.addAll(boards);
             tableView.refresh();
+
+            // Atualiza a visualização das colunas/cards do board selecionado
+            if (selectedId != null) {
+                for (BoardEntity board : boardList) {
+                    if (board.getId().equals(selectedId)) {
+                        tableView.getSelectionModel().select(board);
+                        refreshBoardView(board.getId());
+                        return;
+                    }
+                }
+            }
+
+            // Se não houver seleção anterior, seleciona o primeiro (caso exista)
+            if (!boardList.isEmpty()) {
+                tableView.getSelectionModel().selectFirst();
+                refreshBoardView(boardList.get(0).getId());
+            }
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            logger.error("Erro ao carregar boards", ex);
             showErrorAlert("Erro ao carregar boards", "Ocorreu um erro ao carregar os boards: " + ex.getMessage());
         }
     }
 
-
-    // Cria card utilizando o board selecionado
-    private void createCard(BoardEntity board, TableView<CardEntity> cardTableView, Accordion accordion, VBox columnDisplay) {
+    /**
+     * Cria um card no board selecionado
+     */
+    private void createCard(BoardEntity board) {
         TextInputDialog titleDialog = new TextInputDialog();
         titleDialog.setTitle("Criar Card");
         titleDialog.setHeaderText(null);
@@ -741,7 +736,7 @@ public class JavaFXApp extends Application {
                     VBox.setVgrow(boardColumns, Priority.ALWAYS);
 
                     for (BoardColumnEntity column : updatedBoard.getBoardColumns()) {
-                        VBox columnBox = createColumnBoxWithDragDrop(column, updatedBoard, connection);
+                        VBox columnBox = createColumnBoxWithDragDrop(column, updatedBoard);
                         boardColumns.getChildren().add(columnBox);
                     }
 
@@ -753,7 +748,7 @@ public class JavaFXApp extends Application {
                     alert.setContentText("Card criado com sucesso!");
                     alert.showAndWait();
                 } catch (SQLException ex) {
-                    ex.printStackTrace();
+                    logger.error("Erro ao criar o card", ex);
                     Alert alert = new Alert(Alert.AlertType.ERROR);
                     alert.setTitle("Erro");
                     alert.setHeaderText(null);
@@ -764,6 +759,10 @@ public class JavaFXApp extends Application {
         });
     }
 
+
+    /**
+     * Exibe um alerta de erro com um título e uma mensagem.
+     */
     private void showErrorAlert(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(title);

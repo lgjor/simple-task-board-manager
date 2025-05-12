@@ -1,4 +1,4 @@
-CREATE TABLE board_columns (
+CREATE TABLE boards_columns (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     board_id BIGINT NOT NULL,
     name VARCHAR(255) NOT NULL,
