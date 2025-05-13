@@ -88,6 +88,21 @@ public class CardService {
         }
     }
 
+    public void delete(Long cardId) throws SQLException {
+        String sql = "DELETE FROM CARDS WHERE id = ?";
+        try (var statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, cardId);
+            int rowsAffected = statement.executeUpdate();
+            if (rowsAffected == 0) {
+                throw new SQLException("Falha ao excluir o card. Card não encontrado.");
+            }
+            connection.commit();
+        } catch (SQLException ex) {
+            connection.rollback();
+            throw ex;
+        }
+    }
+
     public void moveToNextColumn(final Long cardId, final List<BoardColumnInfoDTO> boardColumnsInfo) throws SQLException {
         try {
             var dao = new CardDAO(connection);
