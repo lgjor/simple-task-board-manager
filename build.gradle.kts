@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "br.com.dio"
-version = "1.0.0"
+version = "1.0.1"
 
 repositories {
     mavenCentral()
@@ -60,6 +60,7 @@ jlink {
             "--vendor", "DIO",
             "--app-version", "1.0.0"
         )
+        icon = file("src/main/resources/icon.ico").absolutePath
     }
 
     tasks.register<JavaExec>("runApp") {
@@ -67,5 +68,3 @@ jlink {
         mainClass = "br.com.dio.ui.Main"
     }
 }
-
-
