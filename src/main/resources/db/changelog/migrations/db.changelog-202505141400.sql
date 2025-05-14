@@ -1,0 +1,2 @@
+ALTER TABLE cards
+MODIFY COLUMN description TEXT;
