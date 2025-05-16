@@ -23,9 +23,9 @@ Projeto desenvolvido para finalização do Bootcamp Bradesco Java <a href="https
 
 Esse projeto foi desenvolvido com as seguintes tecnologias:
 
-- Java
-- Mysql
-- JavaFX
+- ☕ Java
+- 💾 Sqlite ~~Mysql~~
+- 🖥️ JavaFX
 
 ## <div id="funcionalidades">Funcionalidades</div>
 
