@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "br.com.dio"
-version = "1.0.4"
+version = "1.0.5"
 
 repositories {
     mavenCentral()
@@ -62,7 +62,7 @@ jlink {
             "--win-menu",
             "--win-shortcut",
             "--vendor", "AuDesviante",
-            "--app-version", "1.0.4"
+            "--app-version", "1.0.5"
         )
         icon = file("src/main/resources/icon.ico").absolutePath
     }
