@@ -346,8 +346,7 @@ public class BoardColumnDAO {
             if (result.isPresent() && result.get() == ButtonType.OK) {
                 alert.close(); // Fecha o diálogo explicitamente
                 CompletableFuture.runAsync(() -> {
-                    try {
-                        Connection conn = getConnection();
+                    try (Connection conn = getConnection()) {
                         conn.setAutoCommit(false);
                         executeColumnUpdateWithConnection(conn, cardId, columnId, targetColumnType);
                         verifyUpdateWithConnection(conn, cardId, columnId);

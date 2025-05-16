@@ -6,6 +6,7 @@ module org.desviante {
     requires java.desktop; // Adiciona o módulo java.desktop para usar javax.swing
     requires liquibase.core;
     requires org.slf4j;
+    requires org.xerial.sqlitejdbc;
     exports org.desviante.persistence.entity;
     exports org.desviante.persistence.dao;
     exports org.desviante.ui;

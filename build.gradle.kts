@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "br.com.dio"
-version = "1.0.3"
+version = "1.0.4"
 
 repositories {
     mavenCentral()
@@ -45,6 +45,8 @@ jlink {
         uses("java.sql.Driver")
     }
 
+    addExtraDependencies("sqlite-jdbc")
+
     options.set(listOf("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages"))
     launcher {
         name = "Simple Task Board Manager"
@@ -60,7 +62,7 @@ jlink {
             "--win-menu",
             "--win-shortcut",
             "--vendor", "AuDesviante",
-            "--app-version", "1.0.3"
+            "--app-version", "1.0.4"
         )
         icon = file("src/main/resources/icon.ico").absolutePath
     }

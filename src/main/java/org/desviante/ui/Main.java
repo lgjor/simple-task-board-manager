@@ -48,7 +48,8 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        try (Connection connection = getConnection()) {
+        try {
+            Connection connection = getConnection();
             BoardColumnDAO boardColumnDAO = new BoardColumnDAO(connection);
             boardColumnDAO.setRefreshBoardCallback(this::refreshBoardView);
 
@@ -267,7 +268,8 @@ public class Main extends Application {
     private VBox createCardBox(CardEntity card) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
-        try (Connection connection = getConnection()) {
+        try {
+            Connection connection = getConnection();
             String sql = "SELECT creation_date, last_update_date, completion_date FROM CARDS WHERE id = ?";
             try (var preparedStatement = connection.prepareStatement(sql)) {
                 preparedStatement.setLong(1, card.getId());
@@ -396,14 +398,6 @@ public class Main extends Application {
                         }
                         showErrorAlert("Erro ao atualizar card", "Ocorreu um erro ao atualizar o card: " + ex.getMessage());
                         restoreOriginalView(cardBox, titleLabel, descLabel, titleField, descArea, buttons);
-                    } finally {
-                        if (connection != null) {
-                            try {
-                                connection.close();
-                            } catch (SQLException closeEx) {
-                                logger.error("Erro ao fechar a conexao", closeEx);
-                            }
-                        }
                     }
                 });
 
@@ -412,7 +406,8 @@ public class Main extends Application {
                 });
 
                 deleteButton.setOnAction(e -> {
-                    try (Connection connection = getConnection()) {
+                    try {
+                        Connection connection = getConnection();
                         CardService cardService = new CardService(connection);
                         cardService.delete(card.getId());
                         ((VBox) cardBox.getParent()).getChildren().remove(cardBox);
@@ -446,7 +441,8 @@ public class Main extends Application {
                 return;
             }
 
-            try (var connection = getConnection()) {
+            try {
+                Connection connection = getConnection();
                 var newBoard = getBoardEntity(boardName, connection);
 
                 boardList.add(newBoard);
@@ -501,7 +497,8 @@ public class Main extends Application {
             Thread.currentThread().interrupt();
         }
 
-        try (Connection connection = getConnection()) {
+        try {
+            Connection connection = getConnection();
             connection.setAutoCommit(false);  // Garante consistência da leitura
 
             // Busca o board atualizado
@@ -549,7 +546,7 @@ public class Main extends Application {
             } else {
                 System.err.println("Board não encontrado: " + boardId);
             }
-        } catch (Exception e) {
+        } catch (SQLException e) {
             System.err.println("Erro ao atualizar a visualização do board: " + e.getMessage());
             logger.error("Erro ao atualizar a visualização do board", e);
         }
@@ -561,7 +558,8 @@ public class Main extends Application {
     private void deleteSelectedBoard(TableView<BoardEntity> tableView) {
         BoardEntity selectedBoard = tableView.getSelectionModel().getSelectedItem();
         if (selectedBoard != null) {
-            try (var connection = getConnection()) {
+            try {
+                var connection = getConnection();
                 var boardService = new BoardService(connection);
                 boolean deleted = boardService.delete(selectedBoard.getId());
                 if (deleted) {
@@ -606,7 +604,8 @@ public class Main extends Application {
         // Limpa a lista de boards
         boardList.clear();
 
-        try (var connection = getConnection()) {
+        try {
+            var connection = getConnection();
             var queryService = new BoardQueryService(connection);
             var boards = queryService.findAll();
 
@@ -686,7 +685,8 @@ public class Main extends Application {
                     return;
                 }
 
-                try (var connection = getConnection()) {
+                try {
+                    Connection connection = getConnection();
                     var cardService = new CardService(connection);
                     var queryService = new BoardQueryService(connection);
 
