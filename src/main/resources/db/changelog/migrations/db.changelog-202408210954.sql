@@ -3,7 +3,7 @@
 --comment: boards_columns table create
 
 CREATE TABLE BOARDS_COLUMNS(
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGINT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     `order` int NOT NULL,
     kind VARCHAR(7) NOT NULL,

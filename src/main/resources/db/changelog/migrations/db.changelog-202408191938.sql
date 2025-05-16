@@ -3,7 +3,7 @@
 --comment: boards table create
 
 CREATE TABLE BOARDS(
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGINT PRIMARY KEY,
     name VARCHAR(255) NOT NULL
 ) ENGINE=InnoDB;
 

@@ -1,5 +1,5 @@
 CREATE TABLE boards_columns (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGINT PRIMARY KEY,
     board_id BIGINT NOT NULL,
     name VARCHAR(255) NOT NULL,
     kind VARCHAR(50) NOT NULL,
