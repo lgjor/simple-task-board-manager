@@ -4,17 +4,14 @@ import org.desviante.dto.CardDetailsDTO;
 import org.desviante.persistence.dao.CardDAO;
 import lombok.AllArgsConstructor;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Optional;
 
 @AllArgsConstructor
 public class CardQueryService {
 
-    private final Connection connection;
-
     public Optional<CardDetailsDTO> findById(final Long id) throws SQLException {
-        var dao = new CardDAO(connection);
+        var dao = new CardDAO();
         return dao.findById(id);
     }
 

@@ -2,6 +2,7 @@ package org.desviante.persistence.dao;
 
 import org.desviante.persistence.entity.BoardEntity;
 import lombok.AllArgsConstructor;
+import static org.desviante.persistence.config.ConnectionConfig.getConnection;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -12,11 +13,10 @@ import java.util.ArrayList;
 @AllArgsConstructor
 public class BoardDAO {
 
-    private Connection connection;
-
     public Optional<BoardEntity> findById(final Long id) throws SQLException {
         var sql = "SELECT id, name FROM BOARDS WHERE id = ?;";
-        try(var statement = connection.prepareStatement(sql)){
+        try (Connection connection = getConnection();
+             var statement = connection.prepareStatement(sql)) {
             statement.setLong(1, id);
             try (var resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
@@ -33,7 +33,8 @@ public class BoardDAO {
     public List<BoardEntity> findAll() throws SQLException {
         var sql = "SELECT id, name FROM BOARDS;";
         var boards = new ArrayList<BoardEntity>();
-        try (var statement = connection.prepareStatement(sql);
+        try (Connection connection = getConnection();
+             var statement = connection.prepareStatement(sql);
              var resultSet = statement.executeQuery()) {
             while (resultSet.next()) {
                 var entity = new BoardEntity();
@@ -46,8 +47,9 @@ public class BoardDAO {
     }
 
     public BoardEntity insert(BoardEntity entity) throws SQLException {
-        var sql = "INSERT INTO BOARDS (name) VALUES (?);";
-        try (var statement = connection.prepareStatement(sql, java.sql.Statement.RETURN_GENERATED_KEYS)) {
+        var sql = "INSERT INTO boards (name) VALUES (?);";
+        try (Connection connection = getConnection();
+             var statement = connection.prepareStatement(sql, java.sql.Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, entity.getName());
             statement.executeUpdate();
             try (var rs = statement.getGeneratedKeys()) {
@@ -61,7 +63,8 @@ public class BoardDAO {
 
     public void update(BoardEntity entity) throws SQLException {
         var sql = "UPDATE BOARDS SET name = ? WHERE id = ?;";
-        try (var statement = connection.prepareStatement(sql)) {
+        try (Connection connection = getConnection();
+             var statement = connection.prepareStatement(sql)) {
             statement.setString(1, entity.getName());
             statement.setLong(2, entity.getId());
             statement.executeUpdate();
@@ -70,7 +73,8 @@ public class BoardDAO {
 
     public void delete(final Long id) throws SQLException {
         var sql = "DELETE FROM BOARDS WHERE id = ?;";
-        try (var statement = connection.prepareStatement(sql)) {
+        try (Connection connection = getConnection();
+             var statement = connection.prepareStatement(sql)) {
             statement.setLong(1, id);
             statement.executeUpdate();
         }
@@ -78,7 +82,8 @@ public class BoardDAO {
 
     public boolean exists(final Long id) throws SQLException {
         var sql = "SELECT 1 FROM BOARDS WHERE id = ?;";
-        try (var statement = connection.prepareStatement(sql)) {
+        try (Connection connection = getConnection();
+             var statement = connection.prepareStatement(sql)) {
             statement.setLong(1, id);
             try (var resultSet = statement.executeQuery()) {
                 return resultSet.next();

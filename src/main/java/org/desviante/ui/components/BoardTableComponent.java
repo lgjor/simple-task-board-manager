@@ -53,7 +53,7 @@ public class BoardTableComponent {
         tableView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             if (newSelection != null) {
                 try (var connection = getConnection()) {
-                    var queryService = new BoardQueryService(connection);
+                    var queryService = new BoardQueryService();
                     // Busca as informações atualizadas do board no banco
                     var refreshedBoardOptional = queryService.findById(newSelection.getId());
                     if (refreshedBoardOptional.isPresent()) {
@@ -70,7 +70,7 @@ public class BoardTableComponent {
                         VBox.setVgrow(boardColumns, Priority.ALWAYS);
 
                         for (BoardColumnEntity column : refreshedBoard.getBoardColumns()) {
-                            VBox columnBox = createColumnBoxWithDragDrop(column, refreshedBoard, tableView, columnDisplay);
+                            VBox columnBox = createColumnBoxWithDragDrop(column, refreshedBoard, tableView, columnDisplay, connection);
                             boardColumns.getChildren().add(columnBox);
                         }
 
@@ -87,7 +87,7 @@ public class BoardTableComponent {
     /**
      * Cria uma caixa de cards com suporte a drag and drop
      */
-    public static VBox createColumnBoxWithDragDrop(BoardColumnEntity column, BoardEntity board, TableView<BoardEntity> tableView, VBox columnDisplay) {
+    public static VBox createColumnBoxWithDragDrop(BoardColumnEntity column, BoardEntity board, TableView<BoardEntity> tableView, VBox columnDisplay, Connection connection) {
         VBox columnBox = new VBox();
         columnBox.setId("column-" + column.getId());
 
@@ -119,7 +119,7 @@ public class BoardTableComponent {
         VBox.setVgrow(scrollPane, Priority.ALWAYS);
         columnBox.getChildren().add(scrollPane);
 
-        CardDragAndDropListener listener = new CardDragAndDropListener(
+        CardDragAndDropListener listener = new CardDragAndDropListener(connection,
                 tableView,
                 (tv) -> BoardTableComponent.loadBoards(tv, tableView.getItems(), columnDisplay)
         );
@@ -134,7 +134,13 @@ public class BoardTableComponent {
 
         // Adiciona os cards à área de cards
         for (CardEntity card : column.getCards()) {
-            VBox cardBox = CardTableComponent.createCardBox(card, tableView, columnDisplay);
+            VBox cardBox = CardTableComponent.createCardBox(
+                    card,
+                    tableView,
+                    columnDisplay,
+                    (tv) -> BoardTableComponent.loadBoards(tv, tableView.getItems(), columnDisplay),
+                    tableView
+            );
             dragAndDrop.setupDragSource(cardBox, card.getId());
             cardsArea.getChildren().add(cardBox);
         }
@@ -150,52 +156,38 @@ public class BoardTableComponent {
     }
 
     public static void loadBoards(TableView<BoardEntity> tableView, ObservableList<BoardEntity> boardList, VBox columnDisplay) {
-        // Salva o ID do board selecionado antes de limpar a lista
         BoardEntity selectedBefore = tableView.getSelectionModel().getSelectedItem();
         Long selectedId = selectedBefore != null ? selectedBefore.getId() : null;
-        // Limpa a lista de boards
         boardList.clear();
 
         try {
             var connection = getConnection();
-            var queryService = new BoardQueryService(connection);
+            var queryService = new BoardQueryService();
             var boards = queryService.findAll();
 
-            // Para cada board, carregamos as colunas e os cards
+            // Carrega as colunas e cards para cada board
             for (BoardEntity board : boards) {
-                // Carrega as colunas do board com seus cards
                 var optionalBoard = queryService.findById(board.getId());
                 if (optionalBoard.isPresent()) {
                     BoardEntity fullBoard = optionalBoard.get();
                     board.setBoardColumns(fullBoard.getBoardColumns());
-
-                    // Verifica se as colunas foram carregadas corretamente
-                    System.out.println("Board carregado: " + board.getName() +
-                            ", Colunas: " + (board.getBoardColumns() != null ?
-                            board.getBoardColumns().size() : "null"));
-                } else {
-                    System.err.println("Não foi possível carregar o board completo: " + board.getId());
                 }
             }
 
             boardList.addAll(boards);
             tableView.refresh();
 
-            // Atualiza a visualização das colunas/cards do board selecionado
+            // Seleciona o board anterior ou o primeiro, sem chamar refreshBoardView manualmente
             if (selectedId != null) {
                 for (BoardEntity board : boardList) {
                     if (board.getId().equals(selectedId)) {
                         tableView.getSelectionModel().select(board);
-                        refreshBoardView(board.getId(), tableView, columnDisplay);;
                         return;
                     }
                 }
             }
-
-            // Se não houver seleção anterior, seleciona o primeiro (caso exista)
             if (!boardList.isEmpty()) {
                 tableView.getSelectionModel().selectFirst();
-                refreshBoardView(boardList.get(0).getId(), tableView, columnDisplay);
             }
         } catch (SQLException ex) {
             logger.error("Erro ao carregar boards", ex);
@@ -219,7 +211,7 @@ public class BoardTableComponent {
             connection.setAutoCommit(false);  // Garante consistência da leitura
 
             // Busca o board atualizado
-            BoardQueryService queryService = new BoardQueryService(connection);
+            BoardQueryService queryService = new BoardQueryService();
             var boardOptional = queryService.findById(boardId);
 
             if (boardOptional.isPresent()) {
@@ -240,10 +232,9 @@ public class BoardTableComponent {
                             // Nova conexão para operações dentro do Platform.runLater
                             getConnection();
                             for (BoardColumnEntity column : refreshedBoard.getBoardColumns()) {
-                                VBox columnBox = createColumnBoxWithDragDrop(column, refreshedBoard, tableView, columnDisplay);
+                                VBox columnBox = createColumnBoxWithDragDrop(column, refreshedBoard, tableView, columnDisplay, connection);
                                 boardColumns.getChildren().add(columnBox);
                             }
-                            columnDisplay.getChildren().add(boardColumns);
 
                             // Força atualização da TableView
                             tableView.refresh();

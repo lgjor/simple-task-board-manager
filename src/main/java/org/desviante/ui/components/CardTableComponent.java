@@ -9,6 +9,7 @@ import org.desviante.service.CardService;
 import org.desviante.persistence.entity.BoardEntity;
 import org.desviante.util.AlertUtils;
 
+import java.util.function.Consumer;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -17,7 +18,6 @@ import java.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
 
 import static org.desviante.persistence.config.ConnectionConfig.getConnection;
 
@@ -28,7 +28,13 @@ public class CardTableComponent {
      * Cria uma caixa de card
      * Adiciona eventos de clique e drag and drop
      */
-    public static VBox createCardBox(CardEntity card, TableView<?> tableView, VBox columnDisplay) {
+    public static VBox createCardBox(
+            CardEntity card,
+            TableView<?> tableView,
+            VBox columnDisplay,
+            Consumer<TableView> loadBoardsConsumer,
+            TableView boardTableView
+    ) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
         try {
@@ -107,7 +113,7 @@ public class CardTableComponent {
 
                 Platform.runLater(titleField::requestFocus);
 
-                // Lógica dos botões de salvar, cancelar e excluir
+                // Lógica do botão de salvar
                 saveButton.setOnAction(e -> {
                     String newTitle = titleField.getText().trim();
                     String newDescription = descArea.getText().trim();
@@ -168,16 +174,19 @@ public class CardTableComponent {
                     }
                 });
 
+                // Lógica do botão de cancelar
                 cancelButton.setOnAction(e -> {
                     restoreOriginalView(cardBox, titleLabel, descLabel, titleField, descArea, buttons);
                 });
 
+                // Lógica do botão de excluir
                 deleteButton.setOnAction(e -> {
                     try {
                         Connection connection = getConnection();
                         CardService cardService = new CardService(connection);
                         cardService.delete(card.getId());
                         ((VBox) cardBox.getParent()).getChildren().remove(cardBox);
+                        Platform.runLater(() -> loadBoardsConsumer.accept(boardTableView));
                     } catch (SQLException ex) {
                         logger.error("Erro ao excluir o card", ex);
                         AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", "Erro ao excluir o card: "+ ex.getMessage());

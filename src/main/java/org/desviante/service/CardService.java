@@ -17,12 +17,12 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 
+import static org.desviante.persistence.config.ConnectionConfig.getConnection;
 import static org.desviante.persistence.entity.BoardColumnKindEnum.CANCEL;
 import static org.desviante.persistence.entity.BoardColumnKindEnum.FINAL;
 
 public class CardService {
-
-    private final Connection connection;
+    private Connection connection;
 
     // Construtor para inicializar a conexão
     public CardService(Connection connection) {
@@ -32,24 +32,21 @@ public class CardService {
     // Método para inserir o card no BD e associar a coluna inicial
     public void create(CardEntity card) throws SQLException {
         String sql = "INSERT INTO cards (title, description, board_column_id, creation_date) VALUES (?, ?, ?, ?)";
-        try (var statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection connection = getConnection();
+             var statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
             if (card.getBoardColumn() == null || card.getBoardColumn().getId() == null) {
                 throw new IllegalStateException("A coluna inicial do card não foi definida corretamente.");
             }
 
-            // Log para depuração
             System.out.println("Inserindo card: " + card.getTitle() + ", Coluna ID: " + card.getBoardColumn().getId());
-
-            // A data de criação já é inicializada automaticamente pelo campo creationDate
 
             statement.setString(1, card.getTitle());
             statement.setString(2, card.getDescription());
             statement.setLong(3, card.getBoardColumn().getId());
-            // Define a data de criação
             statement.setTimestamp(4, Timestamp.valueOf(card.getCreationDate()));
             statement.executeUpdate();
 
-            // Recupera o ID gerado
             try (var generatedKeys = statement.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
                     card.setId(generatedKeys.getLong(1));
@@ -59,22 +56,21 @@ public class CardService {
                 }
             }
 
-            connection.commit(); // Confirma a transação
+            connection.commit();
         } catch (SQLException ex) {
-            connection.rollback(); // Reverte a transação em caso de erro
-            System.err.println("Erro ao inserir card: " + ex.getMessage());
+            // Se a conexão foi aberta, tente rollback
             throw ex;
         }
     }
 
     public void update(CardEntity card) throws SQLException {
         String sql = "UPDATE cards SET title = ?, description = ?, last_update_date = ? WHERE id = ?";
-        try (var preparedStatement = connection.prepareStatement(sql)) {
-            // Log para debug
+        try (Connection connection = getConnection();
+             var preparedStatement = connection.prepareStatement(sql)) {
+
             System.out.println("Atualizando card: " + card.getId() +
                     ", LastUpdateDate: " + card.getLastUpdateDate());
 
-            // Atualiza a data de última modificação
             card.setLastUpdateDate(LocalDateTime.now());
             preparedStatement.setString(1, card.getTitle());
             preparedStatement.setString(2, card.getDescription());
@@ -83,14 +79,14 @@ public class CardService {
             preparedStatement.executeUpdate();
             connection.commit();
         } catch (SQLException e) {
-            connection.rollback();
             throw e;
         }
     }
 
     public void delete(Long cardId) throws SQLException {
         String sql = "DELETE FROM cards WHERE id = ?";
-        try (var statement = connection.prepareStatement(sql)) {
+        try (Connection connection = getConnection();
+             var statement = connection.prepareStatement(sql)) {
             statement.setLong(1, cardId);
             int rowsAffected = statement.executeUpdate();
             if (rowsAffected == 0) {
@@ -98,14 +94,13 @@ public class CardService {
             }
             connection.commit();
         } catch (SQLException ex) {
-            connection.rollback();
             throw ex;
         }
     }
 
     public void moveToNextColumn(final Long cardId, final List<BoardColumnInfoDTO> boardColumnsInfo) throws SQLException {
-        try {
-            var dao = new CardDAO(connection);
+        try (Connection connection = getConnection()) {
+            var dao = new CardDAO();
             var optional = dao.findById(cardId);
             var dto = optional.orElseThrow(
                     () -> new EntityNotFoundException("O card de id %s não foi encontrado".formatted(cardId))
@@ -125,7 +120,6 @@ public class CardService {
                     .findFirst()
                     .orElseThrow(() -> new IllegalStateException("Não há próxima coluna disponível"));
 
-            // Atualiza a coluna e a data de última atualização
             String sql = "UPDATE cards SET board_column_id = ?, last_update_date = ? WHERE id = ?";
             try (var statement = connection.prepareStatement(sql)) {
                 statement.setLong(1, nextColumn.id());
@@ -136,14 +130,13 @@ public class CardService {
 
             connection.commit();
         } catch (SQLException ex) {
-            connection.rollback();
             throw ex;
         }
     }
 
     public void cancel(final Long cardId, final Long cancelColumnId, final List<BoardColumnInfoDTO> boardColumnsInfo) throws SQLException {
-        try {
-            var dao = new CardDAO(connection);
+        try (Connection connection = getConnection()) {
+            var dao = new CardDAO();
             var optional = dao.findById(cardId);
             var dto = optional.orElseThrow(
                     () -> new EntityNotFoundException("O card de id %s não foi encontrado".formatted(cardId))
@@ -159,7 +152,6 @@ public class CardService {
                 throw new CardFinishedException("O card já foi finalizado");
             }
 
-            // Atualiza a coluna e a data de última atualização
             String sql = "UPDATE cards SET board_column_id = ?, last_update_date = ? WHERE id = ?";
             try (var statement = connection.prepareStatement(sql)) {
                 statement.setLong(1, cancelColumnId);
@@ -169,15 +161,12 @@ public class CardService {
             }
 
             connection.commit();
-        } catch (SQLException ex) {
-            connection.rollback();
-            throw ex;
         }
     }
 
     public void block(final Long id, final String reason, final List<BoardColumnInfoDTO> boardColumnsInfo) throws SQLException {
-        try {
-            var dao = new CardDAO(connection);
+        try (Connection connection = getConnection()) {
+            var dao = new CardDAO();
             var optional = dao.findById(id);
             var dto = optional.orElseThrow(
                     () -> new EntityNotFoundException("O card de id %s não foi encontrado".formatted(id))
@@ -192,18 +181,15 @@ public class CardService {
             if (currentColumn.kind().equals(FINAL) || currentColumn.kind().equals(CANCEL)) {
                 throw new IllegalStateException("O card está em uma coluna que não permite bloqueio.");
             }
-            var blockDAO = new BlockDAO(connection);
+            var blockDAO = new BlockDAO();
             blockDAO.block(reason, id);
             connection.commit();
-        } catch (SQLException ex) {
-            connection.rollback();
-            throw ex;
         }
     }
 
     public void unblock(final Long id, final String reason) throws SQLException {
-        try {
-            var dao = new CardDAO(connection);
+        try (Connection connection = getConnection()) {
+            var dao = new CardDAO();
             var optional = dao.findById(id);
             var dto = optional.orElseThrow(
                     () -> new EntityNotFoundException("O card de id %s não foi encontrado".formatted(id))
@@ -211,12 +197,9 @@ public class CardService {
             if (!dto.blocked()) {
                 throw new CardBlockedException("O card não está bloqueado.");
             }
-            var blockDAO = new BlockDAO(connection);
+            var blockDAO = new BlockDAO();
             blockDAO.unblock(reason, id);
             connection.commit();
-        } catch (SQLException ex) {
-            connection.rollback();
-            throw ex;
         }
     }
 
@@ -228,7 +211,8 @@ public class CardService {
                 "JOIN boards_columns bc ON c.board_column_id = bc.id " +
                 "WHERE c.id = ?";
 
-        try (var statement = connection.prepareStatement(sql)) {
+        try (Connection connection = getConnection();
+             var statement = connection.prepareStatement(sql)) {
             statement.setLong(1, id);
 
             try (var resultSet = statement.executeQuery()) {
@@ -244,7 +228,6 @@ public class CardService {
                     String kindStr = resultSet.getString("column_kind");
                     BoardColumnKindEnum kind = BoardColumnKindEnum.valueOf(kindStr.trim().toUpperCase());
                     column.setKind(kind);
-
 
                     card.setBoardColumn(column);
 
@@ -263,20 +246,16 @@ public class CardService {
             last_update_date = CURRENT_TIMESTAMP
         WHERE id = ?""";
 
-        try {
-            try (var statement = connection.prepareStatement(sql)) {
-                statement.setLong(1, targetColumnId);
-                statement.setLong(2, cardId);
+        try (Connection connection = getConnection();
+             var statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, targetColumnId);
+            statement.setLong(2, cardId);
 
-                int rowsAffected = statement.executeUpdate();
-                if (rowsAffected == 0) {
-                    throw new SQLException("Falha ao mover o card. Card não encontrado.");
-                }
+            int rowsAffected = statement.executeUpdate();
+            if (rowsAffected == 0) {
+                throw new SQLException("Falha ao mover o card. Card não encontrado.");
             }
             connection.commit();
-        } catch (SQLException ex) {
-            connection.rollback();
-            throw ex;
         }
     }
 }

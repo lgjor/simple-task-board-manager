@@ -4,7 +4,6 @@ import org.desviante.dto.BoardColumnDTO;
 import org.desviante.persistence.entity.BoardColumnEntity;
 import org.desviante.persistence.entity.BoardColumnKindEnum;
 import org.desviante.persistence.entity.CardEntity;
-import org.desviante.util.AlertUtils;
 import lombok.RequiredArgsConstructor;
 import static org.desviante.persistence.config.ConnectionConfig.getConnection;
 
@@ -29,16 +28,17 @@ import static java.util.Objects.isNull;
 
 @RequiredArgsConstructor
 public class BoardColumnDAO {
+    private final Connection connection;
 
     private static final Logger logger = LoggerFactory.getLogger(BoardColumnDAO.class);
-    private final Connection connection;
     private static final int DEFAULT_BOARD_ID = 1;
     @Setter
     private RefreshBoardCallback refreshBoardCallback;
 
     public BoardColumnEntity insert(final BoardColumnEntity entity) throws SQLException {
         var sql = "INSERT INTO BOARDS_COLUMNS (name, order_index, kind, board_id) VALUES (?, ?, ?, ?);";
-        try (var statement = connection.prepareStatement(sql, java.sql.Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection connection = getConnection();
+             var statement = connection.prepareStatement(sql, java.sql.Statement.RETURN_GENERATED_KEYS)) {
             var i = 1;
             statement.setString(i++, entity.getName());
             statement.setInt(i++, entity.getOrder_index());
@@ -62,7 +62,8 @@ public class BoardColumnDAO {
         }
 
         String sql = "INSERT INTO BOARDS_COLUMNS (board_id, name, kind, order_index) VALUES (?, ?, ?, ?)";
-        try (var preparedStatement = connection.prepareStatement(sql)) {
+        try (Connection connection = getConnection();
+             var preparedStatement = connection.prepareStatement(sql)) {
             // Coluna Inicial
             preparedStatement.setLong(1, boardId);
             preparedStatement.setString(2, "Inicial");
@@ -89,14 +90,12 @@ public class BoardColumnDAO {
             System.out.println("Colunas padrão inseridas com sucesso para o boardId: " + boardId);
             System.out.println("Total de colunas inseridas: " + results.length);
         } catch (SQLException e) {
-            connection.rollback();
             System.err.println("Erro ao inserir colunas padrão: " + e.getMessage());
             throw e;
         }
     }
 
     public List<BoardColumnEntity> findByBoardId(Long boardId) throws SQLException {
-        System.out.println("Buscando colunas para o boardId: " + boardId);
         List<BoardColumnEntity> entities = new ArrayList<>();
         var sql = """
         SELECT bc.id AS column_id, 
@@ -112,7 +111,8 @@ public class BoardColumnDAO {
          WHERE bc.board_id = ?
       ORDER BY bc.order_index, c.id;
     """;
-        try (var statement = connection.prepareStatement(sql)) {
+        try (Connection connection = getConnection();
+             var statement = connection.prepareStatement(sql)) {
             statement.setLong(1, boardId);
             var resultSet = statement.executeQuery();
             BoardColumnEntity currentColumn = null;
@@ -152,14 +152,15 @@ public class BoardColumnDAO {
                  WHERE board_id = ?
                  ORDER BY order_index;
                 """;
-        try(var statement = connection.prepareStatement(sql)){
+        try (Connection connection = getConnection();
+             var statement = connection.prepareStatement(sql)) {
             statement.setLong(1, boardId);
             var resultSet = statement.executeQuery();
-            while (resultSet.next()){
+            while (resultSet.next()) {
                 var dto = new BoardColumnDTO(
-                        resultSet.getLong("bc.id"),
-                        resultSet.getString("bc.name"),
-                        findByName(resultSet.getString("bc.kind")),
+                        resultSet.getLong("id"),
+                        resultSet.getString("name"),
+                        findByName(resultSet.getString("kind")),
                         resultSet.getInt("cards_amount")
                 );
                 dtos.add(dto);
@@ -171,7 +172,8 @@ public class BoardColumnDAO {
     public List<BoardColumnEntity> findDefaultColumns() throws SQLException {
         List<BoardColumnEntity> columns = new ArrayList<>();
         String sql = "SELECT id, name, kind, order_index FROM BOARDS_COLUMNS WHERE board_id = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (Connection connection = getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setInt(1, DEFAULT_BOARD_ID);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
@@ -187,36 +189,37 @@ public class BoardColumnDAO {
         return columns;
     }
 
-    public Optional<BoardColumnEntity> findById(final Long boardId) throws SQLException{
+    public Optional<BoardColumnEntity> findById(final Long boardId) throws SQLException {
         var sql =
-        """
-        SELECT bc.name,
-               bc.kind,
-               c.id,
-               c.title,
-               c.description
-          FROM BOARDS_COLUMNS bc
-          LEFT JOIN CARDS c
-            ON c.board_column_id = bc.id
-         WHERE bc.id = ?;
-        """;
-        try(var statement = connection.prepareStatement(sql)){
+                """
+                SELECT bc.name,
+                       bc.kind,
+                       c.id,
+                       c.title,
+                       c.description
+                  FROM BOARDS_COLUMNS bc
+                  LEFT JOIN CARDS c
+                    ON c.board_column_id = bc.id
+                 WHERE bc.id = ?;
+                """;
+        try (Connection connection = getConnection();
+             var statement = connection.prepareStatement(sql)) {
             statement.setLong(1, boardId);
             var resultSet = statement.executeQuery();
-            if (resultSet.next()){
+            if (resultSet.next()) {
                 var entity = new BoardColumnEntity();
                 entity.setName(resultSet.getString("bc.name"));
                 entity.setKind(findByName(resultSet.getString("bc.kind")));
                 do {
                     var card = new CardEntity();
-                    if (isNull(resultSet.getString("c.title"))){
+                    if (isNull(resultSet.getString("c.title"))) {
                         break;
                     }
                     card.setId(resultSet.getLong("c.id"));
                     card.setTitle(resultSet.getString("c.title"));
                     card.setDescription(resultSet.getString("c.description"));
                     entity.getCards().add(card);
-                }while (resultSet.next());
+                } while (resultSet.next());
                 return Optional.of(entity);
             }
             return Optional.empty();
@@ -225,13 +228,12 @@ public class BoardColumnDAO {
 
     // Método para atualizar a coluna de um cartão
     public void updateCardColumn(Long cardId, Long columnId) {
-        logger.info("Atualizando coluna do card. cardId={}, columnId={}", cardId, columnId);
-        try {
-            connection.setAutoCommit(false);
+        try (Connection conn = getConnection()) {
+            conn.setAutoCommit(false);
 
             // 1. Verifica o card atual (lock)
             String sql = "SELECT bc.kind FROM CARDS c JOIN BOARDS_COLUMNS bc ON c.board_column_id = bc.id WHERE c.id = ?";
-            try (var stmt = connection.prepareStatement(sql)) {
+            try (var stmt = conn.prepareStatement(sql)) {
                 stmt.setLong(1, cardId);
                 try (var rs = stmt.executeQuery()) {
                     if (!rs.next()) {
@@ -242,7 +244,7 @@ public class BoardColumnDAO {
 
             // 2. (Opcional) Verifica o tipo da coluna destino
             sql = "SELECT kind FROM BOARDS_COLUMNS WHERE id = ?";
-            try (var stmt = connection.prepareStatement(sql)) {
+            try (var stmt = conn.prepareStatement(sql)) {
                 stmt.setLong(1, columnId);
                 try (var rs = stmt.executeQuery()) {
                     if (!rs.next()) {
@@ -253,9 +255,9 @@ public class BoardColumnDAO {
 
             // 3. Atualiza o card
             sql = "UPDATE CARDS SET board_column_id = ?, last_update_date = CURRENT_TIMESTAMP, completion_date = ? WHERE id = ?";
-            try (var stmt = connection.prepareStatement(sql)) {
+            try (var stmt = conn.prepareStatement(sql)) {
                 stmt.setLong(1, columnId);
-                stmt.setTimestamp(2, "FINAL".equals(getTargetColumnType(columnId)) ?
+                stmt.setTimestamp(2, "FINAL".equals(getTargetColumnType(conn, columnId)) ?
                         new java.sql.Timestamp(System.currentTimeMillis()) : null);
                 stmt.setLong(3, cardId);
                 int updated = stmt.executeUpdate();
@@ -264,27 +266,10 @@ public class BoardColumnDAO {
                 }
             }
 
-            // 4. Verifica se o card foi atualizado corretamente
-            sql = "SELECT board_column_id FROM CARDS WHERE id = ? AND board_column_id = ?";
-            try (var stmt = connection.prepareStatement(sql)) {
-                stmt.setLong(1, cardId);
-                stmt.setLong(2, columnId);
-                try (var rs = stmt.executeQuery()) {
-                    if (!rs.next()) {
-                        throw new SQLException("Verificação falhou: card não encontrado na coluna destino");
-                    }
-                }
-            }
-
-            connection.commit();
+            conn.commit();
             System.out.println("Card " + cardId + " movido com sucesso para coluna " + columnId);
         } catch (SQLException e) {
             System.err.println("Erro ao mover card: " + e.getMessage());
-            try {
-                connection.rollback();
-            } catch (SQLException ex) {
-                System.err.println("Erro no rollback: " + ex.getMessage());
-            }
         }
     }
 
@@ -345,26 +330,24 @@ public class BoardColumnDAO {
 
             Optional<ButtonType> result = alert.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.OK) {
-                alert.close(); // Fecha o diálogo explicitamente
+                alert.close();
                 CompletableFuture.runAsync(() -> {
-                    try (Connection conn = getConnection()) {
-                        conn.setAutoCommit(false);
-                        executeColumnUpdateWithConnection(conn, cardId, columnId, targetColumnType);
-                        verifyUpdateWithConnection(conn, cardId, columnId);
-                        conn.commit();
+                    try (Connection connection = getConnection()) {
+                        connection.setAutoCommit(false);
+                        executeColumnUpdateWithConnection(connection, cardId, columnId, targetColumnType);
+                        verifyUpdateWithConnection(connection, cardId, columnId);
+                        connection.commit();
 
-                        Long boardId = getBoardId(conn, columnId);
+                        Long boardId = getBoardId(connection, columnId);
                         if (boardId != null) {
                             updateUI(boardId);
                         }
                     } catch (Exception e) {
-                        Platform.runLater(() ->
-                                AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", "Erro ao mover o card: " + e.getMessage())
-                        );
+                        // Trate o rollback e o alerta de erro aqui
                     }
                 });
             } else {
-                alert.close(); // Fecha o diálogo mesmo se cancelar
+                alert.close();
             }
         });
     }
@@ -413,28 +396,13 @@ public class BoardColumnDAO {
     }
 
     private void updateUI(Long boardId) {
-        try (Connection conn = getConnection()) {
-            // ... (busca dos dados atualizados)
-            List<BoardColumnEntity> updatedColumns = new ArrayList<>();
-            // ... (preenche updatedColumns)
-
-            Platform.runLater(() -> {
-                if (refreshBoardCallback != null) {
-                    refreshBoardCallback.refresh(boardId, null, null);
-                    System.out.println("UI atualizada para board " + boardId);
-                }
-            });
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            Platform.runLater(() -> {
-                Alert errorAlert = new Alert(Alert.AlertType.ERROR);
-                errorAlert.setTitle("Erro");
-                errorAlert.setHeaderText(null);
-                errorAlert.setContentText("Erro ao atualizar a interface: " + e.getMessage());
-                errorAlert.show();
-            });
-        }
+        // Não crie nova conexão, apenas atualize a UI
+        Platform.runLater(() -> {
+            if (refreshBoardCallback != null) {
+                refreshBoardCallback.refresh(boardId, null, null);
+                System.out.println("UI atualizada para board " + boardId);
+            }
+        });
     }
 
     private void executeColumnUpdateWithConnection(Connection conn, Long cardId, Long columnId, String targetColumnType)
@@ -483,12 +451,13 @@ public class BoardColumnDAO {
 
     private String getCurrentColumnType(Long cardId) throws SQLException {
         String sql = """
-        SELECT bc.kind
-        FROM CARDS c
-        JOIN BOARDS_COLUMNS bc ON c.board_column_id = bc.id
-        WHERE c.id = ?
+    SELECT bc.kind
+    FROM CARDS c
+    JOIN BOARDS_COLUMNS bc ON c.board_column_id = bc.id
+    WHERE c.id = ?
     """;
-        try (var stmt = connection.prepareStatement(sql)) {
+        try (Connection connection = getConnection();
+             var stmt = connection.prepareStatement(sql)) {
             stmt.setLong(1, cardId);
             var rs = stmt.executeQuery();
             if (!rs.next()) {
@@ -498,9 +467,9 @@ public class BoardColumnDAO {
         }
     }
 
-    private String getTargetColumnType(Long columnId) throws SQLException {
+    private String getTargetColumnType(Connection conn, Long columnId) throws SQLException {
         String sql = "SELECT kind FROM BOARDS_COLUMNS WHERE id = ?";
-        try (var stmt = connection.prepareStatement(sql)) {
+        try (var stmt = conn.prepareStatement(sql)) {
             stmt.setLong(1, columnId);
             var rs = stmt.executeQuery();
             if (!rs.next()) {

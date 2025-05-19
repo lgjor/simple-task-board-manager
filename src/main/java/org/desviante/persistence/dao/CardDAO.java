@@ -3,8 +3,9 @@ package org.desviante.persistence.dao;
 import org.desviante.dto.CardDetailsDTO;
 import org.desviante.persistence.entity.CardEntity;
 import lombok.AllArgsConstructor;
-
+import static org.desviante.persistence.config.ConnectionConfig.getConnection;
 import java.sql.Connection;
+
 import java.sql.SQLException;
 import java.util.Optional;
 import java.sql.Statement;
@@ -15,11 +16,10 @@ import static java.util.Objects.nonNull;
 @AllArgsConstructor
 public class CardDAO {
 
-    private Connection connection;
-
     public CardEntity insert(final CardEntity entity) throws SQLException {
         var sql = "INSERT INTO CARDS (title, description, board_column_id) values (?, ?, ?);";
-        try (var statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (var connection = getConnection();
+             var statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             var i = 1;
             statement.setString(i++, entity.getTitle());
             statement.setString(i++, entity.getDescription());
@@ -36,7 +36,8 @@ public class CardDAO {
 
     public void moveToColumn(final Long columnId, final Long cardId) throws SQLException {
         var sql = "UPDATE CARDS SET board_column_id = ? WHERE id = ?;";
-        try (var statement = connection.prepareStatement(sql)) {
+        try (var connection = getConnection();
+             var statement = connection.prepareStatement(sql)) {
             var i = 1;
             statement.setLong(i++, columnId);
             statement.setLong(i, cardId);
@@ -65,7 +66,8 @@ public class CardDAO {
                             ON bc.id = c.board_column_id
                           WHERE c.id = ?;
                         """;
-        try (var statement = connection.prepareStatement(sql)) {
+        try (Connection connection = getConnection();
+             var statement = connection.prepareStatement(sql)) {
             statement.setLong(1, id);
             try (var resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {

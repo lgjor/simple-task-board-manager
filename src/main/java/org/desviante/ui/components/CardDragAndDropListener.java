@@ -21,9 +21,10 @@ public class CardDragAndDropListener implements DragDropListenerInterface {
     private static final Logger logger = LoggerFactory.getLogger(CardDragAndDropListener.class);
     private final TableView boardTableView;
     private final Consumer<TableView> loadBoardsConsumer;
+    private final Connection connection;
 
-    // Construtor ajustado conforme atributos usados
-    public CardDragAndDropListener(TableView boardTableView, Consumer<TableView> loadBoardsConsumer) {
+    public CardDragAndDropListener(Connection connection, TableView boardTableView, Consumer<TableView> loadBoardsConsumer) {
+        this.connection = connection;
         this.boardTableView = boardTableView;
         this.loadBoardsConsumer = loadBoardsConsumer;
     }
@@ -69,13 +70,11 @@ public class CardDragAndDropListener implements DragDropListenerInterface {
 
                 if (updatedCard != null && updatedCard.getBoardColumn() != null &&
                         updatedCard.getBoardColumn().getId().equals(targetColumnId)) {
-                    connection.commit();
-                    Platform.runLater(() -> loadBoardsConsumer.accept(boardTableView));
-                    System.out.println(String.format("Card %d atualizado para coluna %d", cardId, targetColumnId));
+                        Platform.runLater(() -> loadBoardsConsumer.accept(boardTableView));
+                        //System.out.println(String.format("Card %d atualizado para coluna %d", cardId, targetColumnId));
                 } else {
                     connection.rollback();
                     Platform.runLater(() -> AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", "Erro ao atualizar o card no banco de dados."));
-
                     System.out.println(String.format("Card não encontrado: %d", cardId));
                 }
             } catch (Exception e) {
@@ -91,8 +90,8 @@ public class CardDragAndDropListener implements DragDropListenerInterface {
 
     @Override
     public boolean isCardInFinalColumn(Long cardId) {
-        try (Connection conn = getConnection()) {
-            CardService cardService = new CardService(conn);
+        try (Connection connection = getConnection()) {
+            CardService cardService = new CardService(connection);
             CardEntity card = cardService.findById(cardId);
             if (card == null || card.getBoardColumn() == null) {
                 System.out.println(String.format("Card nao encontrado: %d", cardId));
