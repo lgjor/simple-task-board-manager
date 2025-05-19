@@ -6,9 +6,9 @@ import org.desviante.service.BoardQueryService;
 import org.desviante.service.BoardService;
 import org.desviante.ui.components.BoardAccordion;
 import org.desviante.ui.components.BoardTableComponent;
+import org.desviante.util.AlertUtils;
 import javafx.application.Platform;
 import javafx.application.Application;
-import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -23,20 +23,13 @@ import org.desviante.service.CardService;
 import org.desviante.persistence.dao.BoardColumnDAO;
 import org.desviante.persistence.entity.BoardColumnEntity;
 import java.sql.Connection;
-import org.desviante.ui.components.CardDragAndDropListener;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import org.desviante.ui.components.CardDragAndDrop;
 
 import java.sql.SQLException;
 import java.util.Objects;
 import javafx.scene.layout.Priority;
-import org.desviante.service.BoardStatusService;
-import java.util.List;
-import java.time.format.DateTimeFormatter;
-import java.time.LocalDateTime;
-import java.sql.Timestamp;
 
 import static org.desviante.persistence.config.ConnectionConfig.getConnection;
 
@@ -104,7 +97,7 @@ public class Main extends Application {
             primaryStage.show();
         } catch (SQLException e) {
             logger.error("Erro ao carregar o board", e);
-            showErrorAlert("Erro de Conexão", "Não foi possível conectar ao banco de dados: " + e.getMessage());
+            AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro de Conexão", "Não foi possível conectar ao banco de dados: " + e.getMessage());
             Platform.exit();
         }
     }
@@ -363,18 +356,6 @@ public class Main extends Application {
                 }
             });
         });
-    }
-
-
-    /**
-     * Exibe um alerta de erro com um título e uma mensagem.
-     */
-    private void showErrorAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
     }
 
     public static void main(String[] args) {

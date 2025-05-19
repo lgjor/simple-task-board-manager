@@ -16,6 +16,8 @@ import org.desviante.service.BoardStatusService;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
+
+import org.desviante.util.AlertUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,7 +78,7 @@ public class BoardTableComponent {
                     }
                 } catch (Exception e) {
                     logger.error("Erro ao carregar o board", e);
-                    showErrorAlert("Erro", "Erro ao carregar o board: " + e.getMessage());
+                    AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro ao carregar", "Não foi possível carregar board " + e.getMessage());
                 }
             }
         });
@@ -147,14 +149,6 @@ public class BoardTableComponent {
         return columnBox;
     }
 
-    private static void showErrorAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
-
     public static void loadBoards(TableView<BoardEntity> tableView, ObservableList<BoardEntity> boardList, VBox columnDisplay) {
         // Salva o ID do board selecionado antes de limpar a lista
         BoardEntity selectedBefore = tableView.getSelectionModel().getSelectedItem();
@@ -205,7 +199,7 @@ public class BoardTableComponent {
             }
         } catch (SQLException ex) {
             logger.error("Erro ao carregar boards", ex);
-            showErrorAlert("Erro ao carregar boards", "Ocorreu um erro ao carregar os boards: " + ex.getMessage());
+            AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro ao carregar boards", "Ocorreu um erro ao carregar os boards: " + ex.getMessage());
         }
     }
 

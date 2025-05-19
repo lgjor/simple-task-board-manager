@@ -4,6 +4,7 @@ import org.desviante.dto.BoardColumnDTO;
 import org.desviante.persistence.entity.BoardColumnEntity;
 import org.desviante.persistence.entity.BoardColumnKindEnum;
 import org.desviante.persistence.entity.CardEntity;
+import org.desviante.util.AlertUtils;
 import lombok.RequiredArgsConstructor;
 import static org.desviante.persistence.config.ConnectionConfig.getConnection;
 
@@ -358,7 +359,7 @@ public class BoardColumnDAO {
                         }
                     } catch (Exception e) {
                         Platform.runLater(() ->
-                                showErrorAlert("Erro", "Erro ao mover o card: " + e.getMessage())
+                                AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", "Erro ao mover o card: " + e.getMessage())
                         );
                     }
                 });
@@ -409,17 +410,6 @@ public class BoardColumnDAO {
             }
         }
         return null;
-    }
-
-    // Método auxiliar para mostrar erros
-    private void showErrorAlert(String title, String message) {
-        Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle(title);
-            alert.setHeaderText(null);
-            alert.setContentText(message);
-            alert.showAndWait();
-        });
     }
 
     private void updateUI(Long boardId) {

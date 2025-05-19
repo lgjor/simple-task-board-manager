@@ -7,6 +7,7 @@ import org.desviante.persistence.entity.CardEntity;
 import javafx.scene.layout.VBox;
 import org.desviante.service.CardService;
 import org.desviante.persistence.entity.BoardEntity;
+import org.desviante.util.AlertUtils;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -111,7 +112,7 @@ public class CardTableComponent {
                     String newTitle = titleField.getText().trim();
                     String newDescription = descArea.getText().trim();
                     if (newTitle.isEmpty() || newDescription.isEmpty()) {
-                        showErrorAlert("Campos inválidos", "Título e descrição não podem estar vazios.");
+                        AlertUtils.showAlert(Alert.AlertType.ERROR, "Campos inválidos", "Título e descrição não podem estar vazios.");
                         return;
                     }
                     Connection connection = null;
@@ -148,7 +149,7 @@ public class CardTableComponent {
                                 );
                             } else {
                                 connection.rollback();
-                                showErrorAlert("Erro ao atualizar", "Nenhum registro foi atualizado no banco de dados.");
+                                AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro ao atualizar", "Nenhum registro foi atualizado no banco de dados.");
                                 restoreOriginalView(cardBox, titleLabel, descLabel, titleField, descArea, buttons);
                             }
                             connection.setAutoCommit(originalAutoCommit);
@@ -162,7 +163,7 @@ public class CardTableComponent {
                                 logger.error("Erro ao realizar rollback da transacao", rollbackEx);
                             }
                         }
-                        showErrorAlert("Erro ao atualizar card", "Ocorreu um erro ao atualizar o card: " + ex.getMessage());
+                        AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro ao atualizar", "Nenhum registro foi atualizado no banco de dados " + ex.getMessage());
                         restoreOriginalView(cardBox, titleLabel, descLabel, titleField, descArea, buttons);
                     }
                 });
@@ -179,21 +180,13 @@ public class CardTableComponent {
                         ((VBox) cardBox.getParent()).getChildren().remove(cardBox);
                     } catch (SQLException ex) {
                         logger.error("Erro ao excluir o card", ex);
-                        showErrorAlert("Erro", "Erro ao excluir o card: " + ex.getMessage());
+                        AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", "Erro ao excluir o card: "+ ex.getMessage());
                     }
                 });
             }
         });
 
         return cardBox;
-    }
-
-    private static void showErrorAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
     }
 
     private static void restoreOriginalView(VBox cardBox, Label titleLabel, Label descLabel,

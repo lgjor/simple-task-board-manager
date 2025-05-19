@@ -4,6 +4,7 @@ package org.desviante.ui.components;
 import org.desviante.persistence.dao.BoardColumnDAO;
 import org.desviante.persistence.entity.CardEntity;
 import org.desviante.service.CardService;
+import org.desviante.util.AlertUtils;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TableView;
@@ -73,22 +74,15 @@ public class CardDragAndDropListener implements DragDropListenerInterface {
                     System.out.println(String.format("Card %d atualizado para coluna %d", cardId, targetColumnId));
                 } else {
                     connection.rollback();
-                    Platform.runLater(() -> showErrorAlert("Erro ao atualizar o card no banco de dados."));
+                    Platform.runLater(() -> AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", "Erro ao atualizar o card no banco de dados."));
+
                     System.out.println(String.format("Card não encontrado: %d", cardId));
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                Platform.runLater(() -> showErrorAlert(e.getMessage()));
+                Platform.runLater(() -> AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", e.getMessage()));
             }
         });
-    }
-
-    private void showErrorAlert(String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Erro ao mover o card");
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
     }
 
     public void refreshView() {
