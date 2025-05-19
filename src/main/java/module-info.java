@@ -7,6 +7,7 @@ module org.desviante {
     requires liquibase.core;
     requires org.slf4j;
     requires org.xerial.sqlitejdbc;
+    requires java.smartcardio;
     exports org.desviante.persistence.entity;
     exports org.desviante.persistence.dao;
     exports org.desviante.ui;

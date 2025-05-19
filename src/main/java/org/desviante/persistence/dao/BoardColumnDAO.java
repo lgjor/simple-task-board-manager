@@ -33,7 +33,7 @@ public class BoardColumnDAO {
     private final Connection connection;
     private static final int DEFAULT_BOARD_ID = 1;
     @Setter
-    private java.util.function.Consumer<Long> refreshBoardCallback;
+    private RefreshBoardCallback refreshBoardCallback;
 
     public BoardColumnEntity insert(final BoardColumnEntity entity) throws SQLException {
         var sql = "INSERT INTO BOARDS_COLUMNS (name, order_index, kind, board_id) VALUES (?, ?, ?, ?);";
@@ -371,7 +371,7 @@ public class BoardColumnDAO {
     private void updateBoardView(Long boardId) {
         if (refreshBoardCallback != null) {
             Platform.runLater(() -> {
-                refreshBoardCallback.accept(boardId);
+                refreshBoardCallback.refresh(boardId, null, null);
                 System.out.println("Atualização da UI solicitada para board " + boardId);
             });
         }
@@ -430,7 +430,7 @@ public class BoardColumnDAO {
 
             Platform.runLater(() -> {
                 if (refreshBoardCallback != null) {
-                    refreshBoardCallback.accept(boardId);
+                    refreshBoardCallback.refresh(boardId, null, null);
                     System.out.println("UI atualizada para board " + boardId);
                 }
             });
