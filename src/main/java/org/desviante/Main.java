@@ -20,14 +20,10 @@ import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import org.desviante.persistence.dao.BoardColumnDAO;
 import java.sql.Connection;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.sql.SQLException;
-import java.util.Objects;
 
 import static org.desviante.persistence.config.ConnectionConfig.getConnection;
 
@@ -35,10 +31,7 @@ public class Main extends Application {
 
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
     private final ObservableList<BoardEntity> boardList = FXCollections.observableArrayList();
-    private BorderPane root;
     private VBox columnDisplay;
-    private BoardController boardController;
-    private CardController cardController;
     private TableView<BoardEntity> tableView;
 
     /**
@@ -47,8 +40,8 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) {
         try (Connection connection = getConnection()) {
-            boardController = new BoardController();
-            cardController = new CardController();
+            BoardController boardController = new BoardController();
+            CardController cardController = new CardController();
 
             // Inicialize columnDisplay antes de usar
             columnDisplay = new VBox();
@@ -78,7 +71,7 @@ public class Main extends Application {
                     boardController, cardController, boardList, tableView, columnDisplay
             );
 
-            root = new BorderPane();
+            BorderPane root = new BorderPane();
             root.setPadding(new Insets(10));
             root.setCenter(tableView);
             root.setRight(boardUIController.createActionButtons(tableView));
