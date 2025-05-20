@@ -58,7 +58,7 @@ public class CardDAO {
                                (SELECT COUNT(sub_b.id)
                                        FROM BLOCKS sub_b
                                       WHERE sub_b.card_id = c.id) blocks_amount
-                          FROM CARDS c
+                          FROM cards c
                           LEFT JOIN BLOCKS b
                             ON c.id = b.card_id
                            AND b.unblocked_at IS NULL

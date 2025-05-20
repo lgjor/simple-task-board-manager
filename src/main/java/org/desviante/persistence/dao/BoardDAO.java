@@ -9,14 +9,16 @@ import java.sql.SQLException;
 import java.util.Optional;
 import java.util.List;
 import java.util.ArrayList;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 @AllArgsConstructor
 public class BoardDAO {
+    private final Connection connection;
 
     public Optional<BoardEntity> findById(final Long id) throws SQLException {
-        var sql = "SELECT id, name FROM BOARDS WHERE id = ?;";
-        try (Connection connection = getConnection();
-             var statement = connection.prepareStatement(sql)) {
+        var sql = "SELECT id, name FROM boards WHERE id = ?;";
+        try (var statement = connection.prepareStatement(sql)) {
             statement.setLong(1, id);
             try (var resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
@@ -31,16 +33,15 @@ public class BoardDAO {
     }
 
     public List<BoardEntity> findAll() throws SQLException {
-        var sql = "SELECT id, name FROM BOARDS;";
-        var boards = new ArrayList<BoardEntity>();
-        try (Connection connection = getConnection();
-             var statement = connection.prepareStatement(sql);
-             var resultSet = statement.executeQuery()) {
-            while (resultSet.next()) {
-                var entity = new BoardEntity();
-                entity.setId(resultSet.getLong("id"));
-                entity.setName(resultSet.getString("name"));
-                boards.add(entity);
+        List<BoardEntity> boards = new ArrayList<>();
+        String sql = "SELECT id, name FROM boards";
+        try (PreparedStatement stmt = connection.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                BoardEntity board = new BoardEntity();
+                board.setId(rs.getLong("id"));
+                board.setName(rs.getString("name"));
+                boards.add(board);
             }
         }
         return boards;
@@ -48,8 +49,7 @@ public class BoardDAO {
 
     public BoardEntity insert(BoardEntity entity) throws SQLException {
         var sql = "INSERT INTO boards (name) VALUES (?);";
-        try (Connection connection = getConnection();
-             var statement = connection.prepareStatement(sql, java.sql.Statement.RETURN_GENERATED_KEYS)) {
+        try (var statement = connection.prepareStatement(sql, java.sql.Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, entity.getName());
             statement.executeUpdate();
             try (var rs = statement.getGeneratedKeys()) {
@@ -63,8 +63,7 @@ public class BoardDAO {
 
     public void update(BoardEntity entity) throws SQLException {
         var sql = "UPDATE BOARDS SET name = ? WHERE id = ?;";
-        try (Connection connection = getConnection();
-             var statement = connection.prepareStatement(sql)) {
+        try (var statement = connection.prepareStatement(sql)) {
             statement.setString(1, entity.getName());
             statement.setLong(2, entity.getId());
             statement.executeUpdate();
@@ -72,18 +71,16 @@ public class BoardDAO {
     }
 
     public void delete(final Long id) throws SQLException {
-        var sql = "DELETE FROM BOARDS WHERE id = ?;";
-        try (Connection connection = getConnection();
-             var statement = connection.prepareStatement(sql)) {
+        var sql = "DELETE FROM boards WHERE id = ?;";
+        try (var statement = connection.prepareStatement(sql)) {
             statement.setLong(1, id);
             statement.executeUpdate();
         }
     }
 
     public boolean exists(final Long id) throws SQLException {
-        var sql = "SELECT 1 FROM BOARDS WHERE id = ?;";
-        try (Connection connection = getConnection();
-             var statement = connection.prepareStatement(sql)) {
+        var sql = "SELECT 1 FROM boards WHERE id = ?;";
+        try (var statement = connection.prepareStatement(sql)) {
             statement.setLong(1, id);
             try (var resultSet = statement.executeQuery()) {
                 return resultSet.next();

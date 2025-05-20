@@ -105,7 +105,7 @@ public class BoardColumnDAO {
                c.id AS card_id, 
                c.title AS card_title, 
                c.description AS card_description
-          FROM BOARDS_COLUMNS bc
+          FROM boards_columns bc
      LEFT JOIN CARDS c 
             ON c.board_column_id = bc.id
          WHERE bc.board_id = ?
@@ -146,9 +146,9 @@ public class BoardColumnDAO {
                        bc.name,
                        bc.kind,
                        (SELECT COUNT(c.id)
-                               FROM CARDS c
+                               FROM cards c
                               WHERE c.board_column_id = bc.id) cards_amount
-                  FROM BOARDS_COLUMNS bc
+                  FROM boards_columns bc
                  WHERE board_id = ?
                  ORDER BY order_index;
                 """;
@@ -171,7 +171,7 @@ public class BoardColumnDAO {
 
     public List<BoardColumnEntity> findDefaultColumns() throws SQLException {
         List<BoardColumnEntity> columns = new ArrayList<>();
-        String sql = "SELECT id, name, kind, order_index FROM BOARDS_COLUMNS WHERE board_id = ?";
+        String sql = "SELECT id, name, kind, order_index FROM boards_columns WHERE board_id = ?";
         try (Connection connection = getConnection();
              PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setInt(1, DEFAULT_BOARD_ID);
@@ -197,7 +197,7 @@ public class BoardColumnDAO {
                        c.id,
                        c.title,
                        c.description
-                  FROM BOARDS_COLUMNS bc
+                  FROM boards_columns bc
                   LEFT JOIN CARDS c
                     ON c.board_column_id = bc.id
                  WHERE bc.id = ?;
@@ -232,7 +232,7 @@ public class BoardColumnDAO {
             conn.setAutoCommit(false);
 
             // 1. Verifica o card atual (lock)
-            String sql = "SELECT bc.kind FROM CARDS c JOIN BOARDS_COLUMNS bc ON c.board_column_id = bc.id WHERE c.id = ?";
+            String sql = "SELECT bc.kind FROM cards c JOIN BOARDS_COLUMNS bc ON c.board_column_id = bc.id WHERE c.id = ?";
             try (var stmt = conn.prepareStatement(sql)) {
                 stmt.setLong(1, cardId);
                 try (var rs = stmt.executeQuery()) {
@@ -243,7 +243,7 @@ public class BoardColumnDAO {
             }
 
             // 2. (Opcional) Verifica o tipo da coluna destino
-            sql = "SELECT kind FROM BOARDS_COLUMNS WHERE id = ?";
+            sql = "SELECT kind FROM boards_columns WHERE id = ?";
             try (var stmt = conn.prepareStatement(sql)) {
                 stmt.setLong(1, columnId);
                 try (var rs = stmt.executeQuery()) {
@@ -296,7 +296,7 @@ public class BoardColumnDAO {
         }
 
         // 2. Verifica se a atualização foi bem sucedida
-        sql = "SELECT board_column_id FROM CARDS WHERE id = ? AND board_column_id = ?";
+        sql = "SELECT board_column_id FROM cards WHERE id = ? AND board_column_id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setLong(1, cardId);
             stmt.setLong(2, columnId);
@@ -371,7 +371,7 @@ public class BoardColumnDAO {
     }
 
     private Long getBoardIdFromColumn(Connection conn, Long columnId) throws SQLException {
-        String sql = "SELECT board_id FROM BOARDS_COLUMNS WHERE id = ?";
+        String sql = "SELECT board_id FROM boards_columns WHERE id = ?";
         try (var stmt = conn.prepareStatement(sql)) {
             stmt.setLong(1, columnId);
             var rs = stmt.executeQuery();
@@ -384,7 +384,7 @@ public class BoardColumnDAO {
 
     // Método auxiliar para obter o boardId
     private Long getBoardId(Connection conn, Long columnId) throws SQLException {
-        String sql = "SELECT board_id FROM BOARDS_COLUMNS WHERE id = ?";
+        String sql = "SELECT board_id FROM boards_columns WHERE id = ?";
         try (var stmt = conn.prepareStatement(sql)) {
             stmt.setLong(1, columnId);
             var rs = stmt.executeQuery();
@@ -433,7 +433,7 @@ public class BoardColumnDAO {
     }
 
     private void verifyUpdateWithConnection(Connection conn, Long cardId, Long expectedColumnId) throws SQLException {
-        String sql = "SELECT board_column_id FROM CARDS WHERE id = ?";
+        String sql = "SELECT board_column_id FROM cards WHERE id = ?";
         try (var statement = conn.prepareStatement(sql)) {
             statement.setLong(1, cardId);
             var rs = statement.executeQuery();
@@ -452,7 +452,7 @@ public class BoardColumnDAO {
     private String getCurrentColumnType(Long cardId) throws SQLException {
         String sql = """
     SELECT bc.kind
-    FROM CARDS c
+    FROM cards c
     JOIN BOARDS_COLUMNS bc ON c.board_column_id = bc.id
     WHERE c.id = ?
     """;
@@ -468,7 +468,7 @@ public class BoardColumnDAO {
     }
 
     private String getTargetColumnType(Connection conn, Long columnId) throws SQLException {
-        String sql = "SELECT kind FROM BOARDS_COLUMNS WHERE id = ?";
+        String sql = "SELECT kind FROM boards_columns WHERE id = ?";
         try (var stmt = conn.prepareStatement(sql)) {
             stmt.setLong(1, columnId);
             var rs = stmt.executeQuery();

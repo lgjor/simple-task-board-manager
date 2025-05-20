@@ -39,7 +39,7 @@ public class CardTableComponent {
 
         try {
             Connection connection = getConnection();
-            String sql = "SELECT creation_date, last_update_date, completion_date FROM CARDS WHERE id = ?";
+            String sql = "SELECT creation_date, last_update_date, completion_date FROM cards WHERE id = ?";
             try (var preparedStatement = connection.prepareStatement(sql)) {
                 preparedStatement.setLong(1, card.getId());
                 try (var resultSet = preparedStatement.executeQuery()) {
@@ -117,7 +117,7 @@ public class CardTableComponent {
                 saveButton.setOnAction(e -> {
                     String newTitle = titleField.getText().trim();
                     String newDescription = descArea.getText().trim();
-                    if (newTitle.isEmpty() || newDescription.isEmpty()) {
+                    if (newTitle.isEmpty()) {
                         AlertUtils.showAlert(Alert.AlertType.ERROR, "Campos inválidos", "Título e descrição não podem estar vazios.");
                         return;
                     }

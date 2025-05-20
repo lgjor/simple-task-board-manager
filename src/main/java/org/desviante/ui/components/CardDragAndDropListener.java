@@ -3,8 +3,10 @@ package org.desviante.ui.components;
 
 import org.desviante.persistence.dao.BoardColumnDAO;
 import org.desviante.persistence.entity.CardEntity;
+import org.desviante.persistence.entity.BoardEntity;
 import org.desviante.service.CardService;
 import org.desviante.util.AlertUtils;
+import javafx.scene.layout.VBox;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TableView;
@@ -21,12 +23,12 @@ public class CardDragAndDropListener implements DragDropListenerInterface {
     private static final Logger logger = LoggerFactory.getLogger(CardDragAndDropListener.class);
     private final TableView boardTableView;
     private final Consumer<TableView> loadBoardsConsumer;
-    private final Connection connection;
+    private final VBox columnDisplay;
 
-    public CardDragAndDropListener(Connection connection, TableView boardTableView, Consumer<TableView> loadBoardsConsumer) {
-        this.connection = connection;
+    public CardDragAndDropListener(TableView boardTableView, Consumer<TableView> loadBoardsConsumer, VBox columnDisplay) {
         this.boardTableView = boardTableView;
         this.loadBoardsConsumer = loadBoardsConsumer;
+        this.columnDisplay = columnDisplay;
     }
 
     public Long getOriginalColumnId(Long cardId) {
@@ -36,7 +38,7 @@ public class CardDragAndDropListener implements DragDropListenerInterface {
         }
 
         try (Connection connection = getConnection()) {
-            String sql = "SELECT board_column_id FROM CARDS WHERE id = ?";
+            String sql = "SELECT board_column_id FROM cards WHERE id = ?";
             try (var preparedStatement = connection.prepareStatement(sql)) {
                 preparedStatement.setLong(1, cardId);
 
@@ -70,8 +72,15 @@ public class CardDragAndDropListener implements DragDropListenerInterface {
 
                 if (updatedCard != null && updatedCard.getBoardColumn() != null &&
                         updatedCard.getBoardColumn().getId().equals(targetColumnId)) {
-                        Platform.runLater(() -> loadBoardsConsumer.accept(boardTableView));
-                        //System.out.println(String.format("Card %d atualizado para coluna %d", cardId, targetColumnId));
+                    Platform.runLater(() -> {
+                        BoardEntity selectedBoard = (BoardEntity) boardTableView.getSelectionModel().getSelectedItem();
+                        if (selectedBoard != null) {
+                            // Atualiza colunas e cards
+                            BoardTableComponent.loadBoardColumnsAndCards(selectedBoard, columnDisplay, boardTableView);
+                            // Atualiza a lista de boards na TableView
+                            BoardTableComponent.loadBoards(boardTableView, boardTableView.getItems(), columnDisplay);
+                        }
+                    });
                 } else {
                     connection.rollback();
                     Platform.runLater(() -> AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", "Erro ao atualizar o card no banco de dados."));

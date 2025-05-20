@@ -9,6 +9,7 @@ import org.desviante.persistence.dao.CardDAO;
 import org.desviante.persistence.entity.BoardColumnEntity;
 import org.desviante.persistence.entity.BoardColumnKindEnum;
 import org.desviante.persistence.entity.CardEntity;
+import org.desviante.persistence.entity.BoardEntity;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
@@ -30,7 +31,7 @@ public class CardService {
     }
 
     // Método para inserir o card no BD e associar a coluna inicial
-    public void create(CardEntity card) throws SQLException {
+    public void isertCard(CardEntity card) throws SQLException {
         String sql = "INSERT INTO cards (title, description, board_column_id, creation_date) VALUES (?, ?, ?, ?)";
         try (Connection connection = getConnection();
              var statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -61,6 +62,21 @@ public class CardService {
             // Se a conexão foi aberta, tente rollback
             throw ex;
         }
+    }
+
+    public void createAndInsertCard(BoardEntity board, String title, String description) throws SQLException {
+        // Obtém a coluna inicial do board (por exemplo, a primeira coluna)
+        BoardColumnEntity initialColumn = board.getBoardColumns().stream()
+                .findFirst()
+                .orElseThrow(() -> new SQLException("Coluna inicial não encontrada para o board"));
+
+        CardEntity card = new CardEntity();
+        card.setTitle(title);
+        card.setDescription(description);
+        card.setBoardColumn(initialColumn);
+        card.setCreationDate(LocalDateTime.now());
+
+        isertCard(card);
     }
 
     public void update(CardEntity card) throws SQLException {

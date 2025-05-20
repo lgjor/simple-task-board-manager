@@ -7,7 +7,6 @@ import org.desviante.persistence.entity.BoardEntity;
 import lombok.AllArgsConstructor;
 import java.util.ArrayList;
 import java.util.List;
-
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Optional;
@@ -34,7 +33,7 @@ public class BoardQueryService {
 
     public Optional<BoardEntity> findById(final Long id) throws SQLException {
         try (Connection connection = org.desviante.persistence.config.ConnectionConfig.getConnection()) {
-            var dao = new BoardDAO();
+            var dao = new BoardDAO(connection); // Corrigido aqui
             var boardColumnDAO = new BoardColumnDAO(connection);
             var optional = dao.findById(id);
             if (optional.isPresent()) {
@@ -48,7 +47,7 @@ public class BoardQueryService {
 
     public Optional<BoardDetailsDTO> showBoardDetails(final Long id) throws SQLException {
         try (Connection connection = org.desviante.persistence.config.ConnectionConfig.getConnection()) {
-            var dao = new BoardDAO();
+            var dao = new BoardDAO(connection); // Corrigido aqui
             var boardColumnDAO = new BoardColumnDAO(connection);
             var optional = dao.findById(id);
             if (optional.isPresent()) {

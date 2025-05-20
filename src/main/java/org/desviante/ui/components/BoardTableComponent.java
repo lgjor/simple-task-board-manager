@@ -12,6 +12,7 @@ import org.desviante.persistence.entity.BoardEntity;
 import org.desviante.persistence.entity.CardEntity;
 import org.desviante.service.BoardQueryService;
 import org.desviante.service.BoardStatusService;
+import java.time.format.DateTimeFormatter;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -70,7 +71,7 @@ public class BoardTableComponent {
                         VBox.setVgrow(boardColumns, Priority.ALWAYS);
 
                         for (BoardColumnEntity column : refreshedBoard.getBoardColumns()) {
-                            VBox columnBox = createColumnBoxWithDragDrop(column, refreshedBoard, tableView, columnDisplay, connection);
+                            VBox columnBox = createColumnBoxWithDragDrop(column, refreshedBoard, tableView, columnDisplay);
                             boardColumns.getChildren().add(columnBox);
                         }
 
@@ -87,7 +88,7 @@ public class BoardTableComponent {
     /**
      * Cria uma caixa de cards com suporte a drag and drop
      */
-    public static VBox createColumnBoxWithDragDrop(BoardColumnEntity column, BoardEntity board, TableView<BoardEntity> tableView, VBox columnDisplay, Connection connection) {
+    public static VBox createColumnBoxWithDragDrop(BoardColumnEntity column, BoardEntity board, TableView<BoardEntity> tableView, VBox columnDisplay) {
         VBox columnBox = new VBox();
         columnBox.setId("column-" + column.getId());
 
@@ -119,9 +120,10 @@ public class BoardTableComponent {
         VBox.setVgrow(scrollPane, Priority.ALWAYS);
         columnBox.getChildren().add(scrollPane);
 
-        CardDragAndDropListener listener = new CardDragAndDropListener(connection,
+        CardDragAndDropListener listener = new CardDragAndDropListener(
                 tableView,
-                (tv) -> BoardTableComponent.loadBoards(tv, tableView.getItems(), columnDisplay)
+                (tv) -> BoardTableComponent.loadBoards(tv, tableView.getItems(), columnDisplay),
+                columnDisplay
         );
 
 
@@ -160,39 +162,120 @@ public class BoardTableComponent {
         Long selectedId = selectedBefore != null ? selectedBefore.getId() : null;
         boardList.clear();
 
-        try {
-            var connection = getConnection();
-            var queryService = new BoardQueryService();
-            var boards = queryService.findAll();
+        try (Connection connection = getConnection()) {
+            BoardQueryService queryService = new BoardQueryService();
+            List<BoardEntity> boards = queryService.findAll();
 
             // Carrega as colunas e cards para cada board
             for (BoardEntity board : boards) {
                 var optionalBoard = queryService.findById(board.getId());
-                if (optionalBoard.isPresent()) {
-                    BoardEntity fullBoard = optionalBoard.get();
-                    board.setBoardColumns(fullBoard.getBoardColumns());
-                }
+                optionalBoard.ifPresent(fullBoard -> board.setBoardColumns(fullBoard.getBoardColumns()));
             }
 
             boardList.addAll(boards);
+            tableView.setItems(boardList);
             tableView.refresh();
 
-            // Seleciona o board anterior ou o primeiro, sem chamar refreshBoardView manualmente
+            // Seleciona o board anterior ou o primeiro
+            BoardEntity toSelect = null;
             if (selectedId != null) {
                 for (BoardEntity board : boardList) {
                     if (board.getId().equals(selectedId)) {
-                        tableView.getSelectionModel().select(board);
-                        return;
+                        toSelect = board;
+                        break;
                     }
                 }
             }
-            if (!boardList.isEmpty()) {
-                tableView.getSelectionModel().selectFirst();
+            if (toSelect == null && !boardList.isEmpty()) {
+                toSelect = boardList.get(0);
+            }
+            if (toSelect != null) {
+                tableView.getSelectionModel().select(toSelect);
+                BoardTableComponent.loadBoardColumnsAndCards(toSelect, columnDisplay, tableView);
+            } else {
+                columnDisplay.getChildren().clear();
             }
         } catch (SQLException ex) {
             logger.error("Erro ao carregar boards", ex);
             AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro ao carregar boards", "Ocorreu um erro ao carregar os boards: " + ex.getMessage());
         }
+    }
+
+    public static void loadBoardColumnsAndCards(BoardEntity board, VBox columnDisplay, TableView<BoardEntity> tableView) {
+        columnDisplay.getChildren().clear();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm");
+        if (board == null) return;
+
+        BoardEntity fullBoard = null;
+        try {
+            fullBoard = new BoardQueryService().findById(board.getId()).orElse(null);
+        } catch (SQLException e) {
+            logger.error("Erro ao buscar board completo", e);
+            AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro ao carregar colunas", "Não foi possível carregar as colunas do board: " + e.getMessage());
+            return;
+        }
+        if (fullBoard == null || fullBoard.getBoardColumns() == null) return;
+
+        HBox boardColumns = new HBox(16);
+        boardColumns.setPrefWidth(Double.MAX_VALUE);
+
+        try (Connection connection = getConnection()) {
+            for (var column : fullBoard.getBoardColumns()) {
+                VBox columnBox = createColumnBoxWithDragDrop(
+                        column, fullBoard, tableView, columnDisplay
+                );
+
+                // Ajuste visual do columnBox
+                columnBox.setStyle(
+                        "-fx-border-color: #cccccc; " +
+                                "-fx-background-color: #f5f5f5; " +
+                                "-fx-padding: 8; " +
+                                "-fx-border-radius: 8;"
+                );
+                columnBox.setMinWidth(260);
+                columnBox.setPrefWidth(320);
+                columnBox.setMaxWidth(Double.MAX_VALUE);
+                HBox.setHgrow(columnBox, javafx.scene.layout.Priority.ALWAYS);
+
+                // Ajuste visual do título da coluna
+                if (!columnBox.getChildren().isEmpty() && columnBox.getChildren().get(0) instanceof Label) {
+                    Label columnTitle = (Label) columnBox.getChildren().get(0);
+                    columnTitle.setStyle("-fx-font-weight: bold; -fx-font-size: 13px; -fx-padding: 10 0 2 0;");
+                }
+
+                // Ajuste visual dos cards
+                if (columnBox.getChildren().size() > 2 && columnBox.getChildren().get(2) instanceof ScrollPane) {
+                    ScrollPane scrollPane = (ScrollPane) columnBox.getChildren().get(2);
+                    if (scrollPane.getContent() instanceof VBox) {
+                        VBox cardsArea = (VBox) scrollPane.getContent();
+                        for (var node : cardsArea.getChildren()) {
+                            if (node instanceof VBox cardBox && !cardBox.getChildren().isEmpty()) {
+                                // Ajuste visual do título do card
+                                if (cardBox.getChildren().get(0) instanceof Label titleLabel) {
+                                    titleLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px; -fx-padding: 0 0 2 0;");
+                                }
+                                cardBox.setStyle(
+                                        "-fx-background-color: #fff; " +
+                                                "-fx-padding: 4; " +
+                                                "-fx-border-radius: 6; " +
+                                                "-fx-border-color: #e0e0e0; " +
+                                                "-fx-effect: dropshadow(gaussian, #ddd, 2, 0, 0, 1);"
+                                );
+                                cardBox.setMinWidth(180);
+                                cardBox.setPrefWidth(220);
+                                cardBox.setMaxWidth(Double.MAX_VALUE);
+                            }
+                        }
+                    }
+                }
+
+                boardColumns.getChildren().add(columnBox);
+            }
+        } catch (SQLException e) {
+            logger.error("Erro ao criar colunas com drag and drop", e);
+        }
+
+        columnDisplay.getChildren().add(boardColumns);
     }
 
     /**
@@ -232,7 +315,7 @@ public class BoardTableComponent {
                             // Nova conexão para operações dentro do Platform.runLater
                             getConnection();
                             for (BoardColumnEntity column : refreshedBoard.getBoardColumns()) {
-                                VBox columnBox = createColumnBoxWithDragDrop(column, refreshedBoard, tableView, columnDisplay, connection);
+                                VBox columnBox = createColumnBoxWithDragDrop(column, refreshedBoard, tableView, columnDisplay);
                                 boardColumns.getChildren().add(columnBox);
                             }
 

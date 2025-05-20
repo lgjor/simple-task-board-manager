@@ -31,7 +31,7 @@ javafx {
 }
 
 application {
-    mainClass.set("org.desviante.ui.Main")
+    mainClass.set("org.desviante.Main")
     mainModule.set("org.desviante")
 }
 
@@ -69,6 +69,6 @@ jlink {
 
     tasks.register<JavaExec>("runApp") {
         classpath = sourceSets["main"].runtimeClasspath
-        mainClass = "org.desviante.ui.Main"
+        mainClass = "org.desviante.Main"
     }
 }
