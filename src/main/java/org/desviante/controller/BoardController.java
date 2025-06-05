@@ -39,6 +39,14 @@ public class BoardController {
         }
     }
 
+    public void updateBoard(BoardEntity board) throws SQLException {
+        try (Connection connection = getConnection()) {
+            BoardDAO boardDAO = new BoardDAO(connection);
+            BoardService boardService = new BoardService(boardDAO);
+            boardService.update(board);
+        }
+    }
+
     public boolean deleteBoard(BoardEntity board) throws SQLException {
         try (Connection connection = getConnection()) {
             BoardDAO boardDAO = new BoardDAO(connection);

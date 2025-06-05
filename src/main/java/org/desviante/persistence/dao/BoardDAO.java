@@ -61,12 +61,18 @@ public class BoardDAO {
         return entity;
     }
 
-    public void update(BoardEntity entity) throws SQLException {
-        var sql = "UPDATE BOARDS SET name = ? WHERE id = ?;";
-        try (var statement = connection.prepareStatement(sql)) {
-            statement.setString(1, entity.getName());
-            statement.setLong(2, entity.getId());
-            statement.executeUpdate();
+    public void update(BoardEntity board) throws SQLException {
+        String sql = "UPDATE boards SET name = ? WHERE id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, board.getName());
+            stmt.setLong(2, board.getId());
+            int rows = stmt.executeUpdate();
+            if (connection.getAutoCommit() == false) {
+                connection.commit();
+            }
+            if (rows == 0) {
+                throw new SQLException("Nenhum board atualizado. Verifique o id.");
+            }
         }
     }
 

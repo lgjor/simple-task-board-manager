@@ -153,11 +153,6 @@ public class CardTableComponent {
                                             ((TableView<BoardEntity>) tableView).getItems(),
                                             columnDisplay
                                     ));
-
-                                } else {
-                                    connection.rollback();
-                                    AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro ao atualizar", "Nenhum registro foi atualizado no banco de dados.");
-                                    restoreOriginalView(cardBox, titleLabel, descLabel, titleField, descArea, buttons);
                                 }
                             }
                             if (!connection.isClosed()) {

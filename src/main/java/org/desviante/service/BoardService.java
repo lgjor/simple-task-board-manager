@@ -44,6 +44,10 @@ public class BoardService {
         }
     }
 
+    public void update(BoardEntity board) throws SQLException {
+        boardDAO.update(board);
+    }
+
     private Connection getConnection() throws SQLException {
         return org.desviante.persistence.config.ConnectionConfig.getConnection();
     }

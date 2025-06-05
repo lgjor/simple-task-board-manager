@@ -15,6 +15,8 @@ import org.desviante.persistence.dao.BoardColumnDAO;
 import org.desviante.persistence.entity.BoardEntity;
 import org.desviante.service.BoardService;
 import org.desviante.ui.components.BoardTableComponent;
+import org.desviante.ui.components.BoardEditDialog;
+import org.desviante.ui.components.BoardDoubleClickListener;
 import org.desviante.util.AlertUtils;
 
 import java.sql.Connection;
@@ -34,6 +36,7 @@ public class BoardUIController {
         this.boardList = boardList;
         this.tableView = tableView;
         this.columnDisplay = columnDisplay;
+        BoardDoubleClickListener.attach(tableView, () -> editBoard(tableView));
     }
 
     // Métodos para criar, excluir e atualizar boards
@@ -44,6 +47,9 @@ public class BoardUIController {
         Button createBoardButton = new Button("Criar Board");
         createBoardButton.setOnAction(e -> createBoard(tableView));
 
+        Button editBoardButton = new Button("Editar Board");
+        editBoardButton.setOnAction(e -> editBoard(tableView));
+
         Button deleteBoardButton = new Button("Excluir Board");
         deleteBoardButton.setOnAction(e -> deleteSelectedBoard(tableView));
 
@@ -52,7 +58,7 @@ public class BoardUIController {
 
         Button createCardButton = getCreateCardButton(tableView);
 
-        VBox actionButtons = new VBox(10, createBoardButton, deleteBoardButton, refreshButton, createCardButton);
+        VBox actionButtons = new VBox(10, createBoardButton, editBoardButton, deleteBoardButton, refreshButton, createCardButton);
         actionButtons.setPadding(new Insets(10));
 
         return actionButtons;
@@ -117,6 +123,31 @@ public class BoardUIController {
                 AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", "Erro ao criar o board: " + ex.getMessage());
             }
         });
+    }
+
+    private void editBoard(TableView<BoardEntity> tableView) {
+        BoardEntity selectedBoard = tableView.getSelectionModel().getSelectedItem();
+        if (selectedBoard == null) {
+            AlertUtils.showAlert(Alert.AlertType.WARNING, "Nenhum Board Selecionado", "Selecione um board para editar.");
+            return;
+        }
+
+        BoardEditDialog dialog = new BoardEditDialog(selectedBoard.getName());
+        var result = dialog.showAndWait();
+
+        if (result.isEmpty() || result.get().trim().isEmpty()) {
+            AlertUtils.showAlert(Alert.AlertType.WARNING, "Título inválido", "O título não pode estar vazio.");
+            return;
+        }
+
+        try {
+            selectedBoard.setName(result.get().trim());
+            boardController.updateBoard(selectedBoard);
+            tableView.refresh();
+            AlertUtils.showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Board atualizado com sucesso!");
+        } catch (Exception ex) {
+            AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", "Erro ao atualizar o board: " + ex.getMessage());
+        }
     }
 
     private void deleteSelectedBoard(TableView<BoardEntity> tableView) {
