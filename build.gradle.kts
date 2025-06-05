@@ -72,3 +72,10 @@ jlink {
         mainClass = "org.desviante.Main"
     }
 }
+sourceSets {
+    test {
+        java {
+            setSrcDirs(listOf("src/test/java"))
+        }
+    }
+}

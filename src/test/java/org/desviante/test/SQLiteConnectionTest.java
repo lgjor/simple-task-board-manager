@@ -1,3 +1,5 @@
+package org.desviante.test;
+
 import org.junit.jupiter.api.Test;
 import java.sql.Connection;
 import java.sql.SQLException;

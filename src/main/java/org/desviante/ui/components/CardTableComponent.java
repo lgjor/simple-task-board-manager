@@ -121,56 +121,63 @@ public class CardTableComponent {
                         AlertUtils.showAlert(Alert.AlertType.ERROR, "Campos inválidos", "Título e descrição não podem estar vazios.");
                         return;
                     }
-                    Connection connection = null;
-                    try {
-                        connection = getConnection();
+                    try (Connection connection = getConnection()) {
                         boolean originalAutoCommit = connection.getAutoCommit();
-                        connection.setAutoCommit(false);
-                        LocalDateTime now = LocalDateTime.now();
-                        String sql = "UPDATE CARDS SET title = ?, description = ?, last_update_date = ? WHERE id = ?";
-                        try (var preparedStatement = connection.prepareStatement(sql)) {
-                            preparedStatement.setString(1, newTitle);
-                            preparedStatement.setString(2, newDescription);
-                            preparedStatement.setTimestamp(3, Timestamp.valueOf(now));
-                            preparedStatement.setLong(4, card.getId());
-                            int rowsAffected = preparedStatement.executeUpdate();
-                            if (rowsAffected > 0) {
-                                connection.commit();
-                                card.setTitle(newTitle);
-                                card.setDescription(newDescription);
-                                card.setLastUpdateDate(now);
-                                titleLabel.setText(newTitle);
-                                descLabel.setText(newDescription);
-                                lastUpdateLabel.setText("Ultima atualizacao: " + now.format(formatter));
-                                int titleIndex = cardBox.getChildren().indexOf(titleField);
-                                int descIndex = cardBox.getChildren().indexOf(descArea);
-                                int buttonsIndex = cardBox.getChildren().indexOf(buttons);
-                                if (titleIndex >= 0) cardBox.getChildren().set(titleIndex, titleLabel);
-                                if (descIndex >= 0) cardBox.getChildren().set(descIndex, descLabel);
-                                if (buttonsIndex >= 0) cardBox.getChildren().remove(buttonsIndex);
-                                BoardTableComponent.refreshBoardView(
-                                        ((CardEntity) tableView.getSelectionModel().getSelectedItem()).getId(),
-                                        (TableView<BoardEntity>) tableView,
-                                        columnDisplay
-                                );
-                            } else {
-                                connection.rollback();
-                                AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro ao atualizar", "Nenhum registro foi atualizado no banco de dados.");
-                                restoreOriginalView(cardBox, titleLabel, descLabel, titleField, descArea, buttons);
+                        try {
+                            connection.setAutoCommit(false);
+                            LocalDateTime now = LocalDateTime.now();
+                            String sql = "UPDATE CARDS SET title = ?, description = ?, last_update_date = ? WHERE id = ?";
+                            try (var preparedStatement = connection.prepareStatement(sql)) {
+                                preparedStatement.setString(1, newTitle);
+                                preparedStatement.setString(2, newDescription);
+                                preparedStatement.setTimestamp(3, Timestamp.valueOf(now));
+                                preparedStatement.setLong(4, card.getId());
+                                int rowsAffected = preparedStatement.executeUpdate();
+                                if (rowsAffected > 0) {
+                                    connection.commit();
+                                    card.setTitle(newTitle);
+                                    card.setDescription(newDescription);
+                                    card.setLastUpdateDate(now);
+                                    titleLabel.setText(newTitle);
+                                    descLabel.setText(newDescription);
+                                    lastUpdateLabel.setText("Ultima atualizacao: " + now.format(formatter));
+                                    int titleIndex = cardBox.getChildren().indexOf(titleField);
+                                    int descIndex = cardBox.getChildren().indexOf(descArea);
+                                    int buttonsIndex = cardBox.getChildren().indexOf(buttons);
+                                    if (titleIndex >= 0) cardBox.getChildren().set(titleIndex, titleLabel);
+                                    if (descIndex >= 0) cardBox.getChildren().set(descIndex, descLabel);
+                                    if (buttonsIndex >= 0) cardBox.getChildren().remove(buttonsIndex);
+
+                                    Platform.runLater(() -> BoardTableComponent.loadBoards(
+                                            (TableView<BoardEntity>) tableView,
+                                            ((TableView<BoardEntity>) tableView).getItems(),
+                                            columnDisplay
+                                    ));
+
+                                } else {
+                                    connection.rollback();
+                                    AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro ao atualizar", "Nenhum registro foi atualizado no banco de dados.");
+                                    restoreOriginalView(cardBox, titleLabel, descLabel, titleField, descArea, buttons);
+                                }
                             }
-                            connection.setAutoCommit(originalAutoCommit);
-                        }
-                    } catch (SQLException ex) {
-                        logger.error("Erro ao atualizar o card", ex);
-                        if (connection != null) {
+                            if (!connection.isClosed()) {
+                                connection.setAutoCommit(originalAutoCommit);
+                            }
+                        } catch (SQLException ex) {
                             try {
-                                connection.rollback();
+                                if (!connection.isClosed()) {
+                                    connection.rollback();
+                                }
                             } catch (SQLException rollbackEx) {
                                 logger.error("Erro ao realizar rollback da transacao", rollbackEx);
                             }
+                            logger.error("Erro ao atualizar o card", ex);
+                            AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro ao atualizar", "Erro ao atualizar o card: " + ex.getMessage());
+                            restoreOriginalView(cardBox, titleLabel, descLabel, titleField, descArea, buttons);
                         }
-                        AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro ao atualizar", "Nenhum registro foi atualizado no banco de dados " + ex.getMessage());
-                        restoreOriginalView(cardBox, titleLabel, descLabel, titleField, descArea, buttons);
+                    } catch (SQLException ex) {
+                        logger.error("Erro ao abrir conexão", ex);
+                        AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro de conexão", "Não foi possível conectar ao banco de dados: " + ex.getMessage());
                     }
                 });
 

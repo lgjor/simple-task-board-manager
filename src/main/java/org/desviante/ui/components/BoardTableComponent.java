@@ -289,8 +289,7 @@ public class BoardTableComponent {
             Thread.currentThread().interrupt();
         }
 
-        try {
-            Connection connection = getConnection();
+        try (Connection connection = getConnection()) {
             connection.setAutoCommit(false);  // Garante consistência da leitura
 
             // Busca o board atualizado
@@ -331,8 +330,8 @@ public class BoardTableComponent {
                         System.err.println("Área de exibição das colunas não encontrada");
                     }
                 });
-
-                connection.commit();
+                // teste
+                //connection.commit();
             } else {
                 System.err.println("Board não encontrado: " + boardId);
             }
