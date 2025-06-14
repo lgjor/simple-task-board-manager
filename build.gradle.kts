@@ -62,7 +62,7 @@ jlink {
             "--win-menu",
             "--win-shortcut",
             "--vendor", "AuDesviante",
-            "--app-version", "1.0.5"
+            "--app-version", "1.0.6"
         )
         icon = file("src/main/resources/icon.ico").absolutePath
     }
