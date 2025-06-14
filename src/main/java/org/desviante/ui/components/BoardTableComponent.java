@@ -13,6 +13,7 @@ import org.desviante.persistence.entity.CardEntity;
 import org.desviante.service.BoardQueryService;
 import org.desviante.service.BoardStatusService;
 import java.time.format.DateTimeFormatter;
+import javafx.beans.property.SimpleStringProperty;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -44,7 +45,14 @@ public class BoardTableComponent {
             return new ReadOnlyStringWrapper(BoardStatusService.determineBoardStatus(board));
         });
 
-        tableView.getColumns().setAll(List.of(idColumn, nameColumn, statusColumn));
+        TableColumn<BoardEntity, String> percentualCol = new TableColumn<>("Concluído (%)");
+        percentualCol.setCellValueFactory(cellData -> {
+            double percent = cellData.getValue().getCompletionPercentage();
+            return new SimpleStringProperty(String.format("%.1f%%", percent));
+        });
+        tableView.getColumns().add(percentualCol);
+
+        tableView.getColumns().setAll(List.of(idColumn, nameColumn, statusColumn, percentualCol));
         tableView.setItems(boardList);
 
         return tableView;

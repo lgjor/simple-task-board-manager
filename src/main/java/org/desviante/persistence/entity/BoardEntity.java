@@ -103,6 +103,19 @@ public class BoardEntity {
         card.setUnblockReason(reason);
     }
 
+    // Método para calcular o percentual de conclusão do board
+    public double getCompletionPercentage() {
+        if (boardColumns == null || boardColumns.isEmpty()) return 0.0;
+
+        int qtColunasDoBoard = boardColumns.size(), cardsConcluidos = 0, numeroDeCards = 0;
+        for (var col : boardColumns) {
+            numeroDeCards += col.getCards().size();
+            if (col.getName().equalsIgnoreCase("Concluído")) {
+                cardsConcluidos += col.getCards().size();
+            }
+        }
+        return numeroDeCards == 0 ? 0.0 : ((cardsConcluidos * 100.0) / numeroDeCards);
+    }
 }
 
 
