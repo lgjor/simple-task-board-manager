@@ -45,14 +45,28 @@ public class BoardTableComponent {
             return new ReadOnlyStringWrapper(BoardStatusService.determineBoardStatus(board));
         });
 
-        TableColumn<BoardEntity, String> percentualCol = new TableColumn<>("Concluído (%)");
-        percentualCol.setCellValueFactory(cellData -> {
-            double percent = cellData.getValue().getCompletionPercentage();
+        TableColumn<BoardEntity, String> percentualInitial = new TableColumn<>("Não iniciado");
+        percentualInitial.setCellValueFactory(cellData -> {
+            double percent = cellData.getValue().getPercentage("Não iniciado");
             return new SimpleStringProperty(String.format("%.1f%%", percent));
         });
-        tableView.getColumns().add(percentualCol);
+        tableView.getColumns().add(percentualInitial);
 
-        tableView.getColumns().setAll(List.of(idColumn, nameColumn, statusColumn, percentualCol));
+        TableColumn<BoardEntity, String> percentualInProgressCol = new TableColumn<>("Em andamento");
+        percentualInProgressCol.setCellValueFactory(cellData -> {
+            double percent = cellData.getValue().getPercentage("Em Andamento");
+            return new SimpleStringProperty(String.format("%.1f%%", percent));
+        });
+        tableView.getColumns().add(percentualInProgressCol);
+
+        TableColumn<BoardEntity, String> percentualFinalCol = new TableColumn<>("Concluído");
+        percentualFinalCol.setCellValueFactory(cellData -> {
+            double percent = cellData.getValue().getPercentage("Concluído");
+            return new SimpleStringProperty(String.format("%.1f%%", percent));
+        });
+        tableView.getColumns().add(percentualFinalCol);
+
+        tableView.getColumns().setAll(List.of(idColumn, nameColumn, statusColumn, percentualInitial, percentualInProgressCol, percentualFinalCol));
         tableView.setItems(boardList);
 
         return tableView;

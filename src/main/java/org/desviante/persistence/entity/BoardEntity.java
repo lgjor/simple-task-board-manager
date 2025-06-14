@@ -103,18 +103,58 @@ public class BoardEntity {
         card.setUnblockReason(reason);
     }
 
-    // Método para calcular o percentual de conclusão do board
-    public double getCompletionPercentage() {
-        if (boardColumns == null || boardColumns.isEmpty()) return 0.0;
+    public float getPercentage(float qtPercentual, float qtTotal){
+        return (qtPercentual * 100) / qtTotal;
+    }
 
-        int qtColunasDoBoard = boardColumns.size(), cardsConcluidos = 0, numeroDeCards = 0;
+    public int getCardsEmAndamento(){
+        int qtCardsEmAndamento = 0;
         for (var col : boardColumns) {
-            numeroDeCards += col.getCards().size();
-            if (col.getName().equalsIgnoreCase("Concluído")) {
-                cardsConcluidos += col.getCards().size();
+            if (col.getName().equalsIgnoreCase("Em andamento")) {
+                qtCardsEmAndamento = col.getCards().size();
             }
         }
-        return numeroDeCards == 0 ? 0.0 : ((cardsConcluidos * 100.0) / numeroDeCards);
+        return qtCardsEmAndamento;
+    }
+
+    public int getCardsConcluidos(){
+        int qtCardsConcluidos = 0;
+        for (var col : boardColumns) {
+            if (col.getName().equalsIgnoreCase("Concluído")) {
+                qtCardsConcluidos = col.getCards().size();
+            }
+        }
+        return qtCardsConcluidos;
+    }
+
+    public int getCardsNaoIniciados(){
+        int qtCardsNaoIniciados = 0;
+        for (var col : boardColumns) {
+            if (col.getName().equalsIgnoreCase("Não iniciado")) {
+                qtCardsNaoIniciados = col.getCards().size();
+            }
+        }
+        return qtCardsNaoIniciados;
+    }
+
+    public int getTotalCards() {
+        return boardColumns.stream()
+                .mapToInt(col -> col.getCards().size())
+                .sum();
+    }
+
+    // Metodo para calcular o percentual de conclusão do board
+    public double getPercentage(String ColumnName) {
+        if (boardColumns == null || boardColumns.isEmpty()) return 0.0;
+
+        int qtColunasDoBoard = boardColumns.size(), cards = 0, numeroDeCards = 0;
+        numeroDeCards = getTotalCards();
+        for (var col : boardColumns) {
+            if (col.getName().equalsIgnoreCase(ColumnName)) {
+                cards += col.getCards().size();
+            }
+        }
+        return numeroDeCards == 0 ? 0.0 : ((cards * 100.0) / numeroDeCards);
     }
 }
 

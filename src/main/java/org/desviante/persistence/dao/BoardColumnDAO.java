@@ -66,7 +66,7 @@ public class BoardColumnDAO {
              var preparedStatement = connection.prepareStatement(sql)) {
             // Coluna Inicial
             preparedStatement.setLong(1, boardId);
-            preparedStatement.setString(2, "Inicial");
+            preparedStatement.setString(2, "Não iniciado");
             preparedStatement.setString(3, "INITIAL");
             preparedStatement.setInt(4, 1);
             preparedStatement.addBatch();
