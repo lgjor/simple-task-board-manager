@@ -8,6 +8,7 @@ import javafx.scene.layout.VBox;
 import org.desviante.service.CardService;
 import org.desviante.persistence.entity.BoardEntity;
 import org.desviante.util.AlertUtils;
+import org.desviante.persistence.entity.ReminderEntity;
 
 import java.util.function.Consumer;
 import java.sql.Connection;
@@ -147,16 +148,88 @@ public class CardTableComponent {
         Button reminderButton = new Button("Lembrete");
         buttons.getChildren().addAll(saveButton, cancelButton, deleteButton, reminderButton);
 
-        saveButton.setOnAction(e -> salvarEdicao(card, titleField, descArea, cardBox, titleLabel, descLabel, buttons, tableView, columnDisplay, loadBoardsConsumer));
+        saveButton.setOnAction(e -> saveEdition(card, titleField, descArea, cardBox, titleLabel, descLabel, buttons, tableView, columnDisplay, loadBoardsConsumer));
         cancelButton.setOnAction(e -> restoreOriginalView(cardBox, titleLabel, descLabel, titleField, descArea, buttons));
-        deleteButton.setOnAction(e -> excluirCard(card, cardBox, boardTableView, loadBoardsConsumer, columnDisplay));
+        deleteButton.setOnAction(e -> deleteCard(card, cardBox, boardTableView, loadBoardsConsumer, columnDisplay));
+        reminderButton.setOnAction(e -> setReminder(card, cardBox, titleLabel, descLabel, titleField, descArea, buttons, tableView, columnDisplay, loadBoardsConsumer));
 
         // Lógica do botão de lembrete pode ser implementada aqui
 
         return buttons;
     }
 
-    private static void salvarEdicao(
+    // Metodo para definir lembrete
+    private static void setReminder(
+            CardEntity card,
+            VBox cardBox,
+            Label titleLabel,
+            Label descLabel,
+            TextField titleField,
+            TextArea descArea,
+            HBox buttons,
+            TableView<?> tableView,
+            VBox columnDisplay,
+            Consumer<TableView> loadBoardsConsumer
+    ) {
+        Dialog<ReminderEntity> dialog = new Dialog<>();
+        dialog.setTitle("Definir Lembrete");
+
+        // Campos de entrada
+        DatePicker datePicker = new DatePicker();
+        TextField timeField = new TextField();
+        timeField.setPromptText("HH:mm");
+        TextArea messageArea = new TextArea();
+        messageArea.setPromptText("Mensagem do lembrete");
+
+        VBox content = new VBox(8, new Label("Data:"), datePicker, new Label("Hora:"), timeField, new Label("Mensagem:"), messageArea);
+        dialog.getDialogPane().setContent(content);
+
+        ButtonType okButtonType = new ButtonType("Salvar", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(okButtonType, ButtonType.CANCEL);
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == okButtonType) {
+                try {
+                    var date = datePicker.getValue();
+                    var time = java.time.LocalTime.parse(timeField.getText());
+                    var dateTime = java.time.LocalDateTime.of(date, time);
+                    String message = messageArea.getText().trim();
+                    if (date == null || message.isEmpty()) return null;
+                    ReminderEntity reminder = new ReminderEntity();
+                    reminder.setDateTime(dateTime);
+                    reminder.setMessage(message);
+                    reminder.setSent(false);
+                    reminder.setCard(card);
+                    return reminder;
+                } catch (Exception ex) {
+                    AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", "Data ou hora inválida.");
+                    return null;
+                }
+            }
+            return null;
+        });
+
+        dialog.showAndWait().ifPresent(reminder -> {
+            // Aqui você pode salvar o lembrete no banco de dados
+            try (Connection connection = getConnection()) {
+                System.out.println("Banco em uso: " + connection.getMetaData().getURL());
+                String sql = "INSERT INTO reminders (date_time, message, sent, card_id) VALUES (?, ?, ?, ?)";
+                try (var ps = connection.prepareStatement(sql)) {
+                    ps.setTimestamp(1, Timestamp.valueOf(reminder.getDateTime()));
+                    ps.setString(2, reminder.getMessage());
+                    ps.setInt(3, reminder.isSent() ? 1 : 0); // Para SQLite
+                    ps.setLong(4, card.getId());
+                    ps.executeUpdate();
+                }
+                AlertUtils.showAlert(Alert.AlertType.INFORMATION, "Lembrete", "Lembrete salvo com sucesso!");
+            } catch (SQLException ex) {
+                logger.error("Erro ao salvar lembrete", ex);
+                AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", "Erro ao salvar lembrete: " + ex.getMessage());
+            }
+        });
+    }
+
+    private static void saveEdition(
             CardEntity card,
             TextField titleField,
             TextArea descArea,
@@ -229,7 +302,7 @@ public class CardTableComponent {
         }
     }
 
-    private static void excluirCard(
+    private static void deleteCard(
             CardEntity card,
             VBox cardBox,
             TableView boardTableView,

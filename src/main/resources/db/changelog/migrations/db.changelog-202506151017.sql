@@ -1,0 +1,8 @@
+CREATE TABLE reminders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date_time TIMESTAMP NOT NULL,
+    message VARCHAR(255) NOT NULL,
+    sent BOOLEAN NOT NULL DEFAULT FALSE,
+    card_id INTEGER NOT NULL,
+    CONSTRAINT fk_reminder_card FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE
+);
