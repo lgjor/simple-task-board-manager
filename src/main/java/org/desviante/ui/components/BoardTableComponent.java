@@ -47,8 +47,8 @@ public class BoardTableComponent {
         tableView.getColumns().clear();
         // Criação das colunas fixas do board
         // Coluna ID
-        TableColumn<BoardEntity, Long> idColumn = new TableColumn<>("ID");
-        idColumn.setCellValueFactory(data -> data.getValue().idProperty().asObject());
+        //TableColumn<BoardEntity, Long> idColumn = new TableColumn<>("ID");
+        //idColumn.setCellValueFactory(data -> data.getValue().idProperty().asObject());
 
         // Coluna nome
         TableColumn<BoardEntity, String> nameColumn = new TableColumn<>("Nome");
@@ -61,8 +61,8 @@ public class BoardTableComponent {
             return new ReadOnlyStringWrapper(BoardStatusService.determineBoardStatus(board));
         });
 
-        // Adiciona as colunas fixas
-        tableView.getColumns().addAll(idColumn, nameColumn, statusColumn);
+        // Adiciona as colunas fixas (removida a coluna idColumn)
+        tableView.getColumns().addAll(nameColumn, statusColumn);
 
         // Criação das colunas dinâmicas do board
         // Busca o primeiro board que tenha colunas
