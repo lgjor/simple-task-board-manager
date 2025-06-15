@@ -32,44 +32,57 @@ public class BoardTableComponent {
         TableView<BoardEntity> tableView = new TableView<>();
         tableView.setPlaceholder(new Label("Nenhum board disponível"));
 
+        createBoardColumns(tableView, boardList);
+
+        return tableView;
+    }
+
+    /**
+    *
+    * Cria as colunas fixas e dinâmicas do board
+    * @param tableView A TableView onde as colunas serão adicionadas
+    * @param boardList A lista de boards que será exibida na TableView
+    */
+    public static void createBoardColumns(TableView<BoardEntity> tableView, ObservableList<BoardEntity> boardList){
+        tableView.getColumns().clear();
+        // Criação das colunas fixas do board
+        // Coluna ID
         TableColumn<BoardEntity, Long> idColumn = new TableColumn<>("ID");
         idColumn.setCellValueFactory(data -> data.getValue().idProperty().asObject());
 
+        // Coluna nome
         TableColumn<BoardEntity, String> nameColumn = new TableColumn<>("Nome");
         nameColumn.setCellValueFactory(data -> data.getValue().nameProperty());
 
-        // Coluna de status
+        // Coluna status
         TableColumn<BoardEntity, String> statusColumn = new TableColumn<>("Status");
         statusColumn.setCellValueFactory(data -> {
             BoardEntity board = data.getValue();
             return new ReadOnlyStringWrapper(BoardStatusService.determineBoardStatus(board));
         });
 
-        TableColumn<BoardEntity, String> percentualInitial = new TableColumn<>("Não iniciado");
-        percentualInitial.setCellValueFactory(cellData -> {
-            double percent = cellData.getValue().getPercentage("Não iniciado");
-            return new SimpleStringProperty(String.format("%.1f%%", percent));
-        });
-        tableView.getColumns().add(percentualInitial);
+        // Adiciona as colunas fixas
+        tableView.getColumns().addAll(idColumn, nameColumn, statusColumn);
 
-        TableColumn<BoardEntity, String> percentualInProgressCol = new TableColumn<>("Em andamento");
-        percentualInProgressCol.setCellValueFactory(cellData -> {
-            double percent = cellData.getValue().getPercentage("Em Andamento");
-            return new SimpleStringProperty(String.format("%.1f%%", percent));
-        });
-        tableView.getColumns().add(percentualInProgressCol);
+        // Criação das colunas dinâmicas do board
+        // Busca o primeiro board que tenha colunas
+        BoardEntity boardWithColumns = boardList.stream()
+                .filter(b -> b.getBoardColumns() != null && !b.getBoardColumns().isEmpty())
+                .findFirst()
+                .orElse(null);
 
-        TableColumn<BoardEntity, String> percentualFinalCol = new TableColumn<>("Concluído");
-        percentualFinalCol.setCellValueFactory(cellData -> {
-            double percent = cellData.getValue().getPercentage("Concluído");
-            return new SimpleStringProperty(String.format("%.1f%%", percent));
-        });
-        tableView.getColumns().add(percentualFinalCol);
+        if (boardWithColumns != null) {
+            for (BoardColumnEntity col : boardWithColumns.getBoardColumns()) {
+                TableColumn<BoardEntity, String> dynamicCol = new TableColumn<>(col.getName());
+                dynamicCol.setCellValueFactory(cellData -> {
+                    double percent = cellData.getValue().getPercentage(col.getName());
+                    return new SimpleStringProperty(String.format("%.1f%%", percent));
+                });
+                tableView.getColumns().add(dynamicCol);
+            }
+        }
 
-        tableView.getColumns().setAll(List.of(idColumn, nameColumn, statusColumn, percentualInitial, percentualInProgressCol, percentualFinalCol));
         tableView.setItems(boardList);
-
-        return tableView;
     }
 
     public static void configureTableViewListener(TableView<BoardEntity> tableView, VBox columnDisplay) {
@@ -195,7 +208,8 @@ public class BoardTableComponent {
             }
 
             boardList.addAll(boards);
-            tableView.setItems(boardList);
+            //tableView.setItems(boardList);
+            createBoardColumns(tableView, boardList);
             tableView.refresh();
 
             // Seleciona o board anterior ou o primeiro
