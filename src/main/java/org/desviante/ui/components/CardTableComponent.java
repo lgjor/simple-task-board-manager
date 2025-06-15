@@ -28,6 +28,7 @@ public class CardTableComponent {
      * Cria uma caixa de card
      * Adiciona eventos de clique e drag and drop
      */
+
     public static VBox createCardBox(
             CardEntity card,
             TableView<?> tableView,
@@ -35,10 +36,16 @@ public class CardTableComponent {
             Consumer<TableView> loadBoardsConsumer,
             TableView boardTableView
     ) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        carregarDatasDoCard(card);
 
-        try {
-            Connection connection = getConnection();
+        VBox cardBox = criarCardVisual(card);
+        configurarEventoEdicao(cardBox, card, tableView, columnDisplay, loadBoardsConsumer, boardTableView);
+
+        return cardBox;
+    }
+
+    private static void carregarDatasDoCard(CardEntity card) {
+        try (Connection connection = getConnection()) {
             String sql = "SELECT creation_date, last_update_date, completion_date FROM cards WHERE id = ?";
             try (var preparedStatement = connection.prepareStatement(sql)) {
                 preparedStatement.setLong(1, card.getId());
@@ -46,28 +53,24 @@ public class CardTableComponent {
                     if (resultSet.next()) {
                         card.setCreationDate(resultSet.getTimestamp("creation_date").toLocalDateTime());
                         Timestamp lastUpdate = resultSet.getTimestamp("last_update_date");
-                        if (lastUpdate != null) {
-                            card.setLastUpdateDate(lastUpdate.toLocalDateTime());
-                        }
+                        if (lastUpdate != null) card.setLastUpdateDate(lastUpdate.toLocalDateTime());
                         Timestamp completionDate = resultSet.getTimestamp("completion_date");
-                        if (completionDate != null) {
-                            card.setCompletionDate(completionDate.toLocalDateTime());
-                        }
+                        if (completionDate != null) card.setCompletionDate(completionDate.toLocalDateTime());
                     }
                 }
             }
         } catch (SQLException e) {
-            logger.error("Erro ao buscar datas do card", e);
-            System.err.println("Erro ao buscar datas do card: " + e.getMessage());
+            // log e tratamento
         }
+    }
 
-        // Cria a caixa principal do card
+    private static VBox criarCardVisual(CardEntity card) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         VBox cardBox = new VBox();
         cardBox.setId("card-" + card.getId());
         cardBox.setStyle("-fx-border-color: #DDDDDD; -fx-background-color: white; -fx-padding: 8; " +
                 "-fx-spacing: 3; -fx-border-radius: 3; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 3, 0, 0, 1);");
 
-        // Criação dos componentes do card
         Label titleLabel = new Label(card.getTitle());
         titleLabel.setStyle("-fx-font-weight: bold;");
         cardBox.getChildren().add(titleLabel);
@@ -77,7 +80,7 @@ public class CardTableComponent {
         cardBox.getChildren().add(descLabel);
 
         Label dateLabel = new Label("Criado em: " +
-                card.getCreationDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+                card.getCreationDate().format(formatter));
         dateLabel.setStyle("-fx-text-fill: #666666; -fx-font-size: 10px;");
         cardBox.getChildren().add(dateLabel);
 
@@ -91,113 +94,158 @@ public class CardTableComponent {
         completionLabel.setStyle("-fx-text-fill: #666666; -fx-font-size: 10px;");
         cardBox.getChildren().add(completionLabel);
 
-        // Eventos (ex.: duplo clique para edição)
+        return cardBox;
+    }
+
+    private static void configurarEventoEdicao(
+            VBox cardBox,
+            CardEntity card,
+            TableView<?> tableView,
+            VBox columnDisplay,
+            Consumer<TableView> loadBoardsConsumer,
+            TableView boardTableView
+    ) {
+        Label titleLabel = (Label) cardBox.getChildren().get(0);
+        Label descLabel = (Label) cardBox.getChildren().get(1);
+
         cardBox.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) {
                 event.consume();
                 TextField titleField = new TextField(card.getTitle());
                 titleField.setStyle("-fx-font-weight: bold;");
-                cardBox.getChildren().set(cardBox.getChildren().indexOf(titleLabel), titleField);
+                cardBox.getChildren().set(0, titleField);
 
                 TextArea descArea = new TextArea(card.getDescription());
                 descArea.setWrapText(true);
                 descArea.setPrefRowCount(3);
-                cardBox.getChildren().set(cardBox.getChildren().indexOf(descLabel), descArea);
+                cardBox.getChildren().set(1, descArea);
 
-                HBox buttons = new HBox(5);
-                Button saveButton = new Button("Salvar");
-                Button cancelButton = new Button("Cancelar");
-                Button deleteButton = new Button("Excluir");
-                buttons.getChildren().addAll(saveButton, cancelButton, deleteButton);
+                HBox buttons = criarBotoesEdicao(card, cardBox, titleLabel, descLabel, titleField, descArea, tableView, columnDisplay, loadBoardsConsumer, boardTableView);
                 cardBox.getChildren().add(buttons);
 
                 Platform.runLater(titleField::requestFocus);
-
-                // Lógica do botão de salvar
-                saveButton.setOnAction(e -> {
-                    String newTitle = titleField.getText().trim();
-                    String newDescription = descArea.getText().trim();
-                    if (newTitle.isEmpty()) {
-                        AlertUtils.showAlert(Alert.AlertType.ERROR, "Campos inválidos", "Título e descrição não podem estar vazios.");
-                        return;
-                    }
-                    try (Connection connection = getConnection()) {
-                        boolean originalAutoCommit = connection.getAutoCommit();
-                        try {
-                            connection.setAutoCommit(false);
-                            LocalDateTime now = LocalDateTime.now();
-                            String sql = "UPDATE CARDS SET title = ?, description = ?, last_update_date = ? WHERE id = ?";
-                            try (var preparedStatement = connection.prepareStatement(sql)) {
-                                preparedStatement.setString(1, newTitle);
-                                preparedStatement.setString(2, newDescription);
-                                preparedStatement.setTimestamp(3, Timestamp.valueOf(now));
-                                preparedStatement.setLong(4, card.getId());
-                                int rowsAffected = preparedStatement.executeUpdate();
-                                if (rowsAffected > 0) {
-                                    connection.commit();
-                                    card.setTitle(newTitle);
-                                    card.setDescription(newDescription);
-                                    card.setLastUpdateDate(now);
-                                    titleLabel.setText(newTitle);
-                                    descLabel.setText(newDescription);
-                                    lastUpdateLabel.setText("Ultima atualizacao: " + now.format(formatter));
-                                    int titleIndex = cardBox.getChildren().indexOf(titleField);
-                                    int descIndex = cardBox.getChildren().indexOf(descArea);
-                                    int buttonsIndex = cardBox.getChildren().indexOf(buttons);
-                                    if (titleIndex >= 0) cardBox.getChildren().set(titleIndex, titleLabel);
-                                    if (descIndex >= 0) cardBox.getChildren().set(descIndex, descLabel);
-                                    if (buttonsIndex >= 0) cardBox.getChildren().remove(buttonsIndex);
-
-                                    Platform.runLater(() -> BoardTableComponent.loadBoards(
-                                            (TableView<BoardEntity>) tableView,
-                                            ((TableView<BoardEntity>) tableView).getItems(),
-                                            columnDisplay
-                                    ));
-                                }
-                            }
-                            if (!connection.isClosed()) {
-                                connection.setAutoCommit(originalAutoCommit);
-                            }
-                        } catch (SQLException ex) {
-                            try {
-                                if (!connection.isClosed()) {
-                                    connection.rollback();
-                                }
-                            } catch (SQLException rollbackEx) {
-                                logger.error("Erro ao realizar rollback da transacao", rollbackEx);
-                            }
-                            logger.error("Erro ao atualizar o card", ex);
-                            AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro ao atualizar", "Erro ao atualizar o card: " + ex.getMessage());
-                            restoreOriginalView(cardBox, titleLabel, descLabel, titleField, descArea, buttons);
-                        }
-                    } catch (SQLException ex) {
-                        logger.error("Erro ao abrir conexão", ex);
-                        AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro de conexão", "Não foi possível conectar ao banco de dados: " + ex.getMessage());
-                    }
-                });
-
-                // Lógica do botão de cancelar
-                cancelButton.setOnAction(e -> {
-                    restoreOriginalView(cardBox, titleLabel, descLabel, titleField, descArea, buttons);
-                });
-
-                // Lógica do botão de excluir
-                deleteButton.setOnAction(e -> {
-                    try {
-                        Connection connection = getConnection();
-                        CardService cardService = new CardService(connection);
-                        cardService.delete(card.getId());
-                        ((VBox) cardBox.getParent()).getChildren().remove(cardBox);
-                        Platform.runLater(() -> loadBoardsConsumer.accept(boardTableView));
-                    } catch (SQLException ex) {
-                        logger.error("Erro ao excluir o card", ex);
-                        AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", "Erro ao excluir o card: "+ ex.getMessage());
-                    }
-                });
             }
         });
+    }
 
-        return cardBox;
+    private static HBox criarBotoesEdicao(
+            CardEntity card,
+            VBox cardBox,
+            Label titleLabel,
+            Label descLabel,
+            TextField titleField,
+            TextArea descArea,
+            TableView<?> tableView,
+            VBox columnDisplay,
+            Consumer<TableView> loadBoardsConsumer,
+            TableView boardTableView
+    ) {
+        HBox buttons = new HBox(5);
+        Button saveButton = new Button("Salvar");
+        Button cancelButton = new Button("Cancelar");
+        Button deleteButton = new Button("Excluir");
+        Button reminderButton = new Button("Lembrete");
+        buttons.getChildren().addAll(saveButton, cancelButton, deleteButton, reminderButton);
+
+        saveButton.setOnAction(e -> salvarEdicao(card, titleField, descArea, cardBox, titleLabel, descLabel, buttons, tableView, columnDisplay, loadBoardsConsumer));
+        cancelButton.setOnAction(e -> restoreOriginalView(cardBox, titleLabel, descLabel, titleField, descArea, buttons));
+        deleteButton.setOnAction(e -> excluirCard(card, cardBox, boardTableView, loadBoardsConsumer, columnDisplay));
+
+        // Lógica do botão de lembrete pode ser implementada aqui
+
+        return buttons;
+    }
+
+    private static void salvarEdicao(
+            CardEntity card,
+            TextField titleField,
+            TextArea descArea,
+            VBox cardBox,
+            Label titleLabel,
+            Label descLabel,
+            HBox buttons,
+            TableView<?> tableView,
+            VBox columnDisplay,
+            Consumer<TableView> loadBoardsConsumer
+    ) {
+        String newTitle = titleField.getText().trim();
+        String newDescription = descArea.getText().trim();
+        if (newTitle.isEmpty()) {
+            AlertUtils.showAlert(Alert.AlertType.ERROR, "Campos inválidos", "Título e descrição não podem estar vazios.");
+            return;
+        }
+        try (Connection connection = getConnection()) {
+            boolean originalAutoCommit = connection.getAutoCommit();
+            try {
+                connection.setAutoCommit(false);
+                LocalDateTime now = LocalDateTime.now();
+                String sql = "UPDATE CARDS SET title = ?, description = ?, last_update_date = ? WHERE id = ?";
+                try (var preparedStatement = connection.prepareStatement(sql)) {
+                    preparedStatement.setString(1, newTitle);
+                    preparedStatement.setString(2, newDescription);
+                    preparedStatement.setTimestamp(3, Timestamp.valueOf(now));
+                    preparedStatement.setLong(4, card.getId());
+                    int rowsAffected = preparedStatement.executeUpdate();
+                    if (rowsAffected > 0) {
+                        connection.commit();
+                        card.setTitle(newTitle);
+                        card.setDescription(newDescription);
+                        card.setLastUpdateDate(now);
+                        titleLabel.setText(newTitle);
+                        descLabel.setText(newDescription);
+                        // Atualize o label de última atualização se necessário
+                        int titleIndex = cardBox.getChildren().indexOf(titleField);
+                        int descIndex = cardBox.getChildren().indexOf(descArea);
+                        int buttonsIndex = cardBox.getChildren().indexOf(buttons);
+                        if (titleIndex >= 0) cardBox.getChildren().set(titleIndex, titleLabel);
+                        if (descIndex >= 0) cardBox.getChildren().set(descIndex, descLabel);
+                        if (buttonsIndex >= 0) cardBox.getChildren().remove(buttonsIndex);
+
+                        Platform.runLater(() -> BoardTableComponent.loadBoards(
+                                (TableView<BoardEntity>) tableView,
+                                ((TableView<BoardEntity>) tableView).getItems(),
+                                columnDisplay
+                        ));
+                    }
+                }
+                if (!connection.isClosed()) {
+                    connection.setAutoCommit(originalAutoCommit);
+                }
+            } catch (SQLException ex) {
+                try {
+                    if (!connection.isClosed()) {
+                        connection.rollback();
+                    }
+                } catch (SQLException rollbackEx) {
+                    logger.error("Erro ao realizar rollback da transacao", rollbackEx);
+                }
+                logger.error("Erro ao atualizar o card", ex);
+                AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro ao atualizar", "Erro ao atualizar o card: " + ex.getMessage());
+                restoreOriginalView(cardBox, titleLabel, descLabel, titleField, descArea, buttons);
+            }
+        } catch (SQLException ex) {
+            logger.error("Erro ao abrir conexão", ex);
+            AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro de conexão", "Não foi possível conectar ao banco de dados: " + ex.getMessage());
+        }
+    }
+
+    private static void excluirCard(
+            CardEntity card,
+            VBox cardBox,
+            TableView boardTableView,
+            Consumer<TableView> loadBoardsConsumer,
+            VBox columnDisplay
+    ) {
+        try {
+            Connection connection = getConnection();
+            CardService cardService = new CardService(connection);
+            cardService.delete(card.getId());
+            ((VBox) cardBox.getParent()).getChildren().remove(cardBox);
+            Platform.runLater(() -> loadBoardsConsumer.accept(boardTableView));
+        } catch (SQLException ex) {
+            logger.error("Erro ao excluir o card", ex);
+            AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", "Erro ao excluir o card: " + ex.getMessage());
+        }
     }
 
     private static void restoreOriginalView(VBox cardBox, Label titleLabel, Label descLabel,
