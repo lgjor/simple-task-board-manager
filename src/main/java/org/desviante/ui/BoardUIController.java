@@ -10,6 +10,7 @@ import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import org.desviante.controller.BoardController;
 import org.desviante.controller.CardController;
+import org.desviante.controller.GoogleAuthController;
 import org.desviante.persistence.dao.BoardDAO;
 import org.desviante.persistence.dao.BoardColumnDAO;
 import org.desviante.persistence.entity.BoardEntity;
@@ -56,9 +57,13 @@ public class BoardUIController {
         Button refreshButton = new Button("Atualizar");
         refreshButton.setOnAction(e -> BoardTableComponent.loadBoards(tableView, boardList, columnDisplay));
 
+        // Botão para autenticar com o Google Calendar
+        Button googleAuthButton = new Button("Autenticar com Google Calendar");
+        GoogleAuthController.setupGoogleAuthButton(googleAuthButton);
+
         Button createCardButton = getCreateCardButton(tableView);
 
-        VBox actionButtons = new VBox(10, createBoardButton, editBoardButton, deleteBoardButton, refreshButton, createCardButton);
+        VBox actionButtons = new VBox(10, createBoardButton, editBoardButton, deleteBoardButton, refreshButton, createCardButton, googleAuthButton);
         actionButtons.setPadding(new Insets(10));
 
         return actionButtons;

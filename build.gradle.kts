@@ -10,6 +10,7 @@ version = "1.0.5"
 
 repositories {
     mavenCentral()
+    maven { url = uri("https://maven.google.com") }
 }
 
 dependencies {
@@ -19,6 +20,15 @@ dependencies {
     implementation("org.xerial:sqlite-jdbc:3.42.0.0")
     implementation("org.slf4j:slf4j-api:2.0.13")
     implementation("ch.qos.logback:logback-classic:1.4.14")
+    implementation("com.google.api-client:google-api-client:1.34.1")
+    implementation("com.google.oauth-client:google-oauth-client:1.34.1")
+    implementation("com.google.apis:google-api-services-calendar:v3-rev20250404-2.0.0")
+    implementation("com.google.oauth-client:google-oauth-client-java6:1.34.1")
+    implementation("com.google.oauth-client:google-oauth-client-jetty:1.34.1")
+    implementation("com.google.http-client:google-http-client-jackson2:1.43.3")
+    implementation("com.fasterxml.jackson.core:jackson-core:2.17.1")
+    implementation("com.fasterxml.jackson.core:jackson-annotations:2.17.1")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.1")
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     compileOnly("org.projectlombok:lombok:1.18.38")
@@ -45,9 +55,9 @@ jlink {
         uses("java.sql.Driver")
     }
 
-    addExtraDependencies("sqlite-jdbc")
+    addExtraDependencies("sqlite-jdbc", "jackson-core", "jackson-annotations", "jackson-databind","google-http-client-jackson2")
 
-    options.set(listOf("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages"))
+    options.set(listOf("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages", "--bind-services"))
     launcher {
         name = "Simple Task Board Manager"
         jvmArgs = listOf("-Xmx2048m")
@@ -57,6 +67,7 @@ jlink {
         skipInstaller = false
         installerType = "exe"
         installerName = "Simple Task Board Manager"
+
         installerOptions = listOf(
             "--win-dir-chooser",
             "--win-menu",
