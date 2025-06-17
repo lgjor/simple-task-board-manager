@@ -30,10 +30,12 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-annotations:2.17.1")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.17.1")
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
+    testImplementation("org.openjfx:javafx-swing:21")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     compileOnly("org.projectlombok:lombok:1.18.38")
     annotationProcessor("org.projectlombok:lombok:1.18.38")
 }
+
 
 javafx {
     version = "21"
@@ -89,4 +91,7 @@ sourceSets {
             setSrcDirs(listOf("src/test/java"))
         }
     }
+}
+tasks.test {
+    useJUnitPlatform()
 }
