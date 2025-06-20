@@ -33,12 +33,17 @@ Esse projeto foi desenvolvido com as seguintes tecnologias:
 - Criar cards
 - Editar título e descrição dos cards com duplo clique do mouse
 - Mover cards entre as colunas não iniciado, em andamento e concluído usando o drag and drop
+- Método de cálculo do % não inciado, em andamento e concluído dos boards
+- Persistência de dados com banco de dados locais SQLite
+- Integração com a **API do Google Tasks** para criar tarefas a partir dos cards
 
 ## <div id="desafio">Desafio</div>
 
 Board para Gerenciamento de Tarefas simples criado a partir de desafio do Bootcamp Bradesco Java DIO. 
 
 O desafio abordou todas as etapas do desenvolvimento, desde o planejamento e estruturação até a implementação de funcionalidades como gerenciamento de dados e integração entre camadas, seguindo boas práticas de programação.
+
+A partir dessa provocação eu expandi e desenvolvi mais funcionalidades para o projeto.
 
 ## <div id="diagrama">Diagrama UML inicial</div>
 
