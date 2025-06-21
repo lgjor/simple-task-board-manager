@@ -95,3 +95,8 @@ sourceSets {
 tasks.test {
     useJUnitPlatform()
 }
+tasks.register<Exec>("runJlinkApp") {
+    dependsOn("jlink")
+    val execPath = "${buildDir}/image/bin/Simple Task Board Manager.bat"
+    commandLine(execPath)
+}
