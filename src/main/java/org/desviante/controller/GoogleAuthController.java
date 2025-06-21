@@ -2,7 +2,7 @@ package org.desviante.controller;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
-import org.desviante.integration.google.GoogleCalendarIntegration;
+import org.desviante.integration.google.GoogleTaskIntegration;
 
 public class GoogleAuthController {
     @FXML
@@ -11,7 +11,7 @@ public class GoogleAuthController {
     public static void setupGoogleAuthButton(Button button) {
         button.setOnAction(event -> {
             try {
-                GoogleCalendarIntegration.authenticateUser();
+                GoogleTaskIntegration.authenticateUser();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -23,7 +23,7 @@ public class GoogleAuthController {
         authButton.setOnAction(event -> {
             System.out.println("Botão Google Auth clicado!");
             try {
-                GoogleCalendarIntegration.authenticateUser();
+                GoogleTaskIntegration.authenticateUser();
             } catch (Exception e) {
                 e.printStackTrace();
             }

@@ -1,0 +1,2 @@
+ALTER TABLE tasks ADD COLUMN listTitle TEXT;
+ALTER TABLE tasks ADD COLUMN Title TEXT;

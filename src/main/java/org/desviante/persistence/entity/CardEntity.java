@@ -22,4 +22,13 @@ public class CardEntity {
     @Getter
     @Setter
     private LocalDateTime completionDate;
+
+    public BoardEntity getBoard() {
+        // Implemente a lógica para retornar o board
+        // Isso pode envolver buscar o board através da coluna
+        if (this.boardColumn != null) {
+            return this.boardColumn.getBoard();
+        }
+        return null;
+    }
 }

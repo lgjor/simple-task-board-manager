@@ -58,7 +58,7 @@ public class BoardUIController {
         refreshButton.setOnAction(e -> BoardTableComponent.loadBoards(tableView, boardList, columnDisplay));
 
         // Botão para autenticar com o Google Calendar
-        Button googleAuthButton = new Button("Autenticar com Google Calendar");
+        Button googleAuthButton = new Button("Vincular Google");
         GoogleAuthController.setupGoogleAuthButton(googleAuthButton);
 
         Button createCardButton = getCreateCardButton(tableView);

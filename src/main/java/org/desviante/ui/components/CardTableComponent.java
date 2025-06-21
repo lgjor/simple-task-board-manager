@@ -10,6 +10,7 @@ import org.desviante.persistence.entity.BoardEntity;
 import org.desviante.util.AlertUtils;
 import org.desviante.persistence.entity.TaskEntity;
 
+import org.desviante.util.DateTimeConversion;
 import java.util.function.Consumer;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -171,15 +172,37 @@ public class CardTableComponent {
     ) {
         Dialog<TaskEntity> dialog = new Dialog<>();
         dialog.setTitle("Definir Tarefa");
+        TextField listTitle = new TextField();
+        listTitle.setPromptText("Lista da tarefa");
+        // Sugere o título do board, se houver
+        if (card.getBoardColumn() != null &&
+                card.getBoardColumn().getBoard() != null &&
+                card.getBoardColumn().getBoard().getName() != null &&
+                !card.getBoardColumn().getBoard().getName().isBlank()) {
 
-        // Campos de entrada
+            listTitle.setText(card.getBoardColumn().getBoard().getName());
+        }
+        TextField titleArea = new TextField();
+        titleArea.setPromptText("Título da tarefa");
+        if (card.getTitle() != null && !card.getTitle().isBlank()) {
+            titleArea.setText(card.getTitle());
+        }
         DatePicker datePicker = new DatePicker();
         TextField timeField = new TextField();
         timeField.setPromptText("HH:mm");
         TextArea messageArea = new TextArea();
         messageArea.setPromptText("Descrição da tarefa");
+        if (card.getDescription() != null && !card.getDescription().isBlank()) {
+            messageArea.setText(card.getDescription());
+        }
 
-        VBox content = new VBox(8, new Label("Data:"), datePicker, new Label("Hora:"), timeField, new Label("Mensagem:"), messageArea);
+        VBox content = new VBox(8,
+                new Label("Lista da tarefa"), listTitle,
+                new Label("Título da tarefa:"), titleArea,
+                new Label("Data:"), datePicker,
+                new Label("Hora:"), timeField,
+                new Label("Descrição:"), messageArea
+        );
         dialog.getDialogPane().setContent(content);
 
         ButtonType okButtonType = new ButtonType("Salvar", ButtonBar.ButtonData.OK_DONE);
@@ -190,11 +213,14 @@ public class CardTableComponent {
                 try {
                     var date = datePicker.getValue();
                     var time = java.time.LocalTime.parse(timeField.getText());
-                    var dateTime = java.time.LocalDateTime.of(date, time);
+                    if (date == null) return null;
+                    var due = DateTimeConversion.toOffsetDateTime(date, time);
                     String message = messageArea.getText().trim();
-                    if (date == null || message.isEmpty()) return null;
+                    if (message.isEmpty()) return null;
                     TaskEntity task = new TaskEntity();
-                    task.setDue(dateTime);
+                    task.setListTitle(listTitle.getText().trim());
+                    task.setTitle(titleArea.getText().trim());
+                    task.setDue(due);
                     task.setNotes(message);
                     task.setSent(false);
                     task.setCard(card);
@@ -208,15 +234,16 @@ public class CardTableComponent {
         });
 
         dialog.showAndWait().ifPresent(task -> {
-            // Aqui você pode salvar a tarefa no banco de dados
             try (Connection connection = getConnection()) {
                 System.out.println("Banco em uso: " + connection.getMetaData().getURL());
-                String sql = "INSERT INTO tasks (date_time, message, sent, card_id) VALUES (?, ?, ?, ?)";
+                String sql = "INSERT INTO tasks (date_time, message, sent, card_id, listTitle, title) VALUES (?, ?, ?, ?, ?, ?)";
                 try (var ps = connection.prepareStatement(sql)) {
-                    ps.setTimestamp(1, Timestamp.valueOf(task.getDue()));
+                    ps.setTimestamp(1, java.sql.Timestamp.valueOf(task.getDue().toLocalDateTime()));
                     ps.setString(2, task.getNotes());
-                    ps.setInt(3, task.isSent() ? 1 : 0); // Para SQLite
+                    ps.setInt(3, task.isSent() ? 1 : 0);
                     ps.setLong(4, card.getId());
+                    ps.setString(5, task.getListTitle());
+                    ps.setString(6, task.getTitle());
                     ps.executeUpdate();
                 }
                 AlertUtils.showAlert(Alert.AlertType.INFORMATION, "Tarefa", "Tarefa salva com sucesso!");

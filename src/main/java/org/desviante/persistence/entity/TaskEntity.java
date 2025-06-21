@@ -4,27 +4,30 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 public class TaskEntity {
     // Getters e setters
     @Setter
     @Getter
     private Long id;
+    @Setter
+    @Getter
+    private String listTitle;
+    @Setter
+    @Getter
     private String title;
-    private String due;
+    @Setter
+    @Getter
+    private OffsetDateTime due;
+    @Setter
+    @Getter
     private String notes;
+    @Setter
+    @Getter
     private boolean sent;
+    @Setter
+    @Getter
     private CardEntity card;
 
-    public LocalDateTime getDue() { return due; }
-    public void setDue(LocalDateTime due) { this.due = due; }
-
-    public String getNotes() { return notes; }
-    public void setNotes(String notes) { this.notes = notes; }
-
-    public boolean isSent() { return sent; }
-    public void setSent(boolean sent) { this.sent = sent; }
-
-    public CardEntity getCard() { return card; }
-    public void setCard(CardEntity card) { this.card = card; }
 }
