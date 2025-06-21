@@ -47,12 +47,12 @@ public class GoogleCalendarIntegration {
                 .build();
 
         Event event = new Event()
-                .setSummary("Lembrete")
-                .setDescription("Descrição do lembrete")
+                .setSummary("Tarefa")
+                .setDescription("Descrição da tarefa")
                 .setStart(new EventDateTime().setDateTime(new DateTime("2024-06-10T10:00:00-03:00")))
                 .setEnd(new EventDateTime().setDateTime(new DateTime("2024-06-10T10:30:00-03:00")));
 
         service.events().insert("primary", event).execute();
-        System.out.println("Evento criado com sucesso!");
+        System.out.println("Tarefa criada com sucesso!");
     }
 }

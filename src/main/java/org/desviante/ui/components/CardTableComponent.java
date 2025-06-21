@@ -8,7 +8,7 @@ import javafx.scene.layout.VBox;
 import org.desviante.service.CardService;
 import org.desviante.persistence.entity.BoardEntity;
 import org.desviante.util.AlertUtils;
-import org.desviante.persistence.entity.ReminderEntity;
+import org.desviante.persistence.entity.TaskEntity;
 
 import java.util.function.Consumer;
 import java.sql.Connection;
@@ -145,21 +145,19 @@ public class CardTableComponent {
         Button saveButton = new Button("Salvar");
         Button cancelButton = new Button("Cancelar");
         Button deleteButton = new Button("Excluir");
-        Button reminderButton = new Button("Lembrete");
-        buttons.getChildren().addAll(saveButton, cancelButton, deleteButton, reminderButton);
+        Button taskButton = new Button("Tarefa");
+        buttons.getChildren().addAll(saveButton, cancelButton, deleteButton, taskButton);
 
         saveButton.setOnAction(e -> saveEdition(card, titleField, descArea, cardBox, titleLabel, descLabel, buttons, tableView, columnDisplay, loadBoardsConsumer));
         cancelButton.setOnAction(e -> restoreOriginalView(cardBox, titleLabel, descLabel, titleField, descArea, buttons));
         deleteButton.setOnAction(e -> deleteCard(card, cardBox, boardTableView, loadBoardsConsumer, columnDisplay));
-        reminderButton.setOnAction(e -> setReminder(card, cardBox, titleLabel, descLabel, titleField, descArea, buttons, tableView, columnDisplay, loadBoardsConsumer));
-
-        // Lógica do botão de lembrete pode ser implementada aqui
+        taskButton.setOnAction(e -> setTask(card, cardBox, titleLabel, descLabel, titleField, descArea, buttons, tableView, columnDisplay, loadBoardsConsumer));
 
         return buttons;
     }
 
-    // Metodo para definir lembrete
-    private static void setReminder(
+    // Metodo para definir tarefa
+    private static void setTask(
             CardEntity card,
             VBox cardBox,
             Label titleLabel,
@@ -171,15 +169,15 @@ public class CardTableComponent {
             VBox columnDisplay,
             Consumer<TableView> loadBoardsConsumer
     ) {
-        Dialog<ReminderEntity> dialog = new Dialog<>();
-        dialog.setTitle("Definir Lembrete");
+        Dialog<TaskEntity> dialog = new Dialog<>();
+        dialog.setTitle("Definir Tarefa");
 
         // Campos de entrada
         DatePicker datePicker = new DatePicker();
         TextField timeField = new TextField();
         timeField.setPromptText("HH:mm");
         TextArea messageArea = new TextArea();
-        messageArea.setPromptText("Mensagem do lembrete");
+        messageArea.setPromptText("Descrição da tarefa");
 
         VBox content = new VBox(8, new Label("Data:"), datePicker, new Label("Hora:"), timeField, new Label("Mensagem:"), messageArea);
         dialog.getDialogPane().setContent(content);
@@ -195,12 +193,12 @@ public class CardTableComponent {
                     var dateTime = java.time.LocalDateTime.of(date, time);
                     String message = messageArea.getText().trim();
                     if (date == null || message.isEmpty()) return null;
-                    ReminderEntity reminder = new ReminderEntity();
-                    reminder.setDateTime(dateTime);
-                    reminder.setMessage(message);
-                    reminder.setSent(false);
-                    reminder.setCard(card);
-                    return reminder;
+                    TaskEntity task = new TaskEntity();
+                    task.setDue(dateTime);
+                    task.setNotes(message);
+                    task.setSent(false);
+                    task.setCard(card);
+                    return task;
                 } catch (Exception ex) {
                     AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", "Data ou hora inválida.");
                     return null;
@@ -209,22 +207,22 @@ public class CardTableComponent {
             return null;
         });
 
-        dialog.showAndWait().ifPresent(reminder -> {
-            // Aqui você pode salvar o lembrete no banco de dados
+        dialog.showAndWait().ifPresent(task -> {
+            // Aqui você pode salvar a tarefa no banco de dados
             try (Connection connection = getConnection()) {
                 System.out.println("Banco em uso: " + connection.getMetaData().getURL());
-                String sql = "INSERT INTO reminders (date_time, message, sent, card_id) VALUES (?, ?, ?, ?)";
+                String sql = "INSERT INTO tasks (date_time, message, sent, card_id) VALUES (?, ?, ?, ?)";
                 try (var ps = connection.prepareStatement(sql)) {
-                    ps.setTimestamp(1, Timestamp.valueOf(reminder.getDateTime()));
-                    ps.setString(2, reminder.getMessage());
-                    ps.setInt(3, reminder.isSent() ? 1 : 0); // Para SQLite
+                    ps.setTimestamp(1, Timestamp.valueOf(task.getDue()));
+                    ps.setString(2, task.getNotes());
+                    ps.setInt(3, task.isSent() ? 1 : 0); // Para SQLite
                     ps.setLong(4, card.getId());
                     ps.executeUpdate();
                 }
-                AlertUtils.showAlert(Alert.AlertType.INFORMATION, "Lembrete", "Lembrete salvo com sucesso!");
+                AlertUtils.showAlert(Alert.AlertType.INFORMATION, "Tarefa", "Tarefa salva com sucesso!");
             } catch (SQLException ex) {
-                logger.error("Erro ao salvar lembrete", ex);
-                AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", "Erro ao salvar lembrete: " + ex.getMessage());
+                logger.error("Erro ao salvar tarefa", ex);
+                AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", "Erro ao salvar tarefa: " + ex.getMessage());
             }
         });
     }

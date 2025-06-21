@@ -40,3 +40,8 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+## Credentials and keys ##
+!**/src/main/resourcers/credentials.json
+!**/src/test/resources/credentials.json
+!**/src/test/credentials.json
