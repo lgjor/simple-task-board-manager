@@ -5,7 +5,6 @@ module org.desviante.board {
     requires org.slf4j;
     requires org.xerial.sqlitejdbc;
     requires java.smartcardio;
-    requires lombok;
 
     // google
     requires com.google.api.services.tasks;
@@ -13,6 +12,7 @@ module org.desviante.board {
     requires com.google.api.client.json.jackson2;
     requires com.google.api.client.auth;
     requires com.google.api.client;
+    requires static lombok;
 
     exports org.desviante;
     exports org.desviante.persistence.entity;

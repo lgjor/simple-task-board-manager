@@ -1,14 +1,13 @@
 package org.desviante.persistence.config;
 
 import lombok.NoArgsConstructor;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.io.File;
 
-import static lombok.AccessLevel.PRIVATE;
-
-@NoArgsConstructor(access = PRIVATE)
+@NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 public final class ConnectionConfig {
 
     private static Connection connection;

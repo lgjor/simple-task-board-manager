@@ -29,10 +29,6 @@ import static org.desviante.persistence.config.ConnectionConfig.getConnection;
 
 public class Main extends Application {
 
-    static {
-        System.load("F:/javafx-sdk-24.0.1/bin/api-ms-win-core-console-l1-1-0.dll");
-    }
-
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
     private final ObservableList<BoardEntity> boardList = FXCollections.observableArrayList();
     private VBox columnDisplay;
