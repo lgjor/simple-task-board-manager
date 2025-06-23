@@ -121,11 +121,11 @@ public class CardService {
             var dto = optional.orElseThrow(
                     () -> new EntityNotFoundException("O card de id %s não foi encontrado".formatted(cardId))
             );
-            if (dto.blocked()) {
+            if (dto.isBlocked()) {
                 throw new CardBlockedException("O card está bloqueado e não pode ser movido.");
             }
             var currentColumn = boardColumnsInfo.stream()
-                    .filter(bc -> bc.id().equals(dto.columnId()))
+                    .filter(bc -> bc.id().equals(dto.getBoardColumn().getId()))
                     .findFirst()
                     .orElseThrow(() -> new IllegalStateException("O card informado pertence a outro board"));
             if (currentColumn.kind().equals(FINAL)) {
@@ -157,11 +157,11 @@ public class CardService {
             var dto = optional.orElseThrow(
                     () -> new EntityNotFoundException("O card de id %s não foi encontrado".formatted(cardId))
             );
-            if (dto.blocked()) {
+            if (dto.isBlocked()) {
                 throw new CardBlockedException("O card está bloqueado e não pode ser movido.");
             }
             var currentColumn = boardColumnsInfo.stream()
-                    .filter(bc -> bc.id().equals(dto.columnId()))
+                    .filter(bc -> bc.id().equals(dto.getBoardColumn().getId()))
                     .findFirst()
                     .orElseThrow(() -> new IllegalStateException("O card informado pertence a outro board"));
             if (currentColumn.kind().equals(FINAL)) {
@@ -187,11 +187,11 @@ public class CardService {
             var dto = optional.orElseThrow(
                     () -> new EntityNotFoundException("O card de id %s não foi encontrado".formatted(id))
             );
-            if (dto.blocked()) {
+            if (dto.isBlocked()) {
                 throw new CardBlockedException("O card já está bloqueado.");
             }
             var currentColumn = boardColumnsInfo.stream()
-                    .filter(bc -> bc.id().equals(dto.columnId()))
+                    .filter(bc -> bc.id().equals(dto.getBoardColumn().getId()))
                     .findFirst()
                     .orElseThrow();
             if (currentColumn.kind().equals(FINAL) || currentColumn.kind().equals(CANCEL)) {
@@ -210,7 +210,7 @@ public class CardService {
             var dto = optional.orElseThrow(
                     () -> new EntityNotFoundException("O card de id %s não foi encontrado".formatted(id))
             );
-            if (!dto.blocked()) {
+            if (!dto.isBlocked()) {
                 throw new CardBlockedException("O card não está bloqueado.");
             }
             var blockDAO = new BlockDAO();
@@ -221,11 +221,15 @@ public class CardService {
 
     // Verifica se o CardService está implementado corretamente
     public CardEntity findById(Long id) throws SQLException {
-        String sql = "SELECT c.id, c.title, c.description, c.board_column_id, " +
-                "bc.name as column_name, bc.kind as column_kind " +
-                "FROM cards c " +
-                "JOIN boards_columns bc ON c.board_column_id = bc.id " +
-                "WHERE c.id = ?";
+        String sql = """
+        SELECT c.id, c.title, c.description, c.board_column_id, 
+               bc.name AS column_name, bc.kind AS column_kind,
+               b.id AS board_id, b.name AS board_name
+        FROM cards c
+        JOIN boards_columns bc ON c.board_column_id = bc.id
+        JOIN boards b ON bc.board_id = b.id
+        WHERE c.id = ?
+        """;
 
         try (Connection connection = getConnection();
              var statement = connection.prepareStatement(sql)) {
@@ -238,15 +242,20 @@ public class CardService {
                     card.setTitle(resultSet.getString("title"));
                     card.setDescription(resultSet.getString("description"));
 
+                    BoardEntity board = new BoardEntity();
+                    board.setId(resultSet.getLong("board_id"));
+                    board.setName(resultSet.getString("board_name"));
+                    System.out.println("METODO ATUALIZADO: board_name: " + resultSet.getString("board_name"));
+
                     BoardColumnEntity column = new BoardColumnEntity();
                     column.setId(resultSet.getLong("board_column_id"));
                     column.setName(resultSet.getString("column_name"));
                     String kindStr = resultSet.getString("column_kind");
                     BoardColumnKindEnum kind = BoardColumnKindEnum.valueOf(kindStr.trim().toUpperCase());
                     column.setKind(kind);
-
+                    column.setBoard(board);
                     card.setBoardColumn(column);
-
+                    card.setBoard(board);
                     return card;
                 }
             }

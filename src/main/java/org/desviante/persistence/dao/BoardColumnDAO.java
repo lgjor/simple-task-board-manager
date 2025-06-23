@@ -3,6 +3,7 @@ package org.desviante.persistence.dao;
 import org.desviante.dto.BoardColumnDTO;
 import org.desviante.persistence.entity.BoardColumnEntity;
 import org.desviante.persistence.entity.BoardColumnKindEnum;
+import org.desviante.persistence.entity.BoardEntity;
 import org.desviante.persistence.entity.CardEntity;
 import lombok.RequiredArgsConstructor;
 import static org.desviante.persistence.config.ConnectionConfig.getConnection;
@@ -104,33 +105,50 @@ public class BoardColumnDAO {
                bc.kind AS column_kind, 
                c.id AS card_id, 
                c.title AS card_title, 
-               c.description AS card_description
+               c.description AS card_description,
+               b.id AS board_id,
+               b.name AS board_name
           FROM boards_columns bc
-     LEFT JOIN CARDS c 
-            ON c.board_column_id = bc.id
+          INNER JOIN boards b ON bc.board_id = b.id
+          LEFT JOIN CARDS c ON c.board_column_id = bc.id
          WHERE bc.board_id = ?
       ORDER BY bc.order_index, c.id;
     """;
+
         try (Connection connection = getConnection();
              var statement = connection.prepareStatement(sql)) {
             statement.setLong(1, boardId);
             var resultSet = statement.executeQuery();
+
             BoardColumnEntity currentColumn = null;
+            BoardEntity board = null;
+
             while (resultSet.next()) {
+                if (board == null) {
+                    board = new BoardEntity();
+                    board.setId(resultSet.getLong("board_id"));
+                    board.setName(resultSet.getString("board_name"));
+                }
+
                 Long columnId = resultSet.getLong("column_id");
+
                 if (currentColumn == null || !currentColumn.getId().equals(columnId)) {
                     currentColumn = new BoardColumnEntity();
                     currentColumn.setId(columnId);
                     currentColumn.setName(resultSet.getString("column_name"));
                     currentColumn.setOrder_index(resultSet.getInt("column_order"));
                     currentColumn.setKind(findByName(resultSet.getString("column_kind")));
+                    currentColumn.setBoard(board);
                     entities.add(currentColumn);
                 }
+
                 if (resultSet.getLong("card_id") != 0) {
                     var card = new CardEntity();
                     card.setId(resultSet.getLong("card_id"));
                     card.setTitle(resultSet.getString("card_title"));
                     card.setDescription(resultSet.getString("card_description"));
+                    card.setBoard(board);
+                    card.setBoardColumn(currentColumn);
                     currentColumn.addCard(card);
                 }
             }
@@ -189,44 +207,62 @@ public class BoardColumnDAO {
         return columns;
     }
 
-    public Optional<BoardColumnEntity> findById(final Long boardId) throws SQLException {
-        var sql =
-                """
-                SELECT bc.name,
-                       bc.kind,
-                       c.id,
-                       c.title,
-                       c.description
-                  FROM boards_columns bc
-                  LEFT JOIN CARDS c
-                    ON c.board_column_id = bc.id
-                 WHERE bc.id = ?;
-                """;
+    public Optional<BoardColumnEntity> findById(final Long columnId) throws SQLException {
+        var sql = """
+        SELECT bc.name,
+               bc.kind,
+               c.id AS card_id,
+               c.title AS card_title,
+               c.description AS card_description
+          FROM boards_columns bc
+          LEFT JOIN CARDS c
+            ON c.board_column_id = bc.id
+         WHERE bc.id = ?;
+    """;
+
         try (Connection connection = getConnection();
              var statement = connection.prepareStatement(sql)) {
-            statement.setLong(1, boardId);
+
+            statement.setLong(1, columnId);
             var resultSet = statement.executeQuery();
+
             if (resultSet.next()) {
                 var entity = new BoardColumnEntity();
-                entity.setName(resultSet.getString("bc.name"));
-                entity.setKind(findByName(resultSet.getString("bc.kind")));
+                entity.setId(columnId);
+                entity.setName(resultSet.getString("name"));
+                entity.setKind(findByName(resultSet.getString("kind")));
+
+                BoardEntity board = new BoardEntity();
+                board.setId(getBoardIdFromColumn(connection, columnId));
+                entity.setBoard(board);
+
                 do {
-                    var card = new CardEntity();
-                    if (isNull(resultSet.getString("c.title"))) {
-                        break;
+                    Long cardId = resultSet.getObject("card_id", Long.class);
+                    if (cardId != null) {
+                        var card = new CardEntity();
+                        card.setId(cardId);
+                        card.setTitle(resultSet.getString("card_title"));
+                        card.setDescription(resultSet.getString("card_description"));
+                        card.setBoardColumn(entity);
+                        entity.getCards().add(card);
                     }
-                    card.setId(resultSet.getLong("c.id"));
-                    card.setTitle(resultSet.getString("c.title"));
-                    card.setDescription(resultSet.getString("c.description"));
-                    entity.getCards().add(card);
                 } while (resultSet.next());
+
                 return Optional.of(entity);
             }
+
             return Optional.empty();
         }
     }
 
-    // Método para atualizar a coluna de um cartão
+    public BoardEntity findBoardWithColumns(Long boardId) throws SQLException {
+        BoardEntity board = new BoardEntity();
+        board.setId(boardId);
+        board.setBoardColumns(findByBoardId(boardId));
+        return board;
+    }
+
+    // Metodo para atualizar a coluna de um cartão
     public void updateCardColumn(Long cardId, Long columnId) {
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);

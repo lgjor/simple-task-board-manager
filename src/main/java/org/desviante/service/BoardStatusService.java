@@ -21,10 +21,6 @@ public class BoardStatusService {
             return "Não configurado";
         }
 
-        // Imprime informações de debug para verificar as colunas do board
-        System.out.println("Board ID: " + board.getId() + ", Nome: " + board.getName());
-        System.out.println("Número de colunas: " + board.getBoardColumns().size());
-
         for (BoardColumnEntity column : board.getBoardColumns()) {
             System.out.println("Coluna: " + column.getName() +
                     ", Tipo: " + column.getKind() +

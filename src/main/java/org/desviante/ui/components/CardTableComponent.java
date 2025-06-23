@@ -1,8 +1,10 @@
 package org.desviante.ui.components;
 
+import com.google.api.services.tasks.model.Task;
 import javafx.application.Platform;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
+import org.desviante.integration.google.GoogleTaskIntegration;
 import org.desviante.persistence.entity.CardEntity;
 import javafx.scene.layout.VBox;
 import org.desviante.service.CardService;
@@ -11,6 +13,9 @@ import org.desviante.util.AlertUtils;
 import org.desviante.persistence.entity.TaskEntity;
 
 import org.desviante.util.DateTimeConversion;
+
+import java.time.OffsetDateTime;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -175,13 +180,12 @@ public class CardTableComponent {
         TextField listTitle = new TextField();
         listTitle.setPromptText("Lista da tarefa");
         // Sugere o título do board, se houver
-        if (card.getBoardColumn() != null &&
-                card.getBoardColumn().getBoard() != null &&
-                card.getBoardColumn().getBoard().getName() != null &&
-                !card.getBoardColumn().getBoard().getName().isBlank()) {
-
-            listTitle.setText(card.getBoardColumn().getBoard().getName());
+        String boardTitle = "";
+        if (card.getBoardColumn() != null && card.getBoardColumn().getBoard() != null) {
+            boardTitle = card.getBoardColumn().getBoard().getName();
         }
+        listTitle.setText(boardTitle);
+
         TextField titleArea = new TextField();
         titleArea.setPromptText("Título da tarefa");
         if (card.getTitle() != null && !card.getTitle().isBlank()) {
@@ -212,11 +216,32 @@ public class CardTableComponent {
             if (dialogButton == okButtonType) {
                 try {
                     var date = datePicker.getValue();
-                    var time = java.time.LocalTime.parse(timeField.getText());
-                    if (date == null) return null;
+                    if (date == null) {
+                        AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", "Por favor, selecione uma data.");
+                        return null;
+                    }
+
+                    var timeText = timeField.getText().trim();
+                    if (timeText.isEmpty()) {
+                        AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", "Por favor, informe o horário no formato HH:mm.");
+                        return null;
+                    }
+
+                    java.time.LocalTime time;
+                    try {
+                        time = java.time.LocalTime.parse(timeText);
+                    } catch (Exception ex) {
+                        AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", "Formato de hora inválido. Use o formato HH:mm, por exemplo 14:30.");
+                        return null;
+                    }
+
                     var due = DateTimeConversion.toOffsetDateTime(date, time);
                     String message = messageArea.getText().trim();
-                    if (message.isEmpty()) return null;
+                    if (message.isEmpty()) {
+                        AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", "A descrição da tarefa não pode estar vazia.");
+                        return null;
+                    }
+
                     TaskEntity task = new TaskEntity();
                     task.setListTitle(listTitle.getText().trim());
                     task.setTitle(titleArea.getText().trim());
@@ -224,9 +249,14 @@ public class CardTableComponent {
                     task.setNotes(message);
                     task.setSent(false);
                     task.setCard(card);
+
+                    GoogleTaskIntegration.createTaskFromCard(task.getListTitle(), task);
+
                     return task;
+
                 } catch (Exception ex) {
-                    AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", "Data ou hora inválida.");
+                    AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro inesperado", ex.getMessage());
+                    ex.printStackTrace();
                     return null;
                 }
             }
@@ -236,6 +266,20 @@ public class CardTableComponent {
         dialog.showAndWait().ifPresent(task -> {
             try (Connection connection = getConnection()) {
                 System.out.println("Banco em uso: " + connection.getMetaData().getURL());
+
+                if (task.getDue() == null) {
+                    throw new SQLException("Data/hora inválida ou ausente.");
+                }
+                if (task.getListTitle() == null || task.getListTitle().isBlank()) {
+                    throw new SQLException("Título da lista não pode ser vazio.");
+                }
+                if (task.getTitle() == null || task.getTitle().isBlank()) {
+                    throw new SQLException("Título da tarefa não pode ser vazio.");
+                }
+                if (card.getId() == null) {
+                    throw new SQLException("O card associado não possui ID.");
+                }
+
                 String sql = "INSERT INTO tasks (date_time, message, sent, card_id, listTitle, title) VALUES (?, ?, ?, ?, ?, ?)";
                 try (var ps = connection.prepareStatement(sql)) {
                     ps.setTimestamp(1, java.sql.Timestamp.valueOf(task.getDue().toLocalDateTime()));
@@ -244,8 +288,22 @@ public class CardTableComponent {
                     ps.setLong(4, card.getId());
                     ps.setString(5, task.getListTitle());
                     ps.setString(6, task.getTitle());
+
+                    System.out.println("Inserindo tarefa:");
+                    System.out.println("  Due: " + task.getDue());
+                    System.out.println("  Message: " + task.getNotes());
+                    System.out.println("  Sent: " + task.isSent());
+                    System.out.println("  Card ID: " + card.getId());
+                    System.out.println("  List Title: " + task.getListTitle());
+                    System.out.println("  Title: " + task.getTitle());
+
                     ps.executeUpdate();
                 }
+
+                if (!connection.getAutoCommit()) {
+                    connection.commit();
+                }
+
                 AlertUtils.showAlert(Alert.AlertType.INFORMATION, "Tarefa", "Tarefa salva com sucesso!");
             } catch (SQLException ex) {
                 logger.error("Erro ao salvar tarefa", ex);

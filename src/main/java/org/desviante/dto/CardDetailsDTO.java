@@ -10,6 +10,15 @@ public record CardDetailsDTO(Long id,
                              String blockReason,
                              int blocksAmount,
                              Long columnId,
-                             String columnName
+                             String columnName,
+                             Long boardId,
+                             String boardName
 ) {
+    public Long boardColumnId() {
+        return columnId;
+    }
+
+    public String boardColumnName() {
+        return columnName;
+    }
 }

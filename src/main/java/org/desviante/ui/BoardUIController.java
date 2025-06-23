@@ -140,18 +140,21 @@ public class BoardUIController {
         BoardEditDialog dialog = new BoardEditDialog(selectedBoard.getName());
         var result = dialog.showAndWait();
 
-        if (result.isEmpty() || result.get().trim().isEmpty()) {
-            AlertUtils.showAlert(Alert.AlertType.WARNING, "Título inválido", "O título não pode estar vazio.");
-            return;
-        }
+        if (result.isPresent()) {
+            String newName = result.get().trim();
+            if (newName.isEmpty()) {
+                AlertUtils.showAlert(Alert.AlertType.WARNING, "Título inválido", "O título não pode estar vazio.");
+                return;
+            }
 
-        try {
-            selectedBoard.setName(result.get().trim());
-            boardController.updateBoard(selectedBoard);
-            tableView.refresh();
-            AlertUtils.showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Board atualizado com sucesso!");
-        } catch (Exception ex) {
-            AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", "Erro ao atualizar o board: " + ex.getMessage());
+            try {
+                selectedBoard.setName(newName);
+                boardController.updateBoard(selectedBoard);
+                tableView.refresh();
+                AlertUtils.showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Board atualizado com sucesso!");
+            } catch (Exception ex) {
+                AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", "Erro ao atualizar o board: " + ex.getMessage());
+            }
         }
     }
 

@@ -2,9 +2,7 @@ package org.desviante.persistence.entity;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import lombok.*;
 import javafx.beans.property.LongProperty;
 import javafx.beans.property.SimpleLongProperty;
 
@@ -17,8 +15,10 @@ import static org.desviante.persistence.entity.BoardColumnKindEnum.INITIAL;
 
 @Data
 public class BoardEntity {
-
+    @Getter
     private Long id;
+    @Setter
+    @Getter
     private String name;
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
@@ -155,6 +155,12 @@ public class BoardEntity {
             }
         }
         return numeroDeCards == 0 ? 0.0 : ((cards * 100.0) / numeroDeCards);
+    }
+
+    // Metodo para adicionar a coluna do Board
+    public void addBoardColumn(BoardColumnEntity column) {
+        column.setBoard(this);       // Garante o vínculo
+        this.boardColumns.add(column);
     }
 }
 

@@ -2,7 +2,6 @@ package org.desviante.persistence.dao;
 
 import org.desviante.persistence.entity.BoardEntity;
 import lombok.AllArgsConstructor;
-import static org.desviante.persistence.config.ConnectionConfig.getConnection;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -22,10 +21,14 @@ public class BoardDAO {
             statement.setLong(1, id);
             try (var resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
+
                     var entity = new BoardEntity();
                     entity.setId(resultSet.getLong("id"));
                     entity.setName(resultSet.getString("name"));
+
                     return Optional.of(entity);
+                } else {
+                    System.out.println("DEBUG: Nenhum board encontrado com id = " + id);
                 }
             }
         }
@@ -41,6 +44,11 @@ public class BoardDAO {
                 BoardEntity board = new BoardEntity();
                 board.setId(rs.getLong("id"));
                 board.setName(rs.getString("name"));
+
+                // Debug - para verificar se está lendo corretamente do banco
+                System.out.println("Nome do board no ResultSet: " + rs.getString("name"));
+                System.out.println("Nome do board no objeto: " + board.getName());
+
                 boards.add(board);
             }
         }

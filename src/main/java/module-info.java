@@ -12,6 +12,7 @@ module org.desviante.board {
     requires java.base;
     requires com.google.api.client.json.jackson2;
     requires com.google.api.client.auth;
+    requires com.google.api.client;
 
     exports org.desviante;
     exports org.desviante.persistence.entity;
