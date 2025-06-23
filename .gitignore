@@ -46,3 +46,4 @@ bin/
 !**/src/test/resources/credentials.json
 !**/src/test/credentials.json
 /src/main/resources/credentials.json
+/tokens/
