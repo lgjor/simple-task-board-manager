@@ -15,7 +15,6 @@ import com.google.api.services.tasks.TasksScopes;
 import com.google.api.services.tasks.model.Task;
 import com.google.api.services.tasks.model.TaskList;
 import org.desviante.persistence.entity.TaskEntity;
-import com.google.api.client.util.DateTime;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -24,7 +23,6 @@ import java.io.InputStreamReader;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 public class GoogleTaskIntegration {

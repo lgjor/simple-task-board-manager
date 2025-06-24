@@ -5,6 +5,8 @@ module org.desviante.board {
     requires org.slf4j;
     requires org.xerial.sqlitejdbc;
     requires java.smartcardio;
+    requires java.sql;
+    requires java.desktop;
 
     // google
     requires com.google.api.services.tasks;

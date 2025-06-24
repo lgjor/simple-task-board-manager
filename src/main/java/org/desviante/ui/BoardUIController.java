@@ -19,6 +19,7 @@ import org.desviante.ui.components.BoardTableComponent;
 import org.desviante.ui.components.BoardEditDialog;
 import org.desviante.ui.components.BoardDoubleClickListener;
 import org.desviante.util.AlertUtils;
+import org.desviante.integration.google.GoogleTasksLinkApp;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -57,13 +58,17 @@ public class BoardUIController {
         Button refreshButton = new Button("Atualizar");
         refreshButton.setOnAction(e -> BoardTableComponent.loadBoards(tableView, boardList, columnDisplay));
 
-        // Botão para autenticar com o Google Calendar
+        // Botão para autenticar com o Google Task
         Button googleAuthButton = new Button("Vincular Google");
         GoogleAuthController.setupGoogleAuthButton(googleAuthButton);
 
+        // Botão para acessar o Google Task
+        Button googleTaskLink = new Button("Google Task");
+        googleTaskLink.setOnAction(event -> GoogleTasksLinkApp.abrirGoogleTasks());
+
         Button createCardButton = getCreateCardButton(tableView);
 
-        VBox actionButtons = new VBox(10, createBoardButton, editBoardButton, deleteBoardButton, refreshButton, createCardButton, googleAuthButton);
+        VBox actionButtons = new VBox(10, createBoardButton, editBoardButton, deleteBoardButton, refreshButton, createCardButton, googleAuthButton, googleTaskLink);
         actionButtons.setPadding(new Insets(10));
 
         return actionButtons;
