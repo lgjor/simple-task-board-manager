@@ -40,6 +40,8 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-annotations:2.14")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.14")
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
+    testImplementation("org.testfx:testfx-junit5:4.0.17")
+    testImplementation("org.hamcrest:hamcrest:3.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     compileOnly("org.projectlombok:lombok:1.18.38")
     annotationProcessor("org.projectlombok:lombok:1.18.38")

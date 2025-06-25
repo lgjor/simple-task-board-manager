@@ -11,6 +11,7 @@ import org.desviante.persistence.entity.BoardColumnEntity;
 import org.desviante.persistence.entity.BoardEntity;
 import org.desviante.persistence.entity.CardEntity;
 import org.desviante.service.BoardQueryService;
+import org.desviante.service.BoardService;
 import org.desviante.service.BoardStatusService;
 import java.time.format.DateTimeFormatter;
 import javafx.beans.property.SimpleStringProperty;
@@ -192,27 +193,20 @@ public class BoardTableComponent {
         return columnBox;
     }
 
-    public static void loadBoards(TableView<BoardEntity> tableView, ObservableList<BoardEntity> boardList, VBox columnDisplay) {
+    public static void loadBoards(TableView<BoardEntity> tableView,
+                                  ObservableList<BoardEntity> boardList,
+                                  VBox columnDisplay) {
         BoardEntity selectedBefore = tableView.getSelectionModel().getSelectedItem();
         Long selectedId = selectedBefore != null ? selectedBefore.getId() : null;
         boardList.clear();
 
-        try (Connection connection = getConnection()) {
-            BoardQueryService queryService = new BoardQueryService();
-            List<BoardEntity> boards = queryService.findAll();
-
-            // Carrega as colunas e cards para cada board
-            for (BoardEntity board : boards) {
-                var optionalBoard = queryService.findById(board.getId());
-                optionalBoard.ifPresent(fullBoard -> board.setBoardColumns(fullBoard.getBoardColumns()));
-            }
-
+        try {
+            List<BoardEntity> boards = BoardService.loadBoardsFromDatabase();
             boardList.addAll(boards);
-            //tableView.setItems(boardList);
+
             createBoardColumns(tableView, boardList);
             tableView.refresh();
 
-            // Seleciona o board anterior ou o primeiro
             BoardEntity toSelect = null;
             if (selectedId != null) {
                 for (BoardEntity board : boardList) {
@@ -227,15 +221,64 @@ public class BoardTableComponent {
             }
             if (toSelect != null) {
                 tableView.getSelectionModel().select(toSelect);
-                BoardTableComponent.loadBoardColumnsAndCards(toSelect, columnDisplay, tableView);
+                loadBoardColumnsAndCards(toSelect, columnDisplay, tableView);
             } else {
                 columnDisplay.getChildren().clear();
             }
+
         } catch (SQLException ex) {
             logger.error("Erro ao carregar boards", ex);
-            AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro ao carregar boards", "Ocorreu um erro ao carregar os boards: " + ex.getMessage());
+            if (Platform.isFxApplicationThread()) {
+                AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro ao carregar boards",
+                        "Ocorreu um erro ao carregar os boards: " + ex.getMessage());
+            }
         }
     }
+
+//    public static void loadBoards(TableView<BoardEntity> tableView, ObservableList<BoardEntity> boardList, VBox columnDisplay) {
+//        BoardEntity selectedBefore = tableView.getSelectionModel().getSelectedItem();
+//        Long selectedId = selectedBefore != null ? selectedBefore.getId() : null;
+//        boardList.clear();
+//
+//        try (Connection connection = getConnection()) {
+//            BoardQueryService queryService = new BoardQueryService();
+//            List<BoardEntity> boards = queryService.findAll();
+//
+//            // Carrega as colunas e cards para cada board
+//            for (BoardEntity board : boards) {
+//                var optionalBoard = queryService.findById(board.getId());
+//                optionalBoard.ifPresent(fullBoard -> board.setBoardColumns(fullBoard.getBoardColumns()));
+//            }
+//
+//            boardList.addAll(boards);
+//            //tableView.setItems(boardList);
+//            createBoardColumns(tableView, boardList);
+//            tableView.refresh();
+//
+//            // Seleciona o board anterior ou o primeiro
+//            BoardEntity toSelect = null;
+//            if (selectedId != null) {
+//                for (BoardEntity board : boardList) {
+//                    if (board.getId().equals(selectedId)) {
+//                        toSelect = board;
+//                        break;
+//                    }
+//                }
+//            }
+//            if (toSelect == null && !boardList.isEmpty()) {
+//                toSelect = boardList.get(0);
+//            }
+//            if (toSelect != null) {
+//                tableView.getSelectionModel().select(toSelect);
+//                BoardTableComponent.loadBoardColumnsAndCards(toSelect, columnDisplay, tableView);
+//            } else {
+//                columnDisplay.getChildren().clear();
+//            }
+//        } catch (SQLException ex) {
+//            logger.error("Erro ao carregar boards", ex);
+//            AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro ao carregar boards", "Ocorreu um erro ao carregar os boards: " + ex.getMessage());
+//        }
+//    }
 
     public static void loadBoardColumnsAndCards(BoardEntity board, VBox columnDisplay, TableView<BoardEntity> tableView) {
         columnDisplay.getChildren().clear();
@@ -376,4 +419,5 @@ public class BoardTableComponent {
             logger.error("Erro ao atualizar a visualização do board", e);
         }
     }
+
 }

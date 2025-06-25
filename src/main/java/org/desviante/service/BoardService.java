@@ -16,6 +16,18 @@ public class BoardService {
         return boardDAO.findAll();
     }
 
+    public static List<BoardEntity> loadBoardsFromDatabase() throws SQLException {
+        BoardQueryService queryService = new BoardQueryService();
+        List<BoardEntity> boards = queryService.findAll();
+
+        for (BoardEntity board : boards) {
+            var optionalBoard = queryService.findById(board.getId());
+            optionalBoard.ifPresent(fullBoard -> board.setBoardColumns(fullBoard.getBoardColumns()));
+        }
+
+        return boards;
+    }
+
     public void insert(BoardEntity board) throws SQLException {
         var sql = "INSERT INTO boards (name) VALUES (?)";
         try (Connection connection = getConnection();
