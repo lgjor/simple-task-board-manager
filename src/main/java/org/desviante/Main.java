@@ -1,13 +1,11 @@
 package org.desviante;
 
 import org.desviante.persistence.entity.BoardEntity;
-import org.desviante.service.BoardService;
-import org.desviante.ui.components.BoardAccordion;
+
 import org.desviante.ui.components.BoardTableComponent;
 import org.desviante.controller.BoardController;
 import org.desviante.controller.CardController;
 import org.desviante.ui.BoardUIController;
-import org.desviante.ui.CardUIController;
 import org.desviante.util.AlertUtils;
 
 import javafx.application.Platform;
@@ -22,6 +20,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import java.sql.Connection;
 
+import org.desviante.util.JacksonFactoryKeepAlive;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,6 +96,7 @@ public class Main extends Application {
     }
 
     public static void main(String[] args) {
+        JacksonFactoryKeepAlive.ensureUsed(); // força jlink a incluir jackson-core
         launch(args);
     }
 }

@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "br.com.dio"
-version = "1.0.8"
+version = "1.0.9"
 
 repositories {
     mavenCentral()
@@ -14,10 +14,10 @@ repositories {
     maven { url = uri("https://maven.google.com") }
 }
 
-repositories {
-    mavenCentral()
-    maven { url = uri ("https://repo1.maven.org/maven2/") }
-}
+// {
+//    mavenCentral()
+//    maven { url = uri ("https://repo1.maven.org/maven2/") }
+//}
 
 dependencies {
     implementation("org.openjfx:javafx-controls:21")
@@ -31,14 +31,15 @@ dependencies {
     implementation("org.slf4j:slf4j-api:2.0.13")
     implementation("ch.qos.logback:logback-classic:1.4.14")
     // Google Tasks API
+    //runtimeOnly("com.google.apis:google-api-services-tasks:v1-rev71-1.25.0") removido
     implementation("com.google.api-client:google-api-client:2.8.0")
     implementation("com.google.oauth-client:google-oauth-client-jetty:1.39.0")
     implementation("com.google.apis:google-api-services-tasks:v1-rev20250518-2.0.0")
-    implementation("com.google.http-client:google-http-client-jackson2:1.47.0")
-    runtimeOnly("com.google.apis:google-api-services-tasks:v1-rev71-1.25.0")
-    implementation("com.fasterxml.jackson.core:jackson-core:2.14")
-    implementation("com.fasterxml.jackson.core:jackson-annotations:2.14")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.14")
+    implementation("com.google.http-client:google-http-client:1.47.0")
+    implementation("com.google.http-client:google-http-client-jackson2:1.43.3")
+    implementation("com.fasterxml.jackson.core:jackson-core:2.13.3")
+    implementation("com.fasterxml.jackson.core:jackson-annotations:2.13.3")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.3")
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
     testImplementation("org.testfx:testfx-junit5:4.0.17")
     testImplementation("org.hamcrest:hamcrest:3.0")
@@ -66,7 +67,7 @@ javafx {
 
 application {
     mainClass.set("org.desviante.Main")
-    mainModule.set("org.desviante.board")
+   // mainModule.set("org.desviante.board")
 }
 
 sourceSets {
@@ -87,7 +88,9 @@ jlink {
         "--no-man-pages"
     ))
 
-    forceMerge("jackson")
+    forceMerge("jackson-core")
+    forceMerge("jackson-annotations")
+    forceMerge("jackson-databind")
     forceMerge("snakeyaml")
     forceMerge("sqlite-jdbc")
     forceMerge("slf4j")
@@ -99,13 +102,14 @@ jlink {
 
     mergedModule {
         additive = true
-        uses("java.sql.Driver")
+        uses("com.fasterxml.jackson.core.JsonFactory")
         uses("com.fasterxml.jackson.databind.Module")
+        uses("java.sql.Driver")
         uses("com.google.auth.oauth2.OAuth2Credentials")
         uses("io.grpc.ManagedChannelProvider")
     }
 
-    addExtraDependencies("sqlite-jdbc", "jackson-core", "jackson-annotations", "jackson-databind", "google-http-client-jackson2")
+    addExtraDependencies("ALL")
 
     imageZip = project.layout.buildDirectory.file("image-zip/image.zip").get().asFile
 
@@ -123,14 +127,23 @@ jlink {
             "--win-menu",
             "--win-shortcut",
             "--vendor", "AuDesviante",
-            "--app-version", "1.0.8"
+            "--app-version", "1.0.9"
         )
         icon = file("src/main/resources/icon.ico").absolutePath
     }
 
-    tasks.register<JavaExec>("runApp") {
-        classpath = sourceSets["main"].runtimeClasspath
-        mainClass = "org.desviante.Main"
+//    tasks.register<JavaExec>("runApp") {
+//        classpath = sourceSets["main"].runtimeClasspath
+//        mainClass = "org.desviante.Main"
+//    }
+}
+
+configurations.all {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "com.fasterxml.jackson.core") {
+            useVersion("2.13.3")
+            because("Evitar substituição automática pelo jackson-bom:2.18.2")
+        }
     }
 }
 
