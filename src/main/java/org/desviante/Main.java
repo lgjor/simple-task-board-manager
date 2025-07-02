@@ -96,6 +96,7 @@ public class Main extends Application {
     }
 
     public static void main(String[] args) {
+        System.setProperty("https.protocols", "TLSv1.2");
         JacksonFactoryKeepAlive.ensureUsed(); // força jlink a incluir jackson-core
         launch(args);
     }

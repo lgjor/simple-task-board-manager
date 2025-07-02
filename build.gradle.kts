@@ -14,11 +14,6 @@ repositories {
     maven { url = uri("https://maven.google.com") }
 }
 
-// {
-//    mavenCentral()
-//    maven { url = uri ("https://repo1.maven.org/maven2/") }
-//}
-
 dependencies {
     implementation("org.openjfx:javafx-controls:21")
     implementation("org.openjfx:javafx-fxml:21")
@@ -46,6 +41,10 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     compileOnly("org.projectlombok:lombok:1.18.38")
     annotationProcessor("org.projectlombok:lombok:1.18.38")
+
+    // Mockito para mock de dependências
+    testImplementation("org.mockito:mockito-core:5.12.0")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.12.0")
 }
 
 tasks.withType<Test> {
