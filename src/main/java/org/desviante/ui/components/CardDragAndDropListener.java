@@ -3,7 +3,8 @@ package org.desviante.ui.components;
 
 import org.desviante.persistence.entity.CardEntity;
 import org.desviante.persistence.entity.BoardEntity;
-import org.desviante.service.CardService;
+import org.desviante.service.ICardService;
+import org.desviante.service.ProductionCardService;
 import org.desviante.util.AlertUtils;
 import javafx.scene.layout.VBox;
 import javafx.application.Platform;
@@ -21,13 +22,13 @@ public class CardDragAndDropListener implements DragDropListenerInterface {
     private final TableView<BoardEntity> boardTableView;
     private final Consumer<TableView<BoardEntity>> loadBoardsConsumer;
     private final VBox columnDisplay;
-    private final CardService cardService;
+    private final ICardService cardService;
 
     public CardDragAndDropListener(TableView<BoardEntity> boardTableView, Consumer<TableView<BoardEntity>> loadBoardsConsumer, VBox columnDisplay) {
         this.boardTableView = boardTableView;
         this.loadBoardsConsumer = loadBoardsConsumer;
         this.columnDisplay = columnDisplay;
-        this.cardService = new CardService();
+        this.cardService = new ProductionCardService();
     }
 
     @Override

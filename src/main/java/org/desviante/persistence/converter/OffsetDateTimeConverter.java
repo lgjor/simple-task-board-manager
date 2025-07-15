@@ -7,7 +7,7 @@ import java.time.OffsetDateTime;
 
 import static java.time.ZoneOffset.UTC;
 import static java.util.Objects.nonNull;
-import static lombok.AccessLevel.PRIVATE;
+import static lombok.AccessLevel.*;
 
 @NoArgsConstructor(access = PRIVATE)
 public final class OffsetDateTimeConverter {

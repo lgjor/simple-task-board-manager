@@ -2,7 +2,8 @@ package org.desviante.test;
 
 import jakarta.persistence.EntityManager;
 import org.desviante.persistence.entity.*;
-import org.desviante.util.JPAUtil;
+// Importa o utilitário de teste recém-criado em vez do de produção.
+import org.desviante.util.TestJPAUtil;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +17,8 @@ class TaskRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        this.entityManager = JPAUtil.getEntityManager();
+        // A SOLUÇÃO: Usar o TestJPAUtil que inicializa o H2, não o JPAUtil de produção que força o SQLite.
+        this.entityManager = TestJPAUtil.createEntityManager();
     }
 
     @AfterEach

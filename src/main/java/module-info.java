@@ -1,29 +1,46 @@
-module org.desviante.board {
+/**
+ * Define o módulo principal da aplicação "Simple Task Board Manager".
+ */
+module org.desviante {
+    // --- Módulos do JavaFX ---
     requires javafx.controls;
     requires javafx.fxml;
-    requires org.slf4j;
-    requires org.xerial.sqlitejdbc;
-    requires java.smartcardio;
-    requires java.sql;
-    requires java.desktop;
-    requires jakarta.persistence;
-    requires static lombok;
+    requires javafx.swing;
 
-    // google
-    requires com.google.api.services.tasks;
-    requires com.google.api.client.json.jackson2;
-    requires com.google.api.client.auth;
-    requires com.google.api.client;
-
-    // Esta dependência é para uma ferramenta de verificação estática, pode ser mantida.
+    // Adicionado para resolver o erro de "package is not visible"
     requires org.checkerframework.checker.qual;
 
+    // Adicionado para que o compilador reconheça as anotações do Lombok em tempo de compilação
+    requires static lombok;
+
+    // --- Módulos do Hibernate e Jakarta Persistence ---
+    requires org.hibernate.orm.core;
+    requires jakarta.persistence;
+    requires jakarta.transaction;
+    // Adicionados para satisfazer as dependências opcionais do Hibernate,
+    // tornando a arquitetura do módulo explícita e robusta.
+    requires jakarta.xml.bind;
+    requires jakarta.annotation;
+    requires jakarta.cdi;
+
+    // --- Módulos de Logging ---
+    requires org.slf4j;
+
+    // --- Módulos de Conectividade e Banco de Dados ---
+    requires java.sql; // Fornece a API JDBC
+
+    // --- Módulos da API do Google ---
+    requires com.google.api.client;
+    requires com.google.api.services.tasks;
+    requires com.google.auth.oauth2;
+    requires com.google.auth;
+    
+    // --- Abre pacotes para reflexão e FXML ---
+    // Necessário para que frameworks como JavaFX, Hibernate e outros possam acessar
+    // classes e membros privados via reflexão. Abrir o pacote sem um 'to' (abertura
+    // incondicional) o torna acessível a qualquer módulo no classpath, o que é uma
+    // solução robusta para erros de acesso ilegal (`IllegalAccessError`) em tempo de execução.
+    opens org.desviante.controller;
+    opens org.desviante.persistence.entity;
     exports org.desviante;
-    exports org.desviante.persistence.entity;
-    exports org.desviante.service;
-    exports org.desviante.ui.components;
-    exports org.desviante.ui;
-    exports org.desviante.controller;
-    // Exportando o pacote de utilitários, que contém JPAUtil, etc.
-    exports org.desviante.util;
 }

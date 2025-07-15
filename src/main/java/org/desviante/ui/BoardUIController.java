@@ -12,6 +12,7 @@ import org.desviante.controller.BoardController;
 import org.desviante.controller.CardController;
 import org.desviante.controller.GoogleAuthController;
 import org.desviante.persistence.entity.BoardEntity;
+import org.desviante.service.ProductionBoardService;
 import org.desviante.ui.components.BoardTableComponent;
 import org.desviante.ui.components.BoardEditDialog;
 import org.desviante.ui.components.BoardDoubleClickListener;
@@ -53,7 +54,7 @@ public class BoardUIController {
         deleteBoardButton.setOnAction(e -> deleteSelectedBoard(tableView));
 
         Button refreshButton = new Button("Atualizar");
-        refreshButton.setOnAction(e -> BoardTableComponent.loadBoards(tableView, boardList, columnDisplay));
+        refreshButton.setOnAction(e -> refreshBoardList());
 
         // Botão para autenticar com o Google Task
         Button googleAuthButton = new Button("Vincular Google");
@@ -84,9 +85,7 @@ public class BoardUIController {
                         columnDisplay
                 );
                 cardUIController.showCreateCardDialog(selectedBoard);
-                Platform.runLater(() -> {
-                    BoardTableComponent.loadBoards(tableView, boardList, columnDisplay);
-                });
+                Platform.runLater(this::refreshBoardList);
             } else {
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setTitle("Nenhum Board Selecionado");
@@ -115,7 +114,7 @@ public class BoardUIController {
 
                 // 2. Invoca o metodo de recarregamento completo.
                 //    Isso garante que a lista seja atualizada e as colunas da tabela sejam reconstruídas.
-                BoardTableComponent.loadBoards(tableView, boardList, columnDisplay);
+                refreshBoardList();
                 AlertUtils.showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Board criado com sucesso!");
             } catch (Exception e) {
                 AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", "Erro ao criar o board: " + e.getMessage());
@@ -158,7 +157,7 @@ public class BoardUIController {
                 boardController.deleteBoard(selectedBoard);
 
                 // Se chegar a esta linha, a operação foi bem-sucedida.
-                BoardTableComponent.loadBoards(tableView, boardList, columnDisplay);
+                refreshBoardList();
                 AlertUtils.showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Board excluído com sucesso!");
 
             } catch (Exception ex) { // 3. Mude de SQLException para a genérica Exception
@@ -180,5 +179,13 @@ public class BoardUIController {
         } catch (Exception e) {
             AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", "Erro ao criar card: " + e.getMessage());
         }
+    }
+
+    /**
+     * Centraliza a lógica de recarregar a lista de boards, passando a implementação
+     * de serviço de produção.
+     */
+    private void refreshBoardList() {
+        BoardTableComponent.loadBoards(tableView, boardList, columnDisplay, new ProductionBoardService());
     }
 }

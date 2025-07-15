@@ -1,22 +1,29 @@
 package org.desviante.ui;
 
+import jakarta.persistence.EntityManager;
 import javafx.scene.control.TableView;
 import javafx.stage.Stage;
 import org.desviante.Main;
-import org.desviante.persistence.entity.BoardEntity;
-import org.desviante.service.BoardService;
+import org.desviante.persistence.entity.BoardEntity; // Mantido
+import org.desviante.service.IBoardService;
+import org.desviante.service.ProductionBoardService;
 import org.desviante.util.TestDatabaseUtil;
+import org.desviante.util.JPAUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testfx.api.FxRobot;
 import org.testfx.framework.junit5.ApplicationExtension;
 import org.testfx.framework.junit5.Start;
+import org.testfx.util.WaitForAsyncUtils;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.testfx.api.FxAssert.verifyThat;
 import java.util.List;
+
 
 /**
  * Teste de integração para a funcionalidade de criação de Boards.
@@ -25,8 +32,11 @@ import java.util.List;
 @ExtendWith(ApplicationExtension.class)
 public class BoardCreationTest {
 
-    // Instanciar o serviço como um campo evita recriá-lo a cada método.
-    private final BoardService boardService = new BoardService();
+    // A SOLUÇÃO: Em vez de instanciar a classe de lógica pura, o teste agora
+    // usa a interface IBoardService e a implementação de produção.
+    // No contexto de teste, a ProductionBoardService se conectará automaticamente
+    // ao banco de dados H2 em memória, graças à configuração em 'src/test/resources'.
+    private final IBoardService boardService = new ProductionBoardService();
 
     /**
      * O método @Start é executado pelo TestFX para iniciar a aplicação JavaFX.
@@ -45,8 +55,19 @@ public class BoardCreationTest {
      */
     @BeforeEach
     void setup() {
-        // Usa o novo utilitário para uma limpeza de banco de dados mais robusta e eficiente.
-        TestDatabaseUtil.cleanDatabase();
+        // A SOLUÇÃO: O teste deve operar sobre o mesmo banco de dados que a aplicação utiliza.
+        // Como este é um teste de UI ponta a ponta que inicia a aplicação Main,
+        // a aplicação usará o JPAUtil de produção (que cria um banco SQLite).
+        // Portanto, a limpeza do banco de dados no teste também deve usar o JPAUtil.
+        // Isso garante que a preparação e a verificação do teste ocorram no mesmo banco de dados.
+        try (EntityManager em = JPAUtil.getEntityManager()) {
+            em.getTransaction().begin();
+            TestDatabaseUtil.cleanDatabase(em);
+            em.getTransaction().commit();
+        } catch (Exception e) {
+            // Se a limpeza falhar, o teste deve falhar de forma explícita.
+            throw new RuntimeException("Falha ao limpar o banco de dados no setup do teste BoardCreationTest", e);
+        }
     }
 
     /**
@@ -60,7 +81,7 @@ public class BoardCreationTest {
      * @param robot O robô do TestFX que executa as interações do usuário.
      */
     @Test
-    void should_create_board_and_display_it_in_the_table(FxRobot robot) {
+    void should_create_board_and_display_it_in_the_table(FxRobot robot) throws TimeoutException {
         // --- Simulação do Usuário ---
 
         // 1. Clica no botão "Criar Board" usando o ID que definimos.
@@ -69,22 +90,35 @@ public class BoardCreationTest {
         // 2. TestFX encontra o diálogo que apareceu.
         //    Escreve o nome do novo board no campo de texto do diálogo.
         robot.write("Meu Novo Board de Teste");
-
+ 
         // 3. Clica no botão "OK" do diálogo.
         robot.clickOn("OK");
+ 
+        // 4. O aplicativo exibe um alerta de sucesso que é modal e bloqueia o teste.
+        //    É necessário clicar no botão "OK" deste alerta para que o teste prossiga.
+        robot.clickOn("OK");
+ 
+        // --- Verificações (Asserts) ---   
+        
+        // 5. Usa uma abordagem mais robusta, esperando a UI se estabilizar antes de verificar.
+        //    O WaitForAsyncUtils.waitForFxEvents() garante que todas as operações pendentes na
+        //    thread da UI (como redesenhar a tabela) sejam concluídas.
+        WaitForAsyncUtils.waitForFxEvents();
 
-        // --- Verificações (Asserts) ---
+        // Adiciona uma espera explícita e robusta. O teste aguardará até 5 segundos
+        // para que o nó #boardTableView esteja presente na cena, resolvendo a condição de corrida.
+        WaitForAsyncUtils.waitFor(5, TimeUnit.SECONDS, () -> robot.lookup("#boardTableView").tryQuery().isPresent());
 
-        // 4. Verifica se a UI foi atualizada.
-        //    Procuramos na TableView (com o ID que definimos) se existe uma linha
-        //    contendo o nome do board que acabamos de criar.
-        //    A verificação agora é mais específica e clara.
-        verifyThat("#boardTableView", (TableView<BoardEntity> tv) -> {
-            if (tv.getItems().size() != 1) return false;
-            return "Meu Novo Board de Teste".equals(tv.getItems().get(0).getName());
-        });
 
-        // 5. Verifica se o board foi realmente persistido no banco de dados.
+        // 6. Em vez de 'verifyThat', buscamos o nó e fazemos as asserções separadamente.
+        //    Isso torna o teste mais legível e fornece mensagens de erro muito melhores.
+        TableView<BoardEntity> tv = robot.lookup("#boardTableView").query();
+
+        assertFalse(tv.getItems().isEmpty(), "A tabela não deveria estar vazia após a criação.");
+        assertEquals(1, tv.getItems().size(), "A tabela deveria ter exatamente uma linha.");
+        assertEquals("Meu Novo Board de Teste", tv.getItems().get(0).getName(), "O nome do board na tabela está incorreto.");
+
+        // 7. Verifica se o board foi realmente persistido no banco de dados.
         //    Esta é a parte crucial do teste de integração com o Hibernate.
         //    Usamos nosso BoardService para consultar o banco.
         List<BoardEntity> boards = this.boardService.findAllWithColumns();

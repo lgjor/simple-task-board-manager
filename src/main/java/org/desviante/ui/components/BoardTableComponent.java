@@ -9,8 +9,9 @@ import javafx.scene.layout.VBox;
 import org.desviante.persistence.entity.BoardColumnEntity;
 import org.desviante.persistence.entity.BoardEntity;
 import org.desviante.persistence.entity.CardEntity;
-import org.desviante.service.BoardService; // A única fonte de dados de Board
-import org.desviante.service.BoardStatusService;
+import org.desviante.service.IBoardService;
+import org.desviante.service.ProductionBoardService;
+import org.desviante.service.BoardStatusService; // Mantido para lógica de status
 import org.desviante.util.AlertUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +28,7 @@ public class BoardTableComponent {
     public static TableView<BoardEntity> createBoardTable(ObservableList<BoardEntity> boardList) {
         TableView<BoardEntity> tableView = new TableView<>();
         tableView.setPlaceholder(new Label("Nenhum board disponível"));
+        tableView.setId("boardTableView"); // Adiciona o ID para que o TestFX possa encontrar a tabela.
         createBoardColumns(tableView, boardList);
         return tableView;
     }
@@ -65,8 +67,10 @@ public class BoardTableComponent {
         tableView.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             if (newSelection != null) {
                 try {
-                    // Usa o BoardService para buscar a versão mais recente e completa do board.
-                    BoardService boardService = new BoardService();
+                    // Em vez de instanciar a classe de lógica pura (BoardService),
+                    // instanciamos o Decorator de produção (ProductionBoardService).
+                    // Ele gerencia o ciclo de vida do EntityManager e das transações.
+                    IBoardService boardService = new ProductionBoardService();
                     var refreshedBoardOptional = boardService.findById(newSelection.getId());
 
                     if (refreshedBoardOptional.isPresent()) {
@@ -102,15 +106,18 @@ public class BoardTableComponent {
         columnBox.getChildren().add(scrollPane);
         CardDragAndDropListener listener = new CardDragAndDropListener(
                 tableView,
-                (tv) -> BoardTableComponent.loadBoards(tv, tableView.getItems(), columnDisplay),
+                // Este callback agora precisa fornecer uma instância do serviço.
+                // Para a UI de produção, criamos uma nova instância do serviço de produção.
+                (tv) -> BoardTableComponent.loadBoards(tv, tableView.getItems(), columnDisplay, new ProductionBoardService()),
                 columnDisplay
         );
         CardDragAndDrop dragAndDrop = new CardDragAndDrop(listener);
         dragAndDrop.setupDropTarget(cardsArea, column.getId());
         dragAndDrop.setupDropTarget(columnBox, column.getId());
         for (CardEntity card : column.getCards()) {
-            // TODO: O método createCardBox ainda precisa ser refatorado.
-            VBox cardBox = CardTableComponent.createCardBox(card, tableView, columnDisplay, (tv) -> BoardTableComponent.loadBoards(tv, tableView.getItems(), columnDisplay), tableView);
+            // A SOLUÇÃO: A lambda de callback agora passa a implementação de serviço correta
+            // para o método 'loadBoards', resolvendo o erro de compilação.
+            VBox cardBox = CardTableComponent.createCardBox(card, tableView, columnDisplay, (tv) -> BoardTableComponent.loadBoards(tv, tableView.getItems(), columnDisplay, new ProductionBoardService()), tableView);
             dragAndDrop.setupDragSource(cardBox, card.getId());
             cardsArea.getChildren().add(cardBox);
         }
@@ -122,13 +129,13 @@ public class BoardTableComponent {
     // Este método já estava correto na sua versão anterior, apenas garantindo que ele permaneça.
     public static void loadBoards(TableView<BoardEntity> tableView,
                                   ObservableList<BoardEntity> boardList,
-                                  VBox columnDisplay) {
+                                  VBox columnDisplay,
+                                  IBoardService boardService) { // <-- DEPENDÊNCIA INJETADA
         BoardEntity selectedBefore = tableView.getSelectionModel().getSelectedItem();
         Long selectedId = selectedBefore != null ? selectedBefore.getId() : null;
         boardList.clear();
         try {
-            // Unificado para usar apenas o BoardService.
-            BoardService boardService = new BoardService();
+            // A dependência agora é recebida, não mais criada aqui.
             List<BoardEntity> boards = boardService.findAllWithColumns();
             boardList.addAll(boards);
             createBoardColumns(tableView, boardList);
@@ -151,8 +158,8 @@ public class BoardTableComponent {
         columnDisplay.getChildren().clear();
         if (board == null) return;
         try {
-            // Busca a versão mais recente e completa do board usando o serviço.
-            BoardService boardService = new BoardService();
+            // Usa a implementação de produção para buscar os dados completos.
+            IBoardService boardService = new ProductionBoardService();
             BoardEntity fullBoard = boardService.findById(board.getId()).orElse(null);
             if (fullBoard == null || fullBoard.getBoardColumns() == null) return;
 

@@ -1,16 +1,21 @@
 package org.desviante.controller;
 
 import org.desviante.persistence.entity.BoardEntity;
-import org.desviante.service.BoardService;
+import org.desviante.service.IBoardService;
+import org.desviante.service.ProductionBoardService;
+
 import java.util.List;
 import java.util.Optional;
 
 public class BoardController {
 
-    private final BoardService boardService;
+    private final IBoardService boardService;
 
     public BoardController() {
-        this.boardService = new BoardService();
+        // Em vez de instanciar a classe de lógica pura (BoardService),
+        // Instanciamos o Decorator de produção (ProductionBoardService).
+        // Ele gerencia o ciclo de vida do EntityManager e das transações.
+        this.boardService = new ProductionBoardService();
     }
 
     public List<BoardEntity> findAllBoards() {

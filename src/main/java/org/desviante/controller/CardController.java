@@ -2,16 +2,19 @@ package org.desviante.controller;
 
 import org.desviante.persistence.entity.BoardEntity;
 import org.desviante.persistence.entity.CardEntity;
-import org.desviante.service.CardService;
+import org.desviante.service.ICardService;
+import org.desviante.service.ProductionCardService;
 
 public class CardController {
 
-    private final CardService cardService;
+    private final ICardService cardService;
 
     public CardController() {
-        // A instância do serviço agora é um membro da classe,
-        // criada uma vez e reutilizada.
-        this.cardService = new CardService();
+        // A SOLUÇÃO: Em vez de instanciar a classe de lógica pura (CardService),
+        // instanciamos o Decorator de produção (ProductionCardService), que é a
+        // implementação de ICardService para o ambiente de produção.
+        // Ele gerencia o ciclo de vida do EntityManager e das transações.
+        this.cardService = new ProductionCardService();
     }
 
     /**
@@ -36,5 +39,19 @@ public class CardController {
         // 2. Delega a chamada para o serviço, passando apenas os dados necessários.
         // O serviço cuidará da transação e da persistência.
         return cardService.createCard(board.getId(), title.trim(), description);
+    }
+
+    public void updateCard(Long cardId, String newTitle, String newDescription) {
+        if (cardId == null) {
+            throw new IllegalArgumentException("O ID do card não pode ser nulo.");
+        }
+        if (newTitle == null || newTitle.trim().isEmpty()) {
+            throw new IllegalArgumentException("O novo título do card não pode ser vazio.");
+        }
+        cardService.updateCard(cardId, newTitle.trim(), newDescription);
+    }
+
+    public void deleteCard(Long cardId) {
+        cardService.delete(cardId);
     }
 }

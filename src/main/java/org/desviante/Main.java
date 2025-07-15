@@ -6,6 +6,7 @@ import org.desviante.ui.components.BoardTableComponent;
 import org.desviante.controller.BoardController;
 import org.desviante.controller.CardController;
 import org.desviante.ui.BoardUIController;
+import org.desviante.service.ProductionBoardService;
 import org.desviante.util.AlertUtils;
 
 import javafx.application.Platform;
@@ -36,34 +37,25 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) {
         try {
-            BoardController boardController = new BoardController();
-            CardController cardController = new CardController();
+            // --- 1. SETUP CONTROLLERS ---
+            final BoardController boardController = new BoardController();
+            final CardController cardController = new CardController();
 
-            // Inicialize columnDisplay antes de usar
+            // --- 2. SETUP UI COMPONENTS ---
             columnDisplay = new VBox();
             columnDisplay.setId("column-display");
             columnDisplay.setSpacing(6);
             columnDisplay.setPadding(new Insets(6, 0, 0, 0));
 
             tableView = BoardTableComponent.createBoardTable(boardList);
-            tableView.setId("boardTableView"); // Adiciona um ID para o teste encontrar a tabela
-            BoardTableComponent.loadBoards(tableView, boardList, columnDisplay);
 
-            BoardEntity selectedBoard = null;
-            if (!boardList.isEmpty()) {
-                selectedBoard = boardList.get(0);
-            }
+            // --- 3. CONFIGURE LISTENERS ---
+            // Delega a configuração do listener para o componente.
+            // Isso garante que a lógica de carregar colunas ao selecionar um board
+            // esteja encapsulada e seja robusta, pois re-busca os dados do banco.
+            BoardTableComponent.configureTableViewListener(tableView, columnDisplay);
 
-            BoardTableComponent.loadBoardColumnsAndCards(selectedBoard, columnDisplay, tableView);
-
-            tableView.getSelectionModel().selectedItemProperty().addListener((obs, oldBoard, newBoard) -> {
-                if (newBoard != null) {
-                    BoardTableComponent.loadBoardColumnsAndCards(newBoard, columnDisplay, tableView);
-                } else {
-                    columnDisplay.getChildren().clear();
-                }
-            });
-
+            // --- 4. SETUP MAIN LAYOUT ---
             BoardUIController boardUIController = new BoardUIController(
                     boardController, cardController, boardList, tableView, columnDisplay
             );
@@ -74,8 +66,13 @@ public class Main extends Application {
             root.setRight(boardUIController.createActionButtons(tableView));
             root.setBottom(columnDisplay);
 
-            Scene scene = new Scene(root, 1024, 800);
+            // --- 5. INITIAL DATA LOAD ---
+            // Carrega os boards do banco de dados na inicialização, usando a implementação de produção.
+            // Isso irá popular a tabela e disparar o listener para selecionar o primeiro item.
+            BoardTableComponent.loadBoards(tableView, boardList, columnDisplay, new ProductionBoardService());
 
+            // --- 6. SETUP SCENE AND STAGE ---
+            Scene scene = new Scene(root, 1024, 800);
             var cssResource = getClass().getResource("/styles.css");
             if (cssResource != null) {
                 scene.getStylesheets().add(cssResource.toExternalForm());
@@ -87,7 +84,7 @@ public class Main extends Application {
             primaryStage.setTitle("Gerenciador de Boards");
             primaryStage.show();
         } catch (Exception e) {
-            logger.error("Erro ao carregar o board", e);
+            logger.error("Erro fatal ao iniciar a aplicação", e);
             AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro Crítico", "Ocorreu um erro ao iniciar a aplicação " + e.getMessage());
             Platform.exit();
         }

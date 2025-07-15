@@ -1,11 +1,12 @@
 package org.desviante.ui.components;
 
-import org.checkerframework.checker.units.qual.A;
 import org.desviante.persistence.entity.BoardColumnEntity;
 import org.desviante.persistence.entity.CardEntity;
 import org.desviante.persistence.entity.BoardEntity;
-import org.desviante.service.BoardService;
-import org.desviante.service.CardService;
+import org.desviante.service.IBoardService;
+import org.desviante.service.ICardService;
+import org.desviante.service.ProductionBoardService;
+import org.desviante.service.ProductionCardService;
 import org.desviante.util.AlertUtils;
 import javafx.scene.control.Button;
 import javafx.scene.control.Alert;
@@ -19,12 +20,15 @@ import java.util.stream.Collectors;
 
 public class BoardUI {
 
-    private final BoardService boardService;
-    private final CardService cardService;
+    private final IBoardService boardService;
+    private final ICardService cardService;
 
     public BoardUI() {
-        this.boardService = new BoardService();
-        this.cardService = new CardService();
+        // A SOLUÇÃO: Usar os Decorators de produção que gerenciam a conexão e as transações.
+        // O controller agora depende das interfaces (IBoardService, ICardService),
+        // mantendo-se desacoplado das implementações concretas.
+        this.boardService = new ProductionBoardService();
+        this.cardService = new ProductionCardService();
     }
 
     public VBox displayBoardColumns(Long boardId) {

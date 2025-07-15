@@ -1,21 +1,20 @@
 package org.desviante.ui.components;
 
-import com.google.api.services.tasks.model.Task;
 import javafx.application.Platform;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
-import org.desviante.service.TaskService;
 import org.desviante.integration.google.GoogleTaskIntegration;
 import org.desviante.persistence.entity.CardEntity;
 import javafx.scene.layout.VBox;
-import org.desviante.service.CardService;
 import org.desviante.persistence.entity.BoardEntity;
-import org.desviante.util.AlertUtils;
 import org.desviante.persistence.entity.TaskEntity;
-
+import org.desviante.service.ICardService;
+import org.desviante.service.ITaskService;
+import org.desviante.service.ProductionCardService;
+import org.desviante.service.ProductionTaskService;
+import org.desviante.util.AlertUtils;
 import org.desviante.util.DateTimeConversion;
 
-import java.util.Optional;
 import java.util.function.Consumer;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -239,8 +238,8 @@ public class CardTableComponent {
         dialog.showAndWait().ifPresent(task -> {
             try {
                 // O objeto 'task' já está configurado no resultConverter do diálogo.
-                // Apenas delegamos a persistência para o novo TaskService.
-                TaskService taskService = new TaskService();
+                // A SOLUÇÃO: Usamos o ProductionTaskService que gerencia a transação.
+                ITaskService taskService = new ProductionTaskService();
                 taskService.createTask(
                         task.getCard().getId(),
                         task.getListTitle(),
@@ -275,8 +274,8 @@ public class CardTableComponent {
             return;
         }
         try {
-            // Delega a atualização para o CardService
-            CardService cardService = new CardService();
+            // A SOLUÇÃO: Usar o ProductionCardService que gerencia a transação.
+            ICardService cardService = new ProductionCardService();
             cardService.updateCard(card.getId(), newTitle, newDescription);
 
             // Atualiza a UI localmente para feedback imediato
@@ -308,7 +307,8 @@ public class CardTableComponent {
             VBox columnDisplay
     ) {
         try {
-            CardService cardService = new CardService();
+            // A SOLUÇÃO: Usar o ProductionCardService que gerencia a transação.
+            ICardService cardService = new ProductionCardService();
             cardService.delete(card.getId());
             ((VBox) cardBox.getParent()).getChildren().remove(cardBox);
             Platform.runLater(() -> loadBoardsConsumer.accept(boardTableView));

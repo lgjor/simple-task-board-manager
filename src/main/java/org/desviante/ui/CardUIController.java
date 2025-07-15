@@ -5,6 +5,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import org.desviante.controller.CardController;
 import org.desviante.persistence.entity.BoardEntity;
+import org.desviante.service.ProductionBoardService;
 import org.desviante.ui.components.BoardTableComponent; // Import necessário para o refresh
 import org.desviante.util.AlertUtils;
 
@@ -38,7 +39,7 @@ public class CardUIController {
             AlertUtils.showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Card criado com sucesso!");
 
             // Após criar o card, recarrega a visualização do board
-            BoardTableComponent.loadBoards(tableView, boardList, columnDisplay);
+            refreshBoardList();
 
         } catch (Exception e) {
             // Captura qualquer exceção (ex: validação do controller, erro do serviço)
@@ -82,5 +83,13 @@ public class CardUIController {
             // Chama o nosso método 'createCard' refatorado
             createCard(board, title, description);
         }
+    }
+
+    /**
+     * Centraliza a lógica de recarregar a lista de boards, passando a implementação
+     * de serviço de produção.
+     */
+    private void refreshBoardList() {
+        BoardTableComponent.loadBoards(tableView, boardList, columnDisplay, new ProductionBoardService());
     }
 }
