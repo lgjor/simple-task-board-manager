@@ -11,17 +11,13 @@ import javafx.collections.ObservableList;
 import org.desviante.controller.BoardController;
 import org.desviante.controller.CardController;
 import org.desviante.controller.GoogleAuthController;
-import org.desviante.persistence.dao.BoardDAO;
-import org.desviante.persistence.dao.BoardColumnDAO;
 import org.desviante.persistence.entity.BoardEntity;
-import org.desviante.service.BoardService;
 import org.desviante.ui.components.BoardTableComponent;
 import org.desviante.ui.components.BoardEditDialog;
 import org.desviante.ui.components.BoardDoubleClickListener;
 import org.desviante.util.AlertUtils;
 import org.desviante.integration.google.GoogleTasksLinkApp;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 
 public class BoardUIController {
@@ -47,6 +43,7 @@ public class BoardUIController {
      */
     public VBox createActionButtons(TableView<BoardEntity> tableView) {
         Button createBoardButton = new Button("Criar Board");
+        createBoardButton.setId("createBoardButton"); // Adiciona um ID para o teste encontrar o botão
         createBoardButton.setOnAction(e -> createBoard(tableView));
 
         Button editBoardButton = new Button("Editar Board");
@@ -81,7 +78,10 @@ public class BoardUIController {
             if (selectedBoard != null) {
                 // Supondo que você tenha uma instância de CardUIController disponível:
                 CardUIController cardUIController = new CardUIController(
-                        cardController, boardController, boardList, tableView, columnDisplay
+                        cardController,
+                        boardList,
+                        tableView,
+                        columnDisplay
                 );
                 cardUIController.showCreateCardDialog(selectedBoard);
                 Platform.runLater(() -> {
@@ -98,21 +98,6 @@ public class BoardUIController {
         return createCardButton;
     }
 
-    private static BoardEntity getBoardEntity(String boardName, Connection connection) throws SQLException {
-        var boardDAO = new BoardDAO(connection);
-        var boardService = new BoardService(boardDAO);
-        var boardColumnDAO = new BoardColumnDAO(connection);
-        var newBoard = new BoardEntity();
-        newBoard.setName(boardName);
-        boardService.insert(newBoard);
-
-        // Insere as colunas padrão para o novo board
-        boardColumnDAO.insertDefaultColumns(newBoard.getId());
-        // Associa as colunas recém inseridas ao board
-        newBoard.setBoardColumns(boardColumnDAO.findByBoardId(newBoard.getId()));
-        return newBoard;
-    }
-
     private void createBoard(TableView<BoardEntity> tableView) {
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("Criar Board");
@@ -125,12 +110,15 @@ public class BoardUIController {
                 return;
             }
             try {
-                var newBoard = boardController.createBoard(boardName.trim());
-                boardList.add(newBoard);
-                tableView.refresh();
+                // 1. Cria o board através do controller.
+                boardController.createBoard(boardName.trim());
+
+                // 2. Invoca o metodo de recarregamento completo.
+                //    Isso garante que a lista seja atualizada e as colunas da tabela sejam reconstruídas.
+                BoardTableComponent.loadBoards(tableView, boardList, columnDisplay);
                 AlertUtils.showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Board criado com sucesso!");
-            } catch (SQLException ex) {
-                AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", "Erro ao criar o board: " + ex.getMessage());
+            } catch (Exception e) {
+                AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", "Erro ao criar o board: " + e.getMessage());
             }
         });
     }
@@ -167,15 +155,14 @@ public class BoardUIController {
         BoardEntity selectedBoard = tableView.getSelectionModel().getSelectedItem();
         if (selectedBoard != null) {
             try {
-                boolean deleted = boardController.deleteBoard(selectedBoard);
-                if (deleted) {
-                    // Recarrega a lista de boards e a visualização das colunas
-                    BoardTableComponent.loadBoards(tableView, boardList, columnDisplay);
-                    AlertUtils.showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Board excluído com sucesso!");
-                } else {
-                    AlertUtils.showAlert(Alert.AlertType.WARNING, "Erro", "O board não foi encontrado para exclusão.");
-                }
-            } catch (SQLException ex) {
+                boardController.deleteBoard(selectedBoard);
+
+                // Se chegar a esta linha, a operação foi bem-sucedida.
+                BoardTableComponent.loadBoards(tableView, boardList, columnDisplay);
+                AlertUtils.showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Board excluído com sucesso!");
+
+            } catch (Exception ex) { // 3. Mude de SQLException para a genérica Exception
+                //    Qualquer erro lançado pelo serviço ou controller será capturado aqui.
                 AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro", "Erro ao excluir o board: " + ex.getMessage());
             }
         } else {

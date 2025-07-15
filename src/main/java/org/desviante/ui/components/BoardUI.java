@@ -1,28 +1,42 @@
 package org.desviante.ui.components;
 
-import org.desviante.persistence.dao.BoardColumnDAO;
+import org.checkerframework.checker.units.qual.A;
 import org.desviante.persistence.entity.BoardColumnEntity;
 import org.desviante.persistence.entity.CardEntity;
+import org.desviante.persistence.entity.BoardEntity;
+import org.desviante.service.BoardService;
+import org.desviante.service.CardService;
+import org.desviante.util.AlertUtils;
 import javafx.scene.control.Button;
+import javafx.scene.control.Alert;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 
-import java.sql.Connection;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class BoardUI {
 
-    private final BoardColumnDAO boardColumnDAO;
+    private final BoardService boardService;
+    private final CardService cardService;
 
-    public BoardUI(Connection connection) {
-        this.boardColumnDAO = new BoardColumnDAO(connection);
+    public BoardUI() {
+        this.boardService = new BoardService();
+        this.cardService = new CardService();
     }
 
     public VBox displayBoardColumns(Long boardId) {
         VBox columnContainer = new VBox();
         try {
-            // Busca todas as colunas do board
-            List<BoardColumnEntity> columns = boardColumnDAO.findByBoardId(boardId);
+            Optional<BoardEntity> boardOptional = boardService.findById(boardId);
+            if (boardOptional.isEmpty()){
+                columnContainer.getChildren().add(new Text("Board com ID " + boardId + " não encontrado."));
+                return columnContainer;
+            }
+            BoardEntity board = boardOptional.get();
+            List<BoardColumnEntity> columns = board.getBoardColumns();
 
             // Adiciona as colunas ao container
             for (BoardColumnEntity column : columns) {
@@ -39,7 +53,7 @@ public class BoardUI {
 
                     // Botão para mover o card para a próxima coluna
                     Button moveButton = new Button("Mover");
-                    moveButton.setOnAction(e -> moveCardToNextColumn(card, column));
+                    moveButton.setOnAction(e -> moveCardToNextColumn(card, column, board));
                     cardBox.getChildren().add(moveButton);
 
                     columnBox.getChildren().add(cardBox);
@@ -49,25 +63,36 @@ public class BoardUI {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            columnContainer.getChildren().add(new Text("Erro ao carregar o board: " + e.getMessage()));
         }
         return columnContainer;
     }
 
-    private void moveCardToNextColumn(CardEntity card, BoardColumnEntity currentColumn) {
+    private void moveCardToNextColumn(CardEntity card, BoardColumnEntity currentColumn, BoardEntity board) {
         try {
-            BoardColumnEntity nextColumn = currentColumn.getBoard().getBoardColumns().stream()
-                    .filter(c -> c.getOrder_index() == currentColumn.getOrder_index() + 1)
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalStateException("Não há próxima coluna disponível."));
+            // Ordena as colunas para encontrar a próxima de forma confiável
+            List<BoardColumnEntity> sortedColumns = board.getBoardColumns().stream()
+                    .sorted(Comparator.comparingInt(BoardColumnEntity::getOrder_index))
+                    .collect(Collectors.toList());
+            BoardColumnEntity nextColumn = null;
+            for (int i=0; i<sortedColumns.size() -1; i++){
+                if (sortedColumns.get(i).getId().equals(currentColumn.getId())) {
+                    nextColumn = sortedColumns.get(i + 1);
+                    break;
+                }
+            }
+            if (nextColumn == null) {
+                throw new IllegalStateException("Não há próxima coluna disponível.");
+            }
 
-            currentColumn.removeCard(card);
-            nextColumn.addCard(card);
-            card.setBoardColumn(nextColumn);
+            // Delega a operação de mover para o service
+            cardService.moveCard(card.getId(), nextColumn.getId());
 
-            // Atualiza o banco de dados
-            boardColumnDAO.updateCardColumn(card.getId(), nextColumn.getId());
+            // Idealmente, a UI principal seria notificada para se atualizar aqui.
+            AlertUtils.showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Card movido com sucesso. Atualize a visualização!");
         } catch (Exception e) {
             e.printStackTrace();
+            AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro ao Mover", e.getMessage());
         }
     }
 }

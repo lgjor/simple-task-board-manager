@@ -1,5 +1,6 @@
 package org.desviante.persistence.entity;
 
+import jakarta.persistence.*;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import lombok.*;
@@ -13,15 +14,25 @@ import java.util.function.Predicate;
 import static org.desviante.persistence.entity.BoardColumnKindEnum.CANCEL;
 import static org.desviante.persistence.entity.BoardColumnKindEnum.INITIAL;
 
-@Data
+@Entity
+@Table(name = "boards")
+@Getter
+@Setter
+@EqualsAndHashCode(of = "id")
 public class BoardEntity {
-    @Getter
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Setter
-    @Getter
+
     private String name;
+
     @ToString.Exclude
-    @EqualsAndHashCode.Exclude
+    @OneToMany(
+            mappedBy = "board", // 'BoardColumnEntity' gerencia a relação através do campo 'board'.
+            cascade = CascadeType.ALL, // Propaga operações (salvar, deletar) para as colunas filhas.
+            orphanRemoval = true,      // Remove colunas do banco se forem removidas desta lista.
+            fetch = FetchType.LAZY       // Carrega as colunas apenas quando forem acessadas.
+    )
     private List<BoardColumnEntity> boardColumns = new ArrayList<>();
 
     // Validações p/ que cada board tenha: 1 col. inicial, cancelamento e final, com pelo menos 3 colunas.

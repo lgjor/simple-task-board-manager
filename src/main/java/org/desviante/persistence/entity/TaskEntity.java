@@ -1,32 +1,28 @@
 package org.desviante.persistence.entity;
 
+import jakarta.persistence.*;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.OffsetDateTime;
 
+@Entity
+@Table(name = "tasks")
+@Getter
+@Setter
 public class TaskEntity {
     // Getters e setters
-    @Setter
-    @Getter
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Setter
-    @Getter
     private String listTitle;
-    @Setter
-    @Getter
     private String title;
-    @Setter
-    @Getter
     private OffsetDateTime due;
-    @Setter
-    @Getter
     private String notes;
-    @Setter
-    @Getter
     private boolean sent;
-    @Setter
-    @Getter
+    @ManyToOne
+    @JoinColumn(name = "card_id")
     private CardEntity card;
 
 }

@@ -17,14 +17,11 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
-import java.sql.Connection;
 
 import org.desviante.util.JacksonFactoryKeepAlive;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static org.desviante.persistence.config.ConnectionConfig.getConnection;
+import javafx.stage.Stage;
 
 public class Main extends Application {
 
@@ -38,7 +35,7 @@ public class Main extends Application {
      */
     @Override
     public void start(Stage primaryStage) {
-        try (Connection connection = getConnection()) {
+        try {
             BoardController boardController = new BoardController();
             CardController cardController = new CardController();
 
@@ -49,6 +46,7 @@ public class Main extends Application {
             columnDisplay.setPadding(new Insets(6, 0, 0, 0));
 
             tableView = BoardTableComponent.createBoardTable(boardList);
+            tableView.setId("boardTableView"); // Adiciona um ID para o teste encontrar a tabela
             BoardTableComponent.loadBoards(tableView, boardList, columnDisplay);
 
             BoardEntity selectedBoard = null;
@@ -90,7 +88,7 @@ public class Main extends Application {
             primaryStage.show();
         } catch (Exception e) {
             logger.error("Erro ao carregar o board", e);
-            AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro de Conexão", "Não foi possível conectar ao banco de dados: " + e.getMessage());
+            AlertUtils.showAlert(Alert.AlertType.ERROR, "Erro Crítico", "Ocorreu um erro ao iniciar a aplicação " + e.getMessage());
             Platform.exit();
         }
     }

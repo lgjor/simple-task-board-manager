@@ -3,6 +3,7 @@ plugins {
     id("application")
     id("org.openjfx.javafxplugin") version "0.1.0"
     id("org.beryx.jlink") version "3.1.1"
+    id("org.hibernate.orm") version "7.0.6.Final"
 }
 
 group = "br.com.dio"
@@ -25,6 +26,10 @@ dependencies {
     implementation("org.xerial:sqlite-jdbc:3.50.1.0")
     implementation("org.slf4j:slf4j-api:2.0.13")
     implementation("ch.qos.logback:logback-classic:1.4.14")
+
+    implementation("org.hibernate:hibernate-core:7.0.6.Final")
+    implementation("org.hibernate.orm:hibernate-community-dialects:7.0.6.Final")
+
     // Google Tasks API
     //runtimeOnly("com.google.apis:google-api-services-tasks:v1-rev71-1.25.0") removido
     implementation("com.google.api-client:google-api-client:2.8.0")
@@ -35,22 +40,34 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-core:2.13.3")
     implementation("com.fasterxml.jackson.core:jackson-annotations:2.13.3")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.13.3")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
-    testImplementation("org.testfx:testfx-junit5:4.0.17")
-    testImplementation("org.hamcrest:hamcrest:3.0")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     compileOnly("org.projectlombok:lombok:1.18.38")
     annotationProcessor("org.projectlombok:lombok:1.18.38")
 
-    // Mockito para mock de dependências
+    // --- Dependências de Teste (Versão Corrigida e Unificada) ---
+
+    // O JUnit BOM (Bill of Materials) gerencia as versões de todas as bibliotecas JUnit para garantir compatibilidade.
+    testImplementation(platform("org.junit:junit-bom:5.10.2"))
+    // Dependência principal para JUnit 5 (a versão é gerenciada pelo BOM)
+    testImplementation("org.junit.jupiter:junit-jupiter")
+
+    // Unifica a versão do TestFX para a versão estável mais recente
+    testImplementation("org.testfx:testfx-core:4.0.17")
+    testImplementation("org.testfx:testfx-junit5:4.0.17")
+
+    // Mockito e Hamcrest
     testImplementation("org.mockito:mockito-core:5.12.0")
     testImplementation("org.mockito:mockito-junit-jupiter:5.12.0")
+    testImplementation("org.hamcrest:hamcrest:2.2")
+
+    // Necessário para a execução dos testes via linha de comando ou em alguns CIs
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
+// Configura a tarefa de teste para usar a plataforma JUnit 5
 tasks.withType<Test> {
-    javaLauncher.set(javaToolchains.launcherFor {
-        languageVersion = JavaLanguageVersion.of(21)
-    })
+    useJUnitPlatform()
+    // Garante que os testes não falhem se nenhum teste for encontrado
+    failFast = true
 }
 
 //tasks.withType<JavaCompile> {
@@ -144,8 +161,4 @@ configurations.all {
             because("Evitar substituição automática pelo jackson-bom:2.18.2")
         }
     }
-}
-
-tasks.test {
-    useJUnitPlatform()
 }
