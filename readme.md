@@ -14,7 +14,7 @@ Projeto desenvolvido para finalização do Bootcamp Bradesco Java <a href="https
   <a href="#tecnologias">Tecnologias</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
   <a href="#funcionalidades">Funcionalidades</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;  
   <a href="#arquitetura">Evolução da Arquitetura</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
-  <a href="#diagrama">Diagrama UML</a>
+  <a href="#testes">Testes</a>
 </p>
 
 ## <div id="tecnologias">🚀 Tecnologias</div>
@@ -34,7 +34,7 @@ Esse projeto foi desenvolvido com as seguintes tecnologias:
 - Editar título e descrição dos cards com duplo clique (edição in-place).
 - Mover cards entre as colunas ("A Fazer", "Em Andamento", "Concluído") com drag and drop.
 - Visualizar o progresso do board com percentuais de conclusão.
-- Persistência de dados em um banco de dados local H2.
+- Persistência de dados em um banco de dados em memória H2.
 - (Em desenvolvimento) Integração com a API do Google Tasks.
 
 ## <div id="arquitetura">Evolução da Arquitetura: De JDBC a Spring + JPA</div>
@@ -63,3 +63,12 @@ A segunda refatoração introduziu o **Spring Framework** para gerenciamento de 
     - A edição de cards foi transformada de um dialog pop-up para uma **edição in-place**, permitindo que o usuário altere o título e a descrição diretamente no card com um duplo clique.
     - Um botão "Salvar" explícito foi adicionado para tornar a ação de edição mais intuitiva.
     - A identidade visual dos cards foi aprimorada com CSS para criar uma hierarquia clara entre título, descrição e metadados (datas).
+
+- **Gerenciamento do Banco de Dados via Script**: A partir da documentação do Spring Framework, Data Access, capítulo 3: Data Access with JDBCA, optamos por deixar de usar o hibernate, e passamos a adotar um conjuto de classes utilitárias. A inicialização do banco de dados em memória **H2** é gerenciada pelo Spring Boot. Ao iniciar, o Spring detecta e executa automaticamente o arquivo `schema.sql` presente no classpath. Este script é responsável por criar toda a estrutura de tabelas, garantindo um ambiente limpo e consistente a cada execução da aplicação, o que é ideal para desenvolvimento e demonstração.
+## <div id="testes">🧪 Testes Implementados</div>
+
+Para garantir a qualidade e a estabilidade do código, o projeto conta com uma suíte de testes que cobre as principais camadas da aplicação, utilizando **JUnit 5** e **Mockito**.
+
+- **Testes de Unidade (Services)**: Focam em validar a lógica de negócio de cada serviço (`BoardService`, `CardService`) de forma isolada. As dependências externas, como os repositórios, são substituídas por *mocks* criados com o Mockito. Isso permite testar regras de negócio específicas (ex: a lógica de conclusão de um card ao ser movido para a coluna "Concluído") sem a necessidade de interagir com o banco de dados.
+
+- **Testes de Integração (Facade e Camada de Persistência)**: Utilizando a anotação `@SpringBootTest`, estes testes carregam o contexto completo do Spring e validam a integração entre as diferentes camadas, desde a `TaskManagerFacade` até a camada de persistência com o banco de dados H2. Eles garantem que as entidades JPA estão corretamente mapeadas, que as consultas dos repositórios funcionam como esperado e que as transações (`@Transactional`) se comportam corretamente. O perfil `test` é ativado para garantir um ambiente de execução controlado e separado.
