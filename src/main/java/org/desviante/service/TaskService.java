@@ -1,46 +1,43 @@
 package org.desviante.service;
 
-import jakarta.persistence.EntityManager;
-import org.desviante.persistence.entity.CardEntity;
-import org.desviante.persistence.entity.TaskEntity;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import org.desviante.exception.ResourceNotFoundException; // Importe a nova exceção
+import org.desviante.model.Card;
+import org.desviante.model.Task;
+import org.desviante.repository.CardRepository;
+import org.desviante.repository.TaskRepository;
+import org.desviante.service.dto.CreateTaskRequest;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
+@Service
+@RequiredArgsConstructor
+public class TaskService {
 
-/**
- * Classe de lógica de negócio "pura" para Tasks.
- * Depende de um EntityManager injetado e não gerencia transações.
- */
-public class TaskService implements ITaskService {
-    private static final Logger logger = LoggerFactory.getLogger(TaskService.class);
-    private final EntityManager entityManager;
+    private final TaskRepository taskRepository;
+    private final CardRepository cardRepository;
+    private final GoogleTasksApiService googleApiService;
 
-    /**
-     * Construtor que implementa a Injeção de Dependência.
-     * @param entityManager O EntityManager a ser usado por todas as operações do serviço.
-     */
-    public TaskService(EntityManager entityManager) {
-        this.entityManager = entityManager;
-    }
+    @Transactional
+    public Task createTask(Long cardId, String title, String notes) {
+        Card parentCard = cardRepository.findById(cardId)
+                .orElseThrow(() -> new ResourceNotFoundException("Card com ID " + cardId + " não encontrado."));
 
-    @Override
-    public TaskEntity createTask(Long cardId, String listTitle, String title, String notes, OffsetDateTime due) {
-        CardEntity card = entityManager.find(CardEntity.class, cardId);
-        if (card == null) {
-            throw new IllegalArgumentException("Card com ID " + cardId + " não encontrado para criar a tarefa.");
-        }
+        // 1. Chama a API externa PRIMEIRO. Se isso falhar, uma GoogleApiServiceException (RuntimeException)
+        // será lançada, e a anotação @Transactional irá reverter a transação. Nada será salvo.
+        var createTaskRequest = new CreateTaskRequest(parentCard.getTitle(), title, notes);
+        com.google.api.services.tasks.model.Task googleTask = googleApiService.createTaskInList(createTaskRequest);
 
-        TaskEntity task = new TaskEntity();
-        task.setCard(card);
-        task.setListTitle(listTitle);
-        task.setTitle(title);
-        task.setNotes(notes);
-        task.setDue(due);
-        task.setSent(false); // Define o status inicial como não enviado
+        // 2. SOMENTE se a chamada externa for bem-sucedida, criamos e salvamos a entidade local.
+        Task localTask = new Task();
+        localTask.setCardId(cardId);
+        localTask.setTitle(title);
+        localTask.setNotes(notes);
+        localTask.setGoogleTaskId(googleTask.getId());
+        localTask.setSent(true);
 
-        entityManager.persist(task);
-        logger.info("Tarefa persistida para o card ID: {}", cardId);
-        return task;
+        // Esta operação de salvamento agora faz parte da mesma transação que será confirmada (commit)
+        // ao final do método.
+        return taskRepository.save(localTask);
     }
 }

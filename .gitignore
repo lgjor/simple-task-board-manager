@@ -48,3 +48,4 @@ bin/
 /src/main/resources/credentials.json
 /tokens/
 tokens/
+/src/main/resources/auth/

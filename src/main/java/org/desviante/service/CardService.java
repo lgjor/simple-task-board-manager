@@ -1,90 +1,108 @@
 package org.desviante.service;
 
-import jakarta.persistence.EntityManager;
-import org.desviante.persistence.entity.BoardColumnEntity;
-import org.desviante.persistence.entity.BoardEntity;
-import org.desviante.persistence.entity.CardEntity; // Mantido
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import org.desviante.exception.ResourceNotFoundException;
+import org.desviante.model.BoardColumn;
+import org.desviante.model.Card;
+import org.desviante.model.enums.BoardColumnKindEnum;
+import org.desviante.repository.BoardColumnRepository;
+import org.desviante.repository.CardRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
-public class CardService implements ICardService {
+@Service
+@RequiredArgsConstructor
+public class CardService {
 
-    private final EntityManager entityManager;
+    private final CardRepository cardRepository;
+    private final BoardColumnRepository columnRepository;
 
-    public CardService(EntityManager entityManager) {
-        this.entityManager = entityManager;
+    @Transactional
+    public Card createCard(String title, String description, Long parentColumnId) {
+        // Valida se a coluna pai existe antes de criar o card.
+        columnRepository.findById(parentColumnId)
+                .orElseThrow(() -> new ResourceNotFoundException("Coluna com ID " + parentColumnId + " não encontrada."));
+
+        Card newCard = new Card();
+        newCard.setTitle(title);
+        newCard.setDescription(description);
+        newCard.setBoardColumnId(parentColumnId);
+
+        // LÓGICA DE NEGÓCIO: Definir as datas no serviço é a prática correta.
+        LocalDateTime now = LocalDateTime.now();
+        newCard.setCreationDate(now);
+        newCard.setLastUpdateDate(now);
+        // Um novo card nunca está concluído.
+        newCard.setCompletionDate(null);
+
+        return cardRepository.save(newCard);
     }
 
-    private static final Logger logger = LoggerFactory.getLogger(CardService.class);
+    @Transactional
+    public Card moveCardToColumn(Long cardId, Long newColumnId) {
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new ResourceNotFoundException("Card com ID " + cardId + " não encontrado."));
 
-    public void moveCard(Long cardId, Long targetColumnId) {
-        // A transação é gerenciada pelo ProductionCardService
-        CardEntity card = entityManager.find(CardEntity.class, cardId);
-        if (card == null) {
-            throw new IllegalArgumentException("Card com ID " + cardId + " não encontrado.");
-        }
+        BoardColumn newColumn = columnRepository.findById(newColumnId)
+                .orElseThrow(() -> new ResourceNotFoundException("Coluna de destino com ID " + newColumnId + " não encontrada."));
 
-        BoardColumnEntity targetColumn = entityManager.find(BoardColumnEntity.class, targetColumnId);
-        if (targetColumn == null) {
-            throw new IllegalArgumentException("Coluna de destino com ID " + targetColumnId + " não encontrada.");
-        }
-
-        // Remove o card da coluna antiga e adiciona na nova usando os helpers da entidade
-        if (card.getBoardColumn() != null) {
-            card.getBoardColumn().removeCard(card);
-        }
-        targetColumn.addCard(card);
-
-        // O entityManager.merge(card) não é estritamente necessário se a entidade
-        // já estiver gerenciada, mas é uma prática segura para garantir a sincronização.
-        entityManager.merge(card);
-    }
-
-    public CardEntity createCard(long boardId, String title, String description) {
-        BoardEntity board = this.entityManager.find(BoardEntity.class, boardId);
-        if (board == null) {
-            throw new IllegalArgumentException("Board com ID " + boardId + " não encontrado.");
-        }
-
-        // Encontra a coluna inicial do board para colocar o novo card.
-        BoardColumnEntity initialColumn = board.getInitialColumn();
-
-        CardEntity card = new CardEntity();
-        card.setTitle(title);
-        card.setDescription(description);
-        card.setBoard(board);
-        card.setBoardColumn(initialColumn); // Associa o card à coluna inicial
-        card.setCreationDate(LocalDateTime.now());
+        card.setBoardColumnId(newColumnId);
         card.setLastUpdateDate(LocalDateTime.now());
 
-        this.entityManager.persist(card);
-        return card;
-    }
-
-    public Optional<CardEntity> findById(Long cardId) {
-        return Optional.ofNullable(this.entityManager.find(CardEntity.class, cardId));
-    }
-
-    public void updateCard(Long cardId, String newTitle, String newDescription) {
-        CardEntity card = this.entityManager.find(CardEntity.class, cardId);
-        if (card != null) {
-            card.setTitle(newTitle);
-            card.setDescription(newDescription);
-            card.setLastUpdateDate(LocalDateTime.now());
+        // LÓGICA DE CONCLUSÃO REFINADA:
+        // Se a nova coluna for do tipo FINAL, define a data de conclusão.
+        // Caso contrário, garante que a data de conclusão seja nula.
+        if (newColumn.getKind() == BoardColumnKindEnum.FINAL) {
+            card.setCompletionDate(LocalDateTime.now());
         } else {
-            throw new IllegalArgumentException("Card com ID " + cardId + " não encontrado para atualização.");
+            card.setCompletionDate(null);
         }
+
+        return cardRepository.save(card);
     }
 
-    public void delete(Long cardId) {
-        CardEntity card = this.entityManager.find(CardEntity.class, cardId);
-        if (card != null) {
-            this.entityManager.remove(card);
-        } else {
-            // Não lançar exceção se o card já não existir é uma prática mais tolerante.
-            logger.warn("Tentativa de deletar um card não existente com ID: {}", cardId);
+    /**
+     * Atualiza o título e a descrição de um card existente.
+     */
+    @Transactional
+    public Card updateCardDetails(Long cardId, String newTitle, String newDescription) {
+        // 1. Encontra o card ou lança uma exceção se não existir.
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new ResourceNotFoundException("Card com ID " + cardId + " não encontrado para atualização."));
+
+        // 2. Atualiza as propriedades do objeto.
+        card.setTitle(newTitle);
+        card.setDescription(newDescription);
+
+        // 3. REGRA DE NEGÓCIO: Sempre atualiza a data da última modificação.
+        card.setLastUpdateDate(LocalDateTime.now());
+
+        // 4. Salva e retorna a entidade atualizada.
+        return cardRepository.save(card);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Card> getCardById(Long id) {
+        return cardRepository.findById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Card> getCardsForColumns(List<Long> columnIds) {
+        // O repositório já trata a lista vazia, então a delegação direta é segura.
+        return cardRepository.findByBoardColumnIdIn(columnIds);
+    }
+
+    @Transactional
+    public void deleteCard(Long id) {
+        // MELHORIA: Garante que o card existe antes de tentar deletar.
+        // Isso torna a operação mais segura e o comportamento da API mais previsível.
+        if (!cardRepository.findById(id).isPresent()) {
+            throw new ResourceNotFoundException("Card com ID " + id + " não encontrado para deleção.");
         }
+        cardRepository.deleteById(id);
     }
 }

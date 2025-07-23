@@ -13,132 +13,53 @@ Projeto desenvolvido para finalização do Bootcamp Bradesco Java <a href="https
 <p align="center">
   <a href="#tecnologias">Tecnologias</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
   <a href="#funcionalidades">Funcionalidades</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;  
-  <a href="#desafio">Desafio</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
-  <a href="#migracao">Migração para JPA/Hibernate</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
-  <a href="#diagrama">Diagrama UML inicial</a>
+  <a href="#arquitetura">Evolução da Arquitetura</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+  <a href="#diagrama">Diagrama UML</a>
 </p>
 
 ## <div id="tecnologias">🚀 Tecnologias</div>
 
 Esse projeto foi desenvolvido com as seguintes tecnologias:
 
-- ☕ Java
-- 💾 Sqlite
-- 🐘 JPA/Hibernate
+- ☕ Java 21
+- 🍃 Spring Framework
+- 🐘 JPA / Hibernate
+- 💾 Banco de Dados H2
 - 🖥️ JavaFX
 
 ## <div id="funcionalidades">Funcionalidades</div>
 
-- Criar e excluir board de tarefas
-- Criar cards
-- Editar título e descrição dos cards com duplo clique do mouse
-- Mover cards entre as colunas não iniciado, em andamento e concluído usando o drag and drop
-- Método de cálculo do % não inciado, em andamento e concluído dos boards
-- Persistência de dados com banco de dados locais SQLite
-- Integração com a **API do Google Tasks** para criar tarefas a partir dos cards
+- Criar, editar e excluir boards de tarefas.
+- Criar cards dentro das colunas do board.
+- Editar título e descrição dos cards com duplo clique (edição in-place).
+- Mover cards entre as colunas ("A Fazer", "Em Andamento", "Concluído") com drag and drop.
+- Visualizar o progresso do board com percentuais de conclusão.
+- Persistência de dados em um banco de dados local H2.
+- (Em desenvolvimento) Integração com a API do Google Tasks.
 
-## <div id="desafio">Desafio</div>
+## <div id="arquitetura">Evolução da Arquitetura: De JDBC a Spring + JPA</div>
 
-Board para Gerenciamento de Tarefas simples criado a partir de desafio do Bootcamp Bradesco Java DIO. 
+O projeto passou por grandes refatorações que modernizaram sua arquitetura, aumentando a robustez, a manutenibilidade e o desacoplamento entre as camadas.
 
-O desafio abordou todas as etapas do desenvolvimento, desde o planejamento e estruturação até a implementação de funcionalidades como gerenciamento de dados e integração entre camadas, seguindo boas práticas de programação.
+### Fase 1: Migração para JPA/Hibernate
 
-A partir dessa provocação eu expandi e desenvolvi mais funcionalidades para o projeto.
+Inicialmente, a persistência era feita com JDBC puro. A primeira grande evolução foi a migração para o **JPA (Jakarta Persistence API)** com a implementação do **Hibernate**.
 
-## <div id="migracao">Migração para JPA/Hibernate</div>
+- **Mapeamento Objeto-Relacional (ORM)**: As classes do modelo foram transformadas em entidades JPA com anotações (`@Entity`, `@Id`, `@OneToMany`), eliminando a necessidade de escrever SQL manualmente para operações CRUD.
+- **Serviços Transacionais**: As classes de serviço (`BoardService`, `CardService`) foram reescritas para utilizar o `EntityManager` do JPA, que passou a gerenciar as transações e operações de persistência (`persist`, `merge`, `remove`).
+- **Benefícios**: Redução drástica de código boilerplate (try-catch-finally, manipulação de `ResultSet`), aumento da legibilidade e facilidade na troca do banco de dados.
 
-O projeto passou por uma refatoração significativa, migrando da persistência manual com JDBC para o uso do **JPA (Jakarta Persistence API)** com a implementação do **Hibernate**. Essa mudança modernizou a camada de dados, trazendo mais robustez, manutenibilidade e produtividade.
+### Fase 2: Integração com Spring e UI Moderna
 
-### Principais Alterações
+A segunda refatoração introduziu o **Spring Framework** para gerenciamento de dependências e reestruturou a interface gráfica (UI) com JavaFX, seguindo padrões modernos.
 
-- **Mapeamento Objeto-Relacional (ORM)**: As classes de modelo (`BoardEntity`, `CardEntity`, etc.) foram transformadas em entidades JPA com anotações como `@Entity`, `@Id`, `@OneToMany` e `@ManyToOne`. Isso eliminou a necessidade de escrever SQL manualmente para operações CRUD.
+- **Injeção de Dependência com Spring**: O Spring agora gerencia o ciclo de vida dos componentes da aplicação (`@Service`, `@Component`). A `TaskManagerFacade`, que orquestra a lógica de negócio, é injetada automaticamente nos controllers da UI com `@Autowired`, eliminando o acoplamento manual.
 
-- **Camada de Serviço Refatorada**: As classes `BoardService` e `CardService` foram completamente reescritas para utilizar o `EntityManager` do JPA. Toda a lógica de transação (iniciar, comitar, reverter) e operações de persistência (`persist`, `merge`, `remove`, `find`) agora são gerenciadas pelo Hibernate.
+- **Arquitetura de UI Baseada em Componentes**: A interface foi dividida em componentes FXML reutilizáveis (`card-view.fxml`, `column-view.fxml`), cada um com seu próprio controller. Isso torna a UI mais organizada e fácil de manter.
 
-- **Configuração Centralizada**: A configuração do banco de dados foi centralizada no arquivo `src/main/resources/META-INF/persistence.xml`, definindo o dialeto do SQLite, o driver e outras propriedades do Hibernate.
+- **Comunicação Desacoplada na UI**: A comunicação entre os controllers filhos e pais (ex: um card notificando o board sobre uma atualização) é feita através de *callbacks* (usando `BiConsumer`), um padrão que evita dependências diretas e promove o encapsulamento.
 
-- **Gerenciamento de Conexão com `JPAUtil`**: Foi criada a classe `JPAUtil` para gerenciar o ciclo de vida do `EntityManagerFactory` (que é custoso e criado apenas uma vez) e fornecer instâncias do `EntityManager` para cada transação.
-
-- **Localização Dinâmica do Banco de Dados**: A aplicação agora salva o arquivo do banco de dados (`myboard.db`) de forma dinâmica na pasta `MyBoards` dentro do diretório do usuário (ex: `C:\Users\username\MyBoards`), garantindo que os dados não sejam perdidos e que a aplicação seja mais portável.
-
-### Desafios Superados Durante a Migração
-
-A migração para um framework ORM robusto como o Hibernate trouxe desafios de aprendizado que foram superados:
-
-- **`LazyInitializationException`**: Resolvido através do uso de `JOIN FETCH` em consultas JPQL para garantir que coleções "preguiçosas" fossem carregadas junto com suas entidades pai antes de a sessão ser fechada.
-
-- **`MultipleBagFetchException`**: Contornado ao implementar uma estratégia de busca em duas etapas, carregando primeiro a coleção principal e, em uma segunda consulta, as coleções aninhadas, evitando o "produto cartesiano" indesejado.
-
-- **`orphanRemoval`**: O comportamento de exclusão inesperada de cards foi corrigido ajustando a lógica de negócio para modificar apenas o lado "dono" (`@ManyToOne`) da relação, permitindo que o Hibernate gerencie a sincronização das coleções corretamente.
-
-### Benefícios Obtidos
-
-- **Redução de Código Boilerplate**: Eliminação de blocos `try-catch-finally` para gerenciamento de `Connection`, `Statement` e `ResultSet`.
-- **Código Mais Legível e Declarativo**: A lógica de persistência se tornou mais clara e focada no modelo de domínio.
-- **Segurança e Integridade**: Gerenciamento de transações mais seguro e explícito.
-- **Independência de Banco de Dados**: Embora o projeto use SQLite, a arquitetura agora facilita a troca para outro banco de dados com alterações mínimas.
-
-## <div id="diagrama">Diagrama UML inicial</div>
-
-```mermaid
-classDiagram
-class Board {
-+Long id
-+String name
-}
-class BoardColumn {
-    +Long id
-    +String name
-    +Integer order
-    +String kind
-    +Long boardId
-}
-class Card {
-    +Long id
-    +String title
-    +String description
-    +Long boardColumnId
-}
-class Block {
-    +Long id
-    +DateTime blockedAt
-    +String blockReason
-    +DateTime unblockedAt
-    +String unblockReason
-    +Long cardId
-}
-class BoardRepository {
-    <<interface>>
-    +Board findById(Long id)
-    +List<Board> findAll()
-    +void save(Board board)
-    +void delete(Board board)
-}
-class BoardColumnRepository {
-    <<interface>>
-    +BoardColumn findById(Long id)
-    +List<BoardColumn> findByBoardIdOrderByOrder(Long boardId)
-    +void save(BoardColumn boardColumn)
-    +void delete(BoardColumn boardColumn)
-}
-class CardRepository {
-    <<interface>>
-    +Card findById(Long id)
-    +List<Card> findByBoardColumnId(Long boardColumnId)
-    +void save(Card card)
-    +void delete(Card card)
-}
-class BlockRepository {
-    <<interface>>
-    +Block findById(Long id)
-    +List<Block> findByCardId(Long cardId)
-    +void save(Block block)
-}
-Board "1" -- "*" BoardColumn : has
-BoardColumn "1" -- "*" Card : has
-Card "1" -- "*" Block : has
-Board --|> BoardRepository : uses
-BoardColumn --|> BoardColumnRepository : uses
-Card --|> CardRepository : uses
-Block --|> BlockRepository : uses
-```
+- **Melhoria de Experiência do Usuário (UX)**:
+    - A edição de cards foi transformada de um dialog pop-up para uma **edição in-place**, permitindo que o usuário altere o título e a descrição diretamente no card com um duplo clique.
+    - Um botão "Salvar" explícito foi adicionado para tornar a ação de edição mais intuitiva.
+    - A identidade visual dos cards foi aprimorada com CSS para criar uma hierarquia clara entre título, descrição e metadados (datas).

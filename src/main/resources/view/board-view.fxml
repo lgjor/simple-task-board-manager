@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.desviante.view.BoardViewController">
+    <top>
+        <!-- Seção <top> com a ToolBar e os botões -->
+        <VBox>
+            <children>
+                <Label style="-fx-font-size: 12px; -fx-font-weight: bold;" text="">
+                    <padding>
+                        <Insets bottom="0" left="10" right="10" top="5" />
+                    </padding>
+                </Label>
+                <ToolBar>
+                    <items>
+                        <Button fx:id="createBoardButton" onAction="#handleCreateBoard" text="Criar Board" />
+                        <Button fx:id="editBoardButton" onAction="#handleEditBoard" text="Editar Board" />
+                        <Button fx:id="deleteBoardButton" onAction="#handleDeleteBoard" text="Excluir Board" />
+                        <Separator orientation="VERTICAL" />
+                        <Button fx:id="refreshButton" onAction="#handleRefresh" text="Atualizar" />
+                        <Separator orientation="VERTICAL" />
+                        <Button fx:id="linkGoogleButton" onAction="#handleLinkGoogle" text="Vincular Google" />
+                        <Button fx:id="googleTaskButton" onAction="#handleGoogleTask" text="Google Task" />
+                    </items>
+                </ToolBar>
+            </children>
+        </VBox>
+    </top>
+    <center>
+        <!-- Seção <center> -->
+        <VBox spacing="10" BorderPane.alignment="CENTER">
+            <padding>
+                <Insets top="10" />
+            </padding>
+            <children>
+                <Label style="-fx-font-size: 16px; -fx-font-weight: bold;" text="Meus Boards">
+                    <VBox.margin>
+                        <Insets left="10" />
+                    </VBox.margin>
+                </Label>
+                <TableView fx:id="boardsTableView" prefHeight="200.0">
+                    <columns>
+                        <TableColumn fx:id="boardIdColumn" prefWidth="50.0" text="ID" />
+                        <!-- Largura da coluna de nome ajustada para dar espaço -->
+                        <TableColumn fx:id="boardNameColumn" prefWidth="250.0" text="Nome" />
+                        <!-- COLUNA DE STATUS -->
+                        <TableColumn fx:id="boardStatusColumn" prefWidth="120.0" text="Status" />
+                        <TableColumn fx:id="statusInitialColumn" prefWidth="120.0" text="Não Iniciado (%)" />
+                        <TableColumn fx:id="statusPendingColumn" prefWidth="120.0" text="Em Andamento (%)" />
+                        <TableColumn fx:id="statusFinalColumn" prefWidth="120.0" text="Concluído (%)" />
+                    </columns>
+                </TableView>
+                <ScrollPane fitToHeight="true" fitToWidth="true" VBox.vgrow="ALWAYS">
+                    <content>
+                        <HBox fx:id="kanbanContainer" spacing="10">
+                            <padding>
+                                <Insets bottom="10" left="10" right="10" top="10" />
+                            </padding>
+                        </HBox>
+                    </content>
+                </ScrollPane>
+            </children>
+        </VBox>
+    </center>
+</BorderPane>

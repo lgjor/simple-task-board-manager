@@ -1,0 +1,71 @@
+/* Estilo geral para o card, para dar uma aparência limpa e moderna */
+.card-pane {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 1;
+    -fx-background-radius: 5;
+    -fx-border-radius: 5;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 2);
+}
+
+/* Título do Card: Destacado (negrito), maior e com uma cor mais forte */
+.card-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333; /* Cor escura, quase preta */
+}
+
+/* Descrição do Card: Tamanho padrão e cor mais suave para criar contraste */
+.card-description {
+    -fx-font-size: 12px;
+    -fx-text-fill: #555555; /* Cinza escuro, mas mais claro que o título */
+}
+
+
+/* --- Estilos do Rodapé (já existentes) --- */
+
+/* Container do Rodapé: Adiciona um pouco de margem no topo */
+.card-footer {
+    -fx-padding: 5px 0 0 0; /* 5px de espaço acima do rodapé */
+}
+
+/* Título dos labels do rodapé em negrito */
+.footer-title {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #888888;
+}
+
+/* Valor dos labels do rodapé com peso normal */
+.footer-value {
+    -fx-font-size: 10px;
+    -fx-font-weight: normal;
+    -fx-text-fill: #888888;
+}
+
+/* Título da data de conclusão em negrito e verde */
+.footer-title-completed {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2E7D32; /* Verde escuro */
+}
+
+/* Valor da data de conclusão em negrito e verde */
+.footer-value-completed {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2E7D32; /* Verde escuro */
+}
+
+/* Botão de Salvar: Estilo de ação primária */
+.save-button {
+    -fx-background-color: #007BFF; /* Azul vibrante */
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5;
+    -fx-border-color: transparent;
+}
+
+.save-button:hover {
+    -fx-background-color: #0056b3; /* Azul mais escuro no hover */
+}
