@@ -61,8 +61,7 @@ public class BoardViewController {
     private Button deleteBoardButton;
     @FXML
     private Button refreshButton;
-    @FXML
-    private Button linkGoogleButton;
+    // O botão linkGoogleButton foi removido
     @FXML
     private Button googleTaskButton;
 
@@ -110,9 +109,7 @@ public class BoardViewController {
         boardsTableView.setRowFactory(tv -> {
             TableRow<BoardSummaryDTO> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
-                // Verifica se foi um duplo clique e se a linha não está vazia
                 if (event.getClickCount() == 2 && (!row.isEmpty())) {
-                    // Chama o mesmo método de edição do botão
                     handleEditBoard();
                 }
             });
@@ -141,16 +138,29 @@ public class BoardViewController {
                 ColumnViewController columnController = columnLoader.getController();
                 columnNode.setUserData(columnController);
 
-                // CORREÇÃO 1: Passa o callback de atualização de card para o controller da coluna.
-                // Isso garante que novos cards criados dentro da coluna também saibam como se atualizar.
-                columnController.setData(this.facade, columnData, this::handleCardDrop, this::updateSelectedBoardSummary, this::handleCardUpdate);
+                columnController.setData(
+                        this.facade,
+                        boardDetails.name(),
+                        columnData,
+                        this::handleCardDrop,
+                        this::updateSelectedBoardSummary,
+                        this::handleCardUpdate
+                );
 
                 for (CardDetailDTO cardData : columnData.cards()) {
                     FXMLLoader cardLoader = new FXMLLoader(getClass().getResource("/view/card-view.fxml"));
                     Parent cardNode = cardLoader.load();
                     CardViewController cardController = cardLoader.getController();
                     cardNode.setUserData(cardController);
-                    cardController.setData(cardData, columnData.id(), this::handleCardUpdate);
+
+                    cardController.setData(
+                            this.facade,
+                            boardDetails.name(),
+                            cardData,
+                            columnData.id(),
+                            this::handleCardUpdate
+                    );
+
                     cardNodeMap.put(cardData.id(), cardNode);
                     columnController.addCard(cardNode);
                 }
@@ -193,7 +203,6 @@ public class BoardViewController {
 
                 CardViewController cardController = (CardViewController) cardNode.getUserData();
                 if (cardController != null) {
-                    // CORREÇÃO 2: O nome do método no CardViewController foi ajustado para maior clareza.
                     cardController.updateDisplayData(updatedCardDTO);
                     cardController.updateSourceColumn(targetColumnId);
                 }
@@ -285,7 +294,6 @@ public class BoardViewController {
         BoardSummaryDTO selectedBoard = boardsTableView.getSelectionModel().getSelectedItem();
         loadBoards();
         if (selectedBoard != null) {
-            // Tenta re-selecionar o board pelo ID para obter o objeto mais recente
             boardsTableView.getItems().stream()
                     .filter(b -> b.id().equals(selectedBoard.id()))
                     .findFirst()
@@ -293,11 +301,7 @@ public class BoardViewController {
         }
     }
 
-    @FXML
-    private void handleLinkGoogle() {
-        // Lógica a ser implementada
-        System.out.println("Botão 'Vincular Google Task' clicado.");
-    }
+    // O método handleLinkGoogle() foi removido.
 
     @FXML
     private void handleGoogleTask() {
@@ -305,21 +309,16 @@ public class BoardViewController {
         final String url = "https://tasks.google.com/tasks/";
 
         try {
-            // Verifica se a classe Desktop é suportada na plataforma atual
             if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-                // Abre a URL no navegador padrão do usuário
                 Desktop.getDesktop().browse(new URI(url));
             } else {
-                // Fallback ou log de erro se a ação de abrir o navegador não for suportada
                 System.err.println("Ação de abrir navegador não é suportada nesta plataforma.");
                 showError("Ação não suportada", "Não foi possível abrir o navegador automaticamente.");
             }
         } catch (IOException | URISyntaxException e) {
-            // Captura exceções que podem ocorrer ao tentar abrir a URL
             e.printStackTrace();
             showError("Erro ao abrir o navegador", "Ocorreu um erro ao tentar abrir a página do Google Tasks.");
         }
-
     }
 
     private void showError(String title, String message) {

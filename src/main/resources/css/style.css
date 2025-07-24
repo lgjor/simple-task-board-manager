@@ -69,3 +69,19 @@
 .save-button:hover {
     -fx-background-color: #0056b3; /* Azul mais escuro no hover */
 }
+
+/* Botão de Criar Tarefa: Estilo de ação secundária */
+.task-button {
+    -fx-background-color: #f0f0f0;
+    -fx-text-fill: #333333;
+    -fx-font-size: 10px;
+    -fx-background-radius: 5;
+    -fx-border-color: #cccccc;
+    -fx-border-radius: 5;
+    -fx-padding: 2 8 2 8;
+}
+
+.task-button:hover {
+    -fx-background-color: #e0e0e0;
+    -fx-border-color: #bbbbbb;
+}

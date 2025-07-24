@@ -1,5 +1,13 @@
 package org.desviante.service.dto;
 
-// Usar um record Java é perfeito para DTOs imutáveis.
-public record CreateTaskRequest(String listTitle, String taskTitle, String taskNotes) {
-}
+import java.time.LocalDateTime;
+
+/**
+ * DTO interno para passar dados para o GoogleTasksApiService.
+ */
+public record CreateTaskRequest(
+        String listTitle,
+        String title,
+        String notes,
+        LocalDateTime due
+) {}

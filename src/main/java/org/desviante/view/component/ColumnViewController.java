@@ -33,6 +33,7 @@ public class ColumnViewController {
     private VBox cardsContainer;
 
     private TaskManagerFacade facade;
+    private String boardName;
     private BoardColumnDetailDTO columnData;
     private BiConsumer<Long, Long> onCardDrop;
     private Runnable onDataChange;
@@ -45,12 +46,14 @@ public class ColumnViewController {
 
     public void setData(
             TaskManagerFacade facade,
+            String boardName,
             BoardColumnDetailDTO columnData,
             BiConsumer<Long, Long> onCardDrop,
             Runnable onDataChange,
             BiConsumer<Long, UpdateCardDetailsDTO> onCardUpdate
     ) {
         this.facade = facade;
+        this.boardName = boardName; // <--- ARMAZENA O NOME DO BOARD
         this.columnData = columnData;
         this.onCardDrop = onCardDrop;
         this.onDataChange = onDataChange;
@@ -141,7 +144,13 @@ public class ColumnViewController {
                     CardViewController cardController = cardLoader.getController();
                     cardNode.setUserData(cardController);
 
-                    cardController.setData(newCardDTO, this.columnData.id(), this.onCardUpdate);
+                    cardController.setData(
+                            this.facade,      // <--- NOVO PARÂMETRO
+                            this.boardName,   // <--- NOVO PARÂMETRO
+                            newCardDTO,
+                            this.columnData.id(),
+                            this.onCardUpdate
+                    );
 
                     addCard(cardNode);
 

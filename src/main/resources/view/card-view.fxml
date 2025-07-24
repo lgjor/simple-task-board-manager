@@ -47,7 +47,7 @@
                 <Insets top="5.0" />
             </VBox.margin>
         </Separator>
-        <VBox fx:id="footerPane" alignment="CENTER_LEFT" managed="false" spacing="3" styleClass="card-footer" visible="false">
+        <VBox fx:id="footerPane" alignment="CENTER_LEFT" managed="false" spacing="5" styleClass="card-footer" visible="false">
             <children>
                 <!-- Linha para a Data de Criação -->
                 <HBox fx:id="creationDateBox" spacing="5" managed="false" visible="false">
@@ -69,6 +69,15 @@
                         <Label styleClass="footer-title-completed" text="Concluído:" />
                         <Label fx:id="completionDateLabel" styleClass="footer-value-completed" />
                     </children>
+                </HBox>
+                <!-- NOVO: Botão para criar Task -->
+                <HBox alignment="CENTER_LEFT" spacing="5">
+                    <children>
+                        <Button fx:id="createTaskButton" onAction="#handleCreateTask" styleClass="task-button" text="+ Criar Tarefa Google" />
+                    </children>
+                    <VBox.margin>
+                        <Insets top="5.0" />
+                    </VBox.margin>
                 </HBox>
             </children>
         </VBox>

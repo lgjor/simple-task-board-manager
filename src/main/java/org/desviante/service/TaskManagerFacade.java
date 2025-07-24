@@ -254,4 +254,19 @@ public class TaskManagerFacade {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yy HH:mm");
         return localDateTime.format(formatter);
     }
+
+    /**
+     * Cria uma nova Task associada a um Card.
+     */
+    @Transactional
+    public void createTaskForCard(CreateTaskRequestDTO request) {
+        taskService.createTask(
+                request.listTitle(),
+                request.title(),
+                request.notes(),
+                request.due(), // <-- This is now a LocalDateTime
+                request.cardId()
+        );
+        System.out.println("Fachada: Criando tarefa para o card ID " + request.cardId());
+    }
 }

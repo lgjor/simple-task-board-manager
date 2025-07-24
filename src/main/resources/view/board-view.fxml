@@ -30,7 +30,6 @@
                         <Separator orientation="VERTICAL" />
                         <Button fx:id="refreshButton" onAction="#handleRefresh" text="Atualizar" />
                         <Separator orientation="VERTICAL" />
-                        <Button fx:id="linkGoogleButton" onAction="#handleLinkGoogle" text="Vincular Google" />
                         <Button fx:id="googleTaskButton" onAction="#handleGoogleTask" text="Google Task" />
                     </items>
                 </ToolBar>
