@@ -7,7 +7,6 @@ import org.desviante.repository.CardRepository;
 import org.desviante.repository.TaskRepository;
 import org.desviante.service.dto.CreateTaskRequest;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -15,16 +14,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class) // Modern way to initialize Mockito
+@ExtendWith(MockitoExtension.class)
 class TaskServiceTest {
 
-    @Mock // Mockito will create a mock implementation of this repository
+    @Mock
     private TaskRepository taskRepository;
 
     @Mock
@@ -33,75 +33,75 @@ class TaskServiceTest {
     @Mock
     private GoogleTasksApiService googleApiService;
 
-    @InjectMocks // Mockito will inject the mocks above into this instance
+    @InjectMocks
     private TaskService taskService;
 
-    private Card parentCard;
-    private com.google.api.services.tasks.model.Task googleTask;
+    private Card mockCard;
+    private com.google.api.services.tasks.model.Task mockGoogleTask;
 
     @BeforeEach
     void setUp() {
-        // Common setup for tests
-        parentCard = new Card();
-        parentCard.setId(1L);
-        parentCard.setTitle("My Test List");
+        mockCard = new Card();
+        mockCard.setId(1L);
+        mockCard.setTitle("Mock Card");
 
-        googleTask = new com.google.api.services.tasks.model.Task();
-        googleTask.setId("google-task-123");
+        mockGoogleTask = new com.google.api.services.tasks.model.Task();
+        mockGoogleTask.setId("google-task-123");
+        mockGoogleTask.setTitle("Google Task Title");
     }
 
     @Test
-    @DisplayName("Deve criar uma task com sucesso, salvá-la e sincronizá-la com a API do Google")
-    void shouldCreateTaskSuccessfully() {
+    void createTask_shouldSucceed_whenCardExists() {
         // Arrange
-        long cardId = 1L;
-        String title = "Nova Tarefa";
-        String notes = "Detalhes da tarefa";
+        String listTitle = "My Board";
+        String title = "Test Task";
+        String notes = "Test Notes";
+        LocalDateTime dueDate = LocalDateTime.now();
+        Long cardId = 1L;
 
-        // --- Mocking Behavior ---
-        // 1. When the card repository is asked for cardId, return our parentCard.
-        when(cardRepository.findById(cardId)).thenReturn(Optional.of(parentCard));
-
-        // 2. CORREÇÃO: When the googleApiService is called with ANY CreateTaskRequest object, return our fake googleTask.
-        when(googleApiService.createTaskInList(any(CreateTaskRequest.class))).thenReturn(googleTask);
-
-        // 3. When the task repository saves ANY task, just return that same task.
+        // Mocks
+        when(cardRepository.findById(cardId)).thenReturn(Optional.of(mockCard));
+        when(googleApiService.createTaskInList(any(CreateTaskRequest.class))).thenReturn(mockGoogleTask);
         when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
-        // CORREÇÃO: Call the correct method name 'createTask'.
-        Task result = taskService.createTask(cardId, title, notes);
+        // CORREÇÃO: Chamada do método atualizada para incluir todos os parâmetros.
+        Task result = taskService.createTask(listTitle, title, notes, dueDate, cardId);
 
         // Assert
         assertNotNull(result);
+        assertEquals(cardId, result.getCardId());
         assertEquals(title, result.getTitle());
-        assertEquals("google-task-123", result.getGoogleTaskId(), "O ID da task do Google deveria ter sido definido.");
-        assertTrue(result.isSent(), "A task deveria ser marcada como enviada.");
+        assertEquals(notes, result.getNotes());
+        assertEquals("google-task-123", result.getGoogleTaskId());
+        assertTrue(result.isSent());
 
-        // --- Verification ---
-        // We can use an ArgumentCaptor to capture the DTO and verify its contents.
+        // Verifica se o DTO correto foi passado para o serviço da API do Google
         ArgumentCaptor<CreateTaskRequest> requestCaptor = ArgumentCaptor.forClass(CreateTaskRequest.class);
-
-        // CORREÇÃO: Verify the googleApiService was called once with the captured request.
         verify(googleApiService).createTaskInList(requestCaptor.capture());
-        assertEquals("My Test List", requestCaptor.getValue().listTitle());
-        assertEquals(title, requestCaptor.getValue().taskTitle());
 
-        // Verify that the repository's save method was called once.
-        verify(taskRepository).save(any(Task.class));
+        CreateTaskRequest capturedRequest = requestCaptor.getValue();
+        // CORREÇÃO: Acessores do record corrigidos de .taskTitle() para .title()
+        assertEquals(listTitle, capturedRequest.listTitle());
+        assertEquals(title, capturedRequest.title());
+        assertEquals(notes, capturedRequest.notes());
+        assertEquals(dueDate, capturedRequest.due());
     }
 
     @Test
-    @DisplayName("Deve lançar exceção se o Card pai não for encontrado")
-    void shouldThrowException_whenCardNotFound() {
-        // Arrange: Mock the repository to find nothing.
-        when(cardRepository.findById(anyLong())).thenReturn(Optional.empty());
+    void createTask_shouldThrowException_whenCardNotFound() {
+        // Arrange
+        long nonExistentCardId = 99L;
+        when(cardRepository.findById(nonExistentCardId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        // CORREÇÃO: O teste agora espera a exceção correta e mais específica que o serviço lança.
-        assertThrows(ResourceNotFoundException.class, () -> taskService.createTask(99L, "Título", ""));
+        // CORREÇÃO: Chamada do método atualizada para corresponder à nova assinatura.
+        assertThrows(ResourceNotFoundException.class, () -> {
+            taskService.createTask("Any List", "Any Title", "Any notes", null, nonExistentCardId);
+        });
 
-        // Verify that the Google API service was NEVER called.
-        verify(googleApiService, never()).createTaskInList(any(CreateTaskRequest.class));
+        // Garante que, se o card não existe, a API do Google nunca é chamada.
+        verify(googleApiService, never()).createTaskInList(any());
+        verify(taskRepository, never()).save(any());
     }
 }

@@ -29,12 +29,14 @@ import java.net.URISyntaxException;
 @Component
 public class BoardViewController {
 
-    @Autowired
-    private TaskManagerFacade facade;
+    // Declarado como 'final' para garantir a imutabilidade após a construção.
+    private final TaskManagerFacade facade;
 
     // --- Componentes da Tabela de Boards ---
     @FXML
     private TableView<BoardSummaryDTO> boardsTableView;
+
+    // --- Componentes da Tabela de Boards ---
     @FXML
     private TableColumn<BoardSummaryDTO, String> boardIdColumn;
     @FXML
@@ -67,6 +69,10 @@ public class BoardViewController {
 
     // Mapa para rastrear o nó visual de cada card pelo seu ID.
     private final Map<Long, Node> cardNodeMap = new HashMap<>();
+
+    public BoardViewController(TaskManagerFacade facade) {
+        this.facade = facade;
+    }
 
     @FXML
     public void initialize() {

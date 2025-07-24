@@ -6,35 +6,34 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import org.desviante.config.AppConfig;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.stereotype.Component;
 
+/**
+ * A classe da UI do JavaFX, agora tratada como um simples Componente Spring.
+ * Ela não controla mais o ciclo de vida do Spring.
+ */
+@Component // Opcional, mas boa prática para indicar que é um bean Spring.
 public class MainApp extends Application {
 
     private ConfigurableApplicationContext springContext;
 
     /**
-     * O método init() é chamado antes do start().
-     * É o lugar perfeito para inicializar nosso contexto Spring.
+     * O método init() agora simplesmente obtém o contexto Spring
+     * que já foi criado pela classe principal.
      */
     @Override
     public void init() {
-        // CORREÇÃO: Use AnnotationConfigApplicationContext para inicializar o Spring.
-        springContext = new AnnotationConfigApplicationContext(AppConfig.class);
+        this.springContext = SimpleTaskBoardManagerApplication.getSpringContext();
     }
 
     /**
-     * O método start() é o ponto de entrada principal para a UI.
+     * O método start() permanece o mesmo. Sua lógica para carregar o FXML
+     * e usar a ControllerFactory do Spring já estava perfeita.
      */
     @Override
     public void start(Stage primaryStage) throws Exception {
-        // Carrega o arquivo FXML que define nossa UI.
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/view/board-view.fxml"));
-
-        // AQUI ESTÁ A MÁGICA:
-        // Dizemos ao FXMLLoader para usar o contexto do Spring para obter instâncias de controller.
-        // Quando o FXML pedir o MainViewController, o Spring o fornecerá com a facade já injetada.
         fxmlLoader.setControllerFactory(springContext::getBean);
 
         Parent root = fxmlLoader.load();
@@ -44,8 +43,8 @@ public class MainApp extends Application {
     }
 
     /**
-     * O método stop() é chamado quando a aplicação fecha.
-     * É crucial fechar o contexto do Spring para liberar recursos.
+     * O método stop() também permanece o mesmo, garantindo que o contexto
+     * do Spring seja fechado corretamente quando a UI fechar.
      */
     @Override
     public void stop() {
