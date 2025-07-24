@@ -21,7 +21,10 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
+
+import java.awt.Desktop;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 @Component
 public class BoardViewController {
@@ -102,6 +105,19 @@ public class BoardViewController {
                     }
                 }
         );
+
+        // Habilita a edição com duplo clique na tabela de Boards
+        boardsTableView.setRowFactory(tv -> {
+            TableRow<BoardSummaryDTO> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                // Verifica se foi um duplo clique e se a linha não está vazia
+                if (event.getClickCount() == 2 && (!row.isEmpty())) {
+                    // Chama o mesmo método de edição do botão
+                    handleEditBoard();
+                }
+            });
+            return row;
+        });
     }
 
     private void loadBoards() {
@@ -279,14 +295,31 @@ public class BoardViewController {
 
     @FXML
     private void handleLinkGoogle() {
-        System.out.println("Botão 'Vincular Google' clicado.");
         // Lógica a ser implementada
+        System.out.println("Botão 'Vincular Google Task' clicado.");
     }
 
     @FXML
     private void handleGoogleTask() {
-        System.out.println("Botão 'Google Task' clicado.");
-        // Lógica a ser implementada
+        System.out.println("Botão 'Google Task' clicado. Abrindo o navegador...");
+        final String url = "https://tasks.google.com/tasks/";
+
+        try {
+            // Verifica se a classe Desktop é suportada na plataforma atual
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                // Abre a URL no navegador padrão do usuário
+                Desktop.getDesktop().browse(new URI(url));
+            } else {
+                // Fallback ou log de erro se a ação de abrir o navegador não for suportada
+                System.err.println("Ação de abrir navegador não é suportada nesta plataforma.");
+                showError("Ação não suportada", "Não foi possível abrir o navegador automaticamente.");
+            }
+        } catch (IOException | URISyntaxException e) {
+            // Captura exceções que podem ocorrer ao tentar abrir a URL
+            e.printStackTrace();
+            showError("Erro ao abrir o navegador", "Ocorreu um erro ao tentar abrir a página do Google Tasks.");
+        }
+
     }
 
     private void showError(String title, String message) {
