@@ -180,6 +180,17 @@ public class BoardViewController {
 
     private void handleCardUpdate(Long cardId, UpdateCardDetailsDTO updatedDetails) {
         System.out.println("Atualizando detalhes para o card ID: " + cardId);
+        
+        // Se updatedDetails for null, significa que o card foi deletado
+        if (updatedDetails == null) {
+            System.out.println("Card ID " + cardId + " foi deletado");
+            // Remove o card do mapa de nós
+            cardNodeMap.remove(cardId);
+            // Atualiza o resumo do board
+            updateSelectedBoardSummary();
+            return;
+        }
+        
         try {
             facade.updateCardDetails(cardId, updatedDetails);
             BoardSummaryDTO selectedBoard = boardsTableView.getSelectionModel().getSelectedItem();

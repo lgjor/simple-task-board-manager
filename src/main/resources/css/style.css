@@ -70,6 +70,19 @@
     -fx-background-color: #0056b3; /* Azul mais escuro no hover */
 }
 
+/* Botão de Excluir: Estilo de ação destrutiva */
+.delete-button {
+    -fx-background-color: #DC3545; /* Vermelho vibrante */
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5;
+    -fx-border-color: transparent;
+}
+
+.delete-button:hover {
+    -fx-background-color: #C82333; /* Vermelho mais escuro no hover */
+}
+
 /* Botão de Criar Tarefa: Estilo de ação secundária */
 .task-button {
     -fx-background-color: #f0f0f0;

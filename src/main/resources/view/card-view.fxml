@@ -31,12 +31,13 @@
             </children>
         </StackPane>
 
-        <!-- Container para os controles de edição (botão Salvar) -->
-        <HBox fx:id="editControlsBox" alignment="CENTER_RIGHT" managed="false" visible="false">
+        <!-- Container para os controles de edição (botões Salvar e Excluir) -->
+        <HBox fx:id="editControlsBox" alignment="CENTER_RIGHT" managed="false" visible="false" spacing="10">
             <VBox.margin>
                 <Insets top="10.0" />
             </VBox.margin>
             <children>
+                <Button fx:id="deleteButton" onAction="#handleDelete" styleClass="delete-button" text="Excluir" />
                 <Button fx:id="saveButton" onAction="#handleSave" styleClass="save-button" text="Salvar" defaultButton="true" />
             </children>
         </HBox>

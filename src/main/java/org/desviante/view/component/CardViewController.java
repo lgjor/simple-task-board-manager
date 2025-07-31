@@ -49,6 +49,7 @@ public class CardViewController {
     // --- COMPONENTES DE CONTROLE DE EDIÇÃO ---
     @FXML private HBox editControlsBox;
     @FXML private Button saveButton;
+    @FXML private Button deleteButton;
 
     // --- CAMPOS DE DADOS ---
     private TaskManagerFacade facade;
@@ -221,6 +222,49 @@ public class CardViewController {
         );
 
         switchToDisplayMode();
+    }
+
+    @FXML
+    private void handleDelete() {
+        if (cardData == null) {
+            return;
+        }
+
+        // Confirmação antes de deletar
+        Alert confirmDialog = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmDialog.setTitle("Confirmar Exclusão");
+        confirmDialog.setHeaderText("Excluir Card");
+        confirmDialog.setContentText("Tem certeza que deseja excluir o card '" + cardData.title() + "'?\n\nEsta ação não pode ser desfeita.");
+
+        confirmDialog.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                try {
+                    // Chama o facade para deletar o card
+                    facade.deleteCard(cardData.id());
+                    
+                    // Remove o card da interface
+                    if (cardPane.getParent() instanceof VBox) {
+                        VBox parent = (VBox) cardPane.getParent();
+                        parent.getChildren().remove(cardPane);
+                    }
+                    
+                    // Notifica mudança de dados (se houver callback)
+                    if (onSaveCallback != null) {
+                        // Usa o callback de save para notificar a mudança
+                        // Passa null como UpdateCardDetailsDTO para indicar que foi deletado
+                        onSaveCallback.accept(cardData.id(), null);
+                    }
+                    
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Alert errorDialog = new Alert(Alert.AlertType.ERROR);
+                    errorDialog.setTitle("Erro ao Excluir");
+                    errorDialog.setHeaderText("Falha na Exclusão");
+                    errorDialog.setContentText("Não foi possível excluir o card: " + e.getMessage());
+                    errorDialog.showAndWait();
+                }
+            }
+        });
     }
 
     /**
