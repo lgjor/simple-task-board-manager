@@ -131,7 +131,7 @@ Para garantir qualidade e estabilidade, o projeto conta com uma suíte abrangent
 ### Desenvolvimento
 ```bash
 # Clone o repositório
-git clone https://github.com/seu-usuario/simple-task-board-manager.git
+git clone https://github.com/lgjor/simple-task-board-manager.git
 
 # Execute com Gradle
 ./gradlew run
