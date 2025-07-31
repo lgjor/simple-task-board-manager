@@ -12,6 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -76,5 +77,118 @@ class CardServiceTest {
 
         // Verify that the save method was never called, preventing orphaned data
         verify(cardRepository, never()).save(any(Card.class));
+    }
+
+    @Test
+    @DisplayName("Deve deletar um card com sucesso quando o card existe")
+    void shouldDeleteCardSuccessfully() {
+        // Arrange
+        Long cardId = 1L;
+        Card cardToDelete = new Card();
+        cardToDelete.setId(cardId);
+        cardToDelete.setTitle("Card para Deletar");
+        cardToDelete.setDescription("Descrição do card");
+        cardToDelete.setBoardColumnId(1L);
+        cardToDelete.setCreationDate(LocalDateTime.now());
+        cardToDelete.setLastUpdateDate(LocalDateTime.now());
+
+        // Mocking behavior: pretend the card exists
+        when(cardRepository.findById(cardId)).thenReturn(Optional.of(cardToDelete));
+        // Mocking behavior: pretend the delete operation succeeds
+        doNothing().when(cardRepository).deleteById(cardId);
+
+        // Act
+        cardService.deleteCard(cardId);
+
+        // Assert
+        // Verify that findById was called to check if card exists
+        verify(cardRepository).findById(cardId);
+        // Verify that deleteById was called
+        verify(cardRepository).deleteById(cardId);
+    }
+
+    @Test
+    @DisplayName("Deve lançar ResourceNotFoundException ao tentar deletar um card inexistente")
+    void shouldThrowExceptionWhenDeletingNonExistentCard() {
+        // Arrange
+        Long nonExistentCardId = 99L;
+
+        // Mocking behavior: pretend the card does not exist
+        when(cardRepository.findById(nonExistentCardId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class, () -> cardService.deleteCard(nonExistentCardId));
+
+        // Verify that findById was called but deleteById was never called
+        verify(cardRepository).findById(nonExistentCardId);
+        verify(cardRepository, never()).deleteById(any());
+    }
+
+    @Test
+    @DisplayName("Deve lançar ResourceNotFoundException quando cardId é null")
+    void shouldThrowExceptionWhenCardIdIsNull() {
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class, () -> cardService.deleteCard(null));
+
+        // Verify that findById was called (the method checks for existence even with null)
+        verify(cardRepository).findById(null);
+        verify(cardRepository, never()).deleteById(any());
+    }
+
+    @Test
+    @DisplayName("Deve atualizar um card com sucesso")
+    void shouldUpdateCardDetailsSuccessfully() {
+        // Arrange
+        Long cardId = 1L;
+        String newTitle = "Título Atualizado";
+        String newDescription = "Descrição Atualizada";
+
+        Card existingCard = new Card();
+        existingCard.setId(cardId);
+        existingCard.setTitle("Título Antigo");
+        existingCard.setDescription("Descrição Antiga");
+        existingCard.setBoardColumnId(1L);
+        existingCard.setCreationDate(LocalDateTime.now().minusDays(1));
+        existingCard.setLastUpdateDate(LocalDateTime.now().minusDays(1));
+
+        // Mocking behavior: pretend the card exists
+        when(cardRepository.findById(cardId)).thenReturn(Optional.of(existingCard));
+        when(cardRepository.save(any(Card.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        Card result = cardService.updateCardDetails(cardId, newTitle, newDescription);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(cardId, result.getId());
+        assertEquals(newTitle, result.getTitle());
+        assertEquals(newDescription, result.getDescription());
+        assertEquals(existingCard.getBoardColumnId(), result.getBoardColumnId());
+        assertEquals(existingCard.getCreationDate(), result.getCreationDate());
+        assertNotNull(result.getLastUpdateDate());
+
+        // Verify that findById and save were called
+        verify(cardRepository).findById(cardId);
+        verify(cardRepository).save(any(Card.class));
+    }
+
+    @Test
+    @DisplayName("Deve lançar ResourceNotFoundException ao tentar atualizar um card inexistente")
+    void shouldThrowExceptionWhenUpdatingNonExistentCard() {
+        // Arrange
+        Long nonExistentCardId = 99L;
+        String newTitle = "Novo Título";
+        String newDescription = "Nova Descrição";
+
+        // Mocking behavior: pretend the card does not exist
+        when(cardRepository.findById(nonExistentCardId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class, 
+                () -> cardService.updateCardDetails(nonExistentCardId, newTitle, newDescription));
+
+        // Verify that findById was called but save was never called
+        verify(cardRepository).findById(nonExistentCardId);
+        verify(cardRepository, never()).save(any());
     }
 }
