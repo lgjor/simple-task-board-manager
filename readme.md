@@ -1,74 +1,154 @@
-# Gerenciador de boards de tarefas
+# Simple Task Board Manager
 
 <p align="center">
   <a href="https://github.com/lgjor/desafio-board-dio" target="_blank">
-    <img src=".github/preview.jpg" width="100%" alt="Gerenciador de boards de tarefas">
+    <img src=".github/preview.jpg" width="100%" alt="Simple Task Board Manager">
   </a>
 </p>
 
 <p align="center">
-Projeto desenvolvido para finalização do Bootcamp Bradesco Java <a href="https://www.dio.me" target="_blank">DIO</a><br/>
+Aplicação desktop simples e eficiente para gerenciamento de tarefas<br/>
+Desenvolvido para manter você focado no que realmente importa: **resolver suas tarefas**
 </p>
 
 <p align="center">
-  <a href="#tecnologias">Tecnologias</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
-  <a href="#funcionalidades">Funcionalidades</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;  
-  <a href="#arquitetura">Evolução da Arquitetura</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+  <a href="#diferencial">Diferencial</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+  <a href="#tecnologias">Tecnologias</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+  <a href="#funcionalidades">Funcionalidades</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+  <a href="#arquitetura">Arquitetura</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
   <a href="#testes">Testes</a>
 </p>
 
+## <div id="diferencial">🎯 Nosso Diferencial: Simplicidade que Foca na Produtividade</div>
+
+Enquanto outras ferramentas de gerenciamento de tarefas oferecem inúmeras funcionalidades e configurações complexas, o **Simple Task Board Manager** foi desenvolvido com um propósito claro: **manter você focado na resolução de suas tarefas, não no uso da ferramenta**.
+
+### Por que escolher nossa solução?
+
+- **⚡ Zero Configuração**: Instale e use imediatamente - sem setups complexos
+- **🎯 Interface Minimalista**: Apenas o essencial para gerenciar tarefas eficientemente
+- **⏱️ Economia de Tempo**: Menos tempo configurando, mais tempo produzindo
+- **🧠 Foco na Tarefa**: Interface limpa que não distrai do objetivo principal
+- **💾 Persistência Local**: Seus dados ficam seguros no seu computador
+
+> *"A melhor ferramenta é aquela que você esquece que está usando"*
+
 ## <div id="tecnologias">🚀 Tecnologias</div>
 
-Esse projeto foi desenvolvido com as seguintes tecnologias:
+Este projeto foi desenvolvido com tecnologias modernas e estáveis:
 
-- ☕ Java 21
-- 🍃 Spring Framework
-- 🐘 JPA / Hibernate
-- 💾 Banco de Dados H2
-- 🖥️ JavaFX
+- **☕ Java 21** - Linguagem principal com recursos modernos
+- **🍃 Spring Boot 3.2.5** - Framework para injeção de dependências e configuração
+- **💾 H2 Database 2.3.232** - Banco de dados em memória para persistência local
+- **🖥️ JavaFX 21.0.4** - Interface gráfica moderna e responsiva
+- **🔧 Gradle 8.14.3** - Sistema de build e gerenciamento de dependências
+- **📊 Micrometer 1.15.2** - Observabilidade e métricas
+- **🧪 JUnit 5 + Mockito** - Testes unitários e de integração
+- **🔌 Google Tasks API** - Integração com Google Tasks (em desenvolvimento)
 
-## <div id="funcionalidades">Funcionalidades</div>
+## <div id="funcionalidades">✨ Funcionalidades</div>
 
-- Criar, editar e excluir boards de tarefas.
-- Criar cards dentro das colunas do board.
-- Editar título e descrição dos cards com duplo clique (edição in-place).
-- Mover cards entre as colunas ("A Fazer", "Em Andamento", "Concluído") com drag and drop.
-- Visualizar o progresso do board com percentuais de conclusão.
-- Persistência de dados em um banco de dados em memória H2.
-- (Em desenvolvimento) Integração com a API do Google Tasks.
+### Interface Intuitiva
+- **📋 Boards Visuais**: Organize suas tarefas em colunas visuais (A Fazer, Em Andamento, Concluído)
+- **🎴 Cards Interativos**: Crie e edite cards com duplo clique (edição in-place)
+- **🔄 Drag & Drop**: Mova tarefas entre colunas com arrastar e soltar
+- **📊 Progresso Visual**: Acompanhe o progresso com percentuais automáticos
 
-## <div id="arquitetura">Evolução da Arquitetura: De JDBC a Spring + JPA</div>
+### Produtividade
+- **⚡ Início Rápido**: Sem configurações complexas - abra e use
+- **💾 Persistência Automática**: Dados salvos automaticamente no banco local
+- **🎨 Interface Limpa**: Design minimalista que não distrai
+- **📱 Responsivo**: Interface adaptável a diferentes tamanhos de tela
 
-O projeto passou por grandes refatorações que modernizaram sua arquitetura, aumentando a robustez, a manutenibilidade e o desacoplamento entre as camadas.
+### Recursos Avançados
+- **🔍 Busca e Filtros**: Encontre rapidamente suas tarefas
+- **📅 Datas e Prazos**: Acompanhe prazos e datas de criação/conclusão
+- **🔄 Sincronização**: Integração com Google Tasks (em desenvolvimento)
+- **📊 Relatórios**: Visualize seu progresso e produtividade
 
-### Fase 1: Migração para JPA/Hibernate
+## <div id="arquitetura">🏗️ Arquitetura</div>
 
-Inicialmente, a persistência era feita com JDBC puro. A primeira grande evolução foi a migração para o **JPA (Jakarta Persistence API)** com a implementação do **Hibernate**.
+O projeto evoluiu de uma arquitetura simples para uma solução robusta e escalável, mantendo sempre o foco na simplicidade de uso.
 
-- **Mapeamento Objeto-Relacional (ORM)**: As classes do modelo foram transformadas em entidades JPA com anotações (`@Entity`, `@Id`, `@OneToMany`), eliminando a necessidade de escrever SQL manualmente para operações CRUD.
-- **Serviços Transacionais**: As classes de serviço (`BoardService`, `CardService`) foram reescritas para utilizar o `EntityManager` do JPA, que passou a gerenciar as transações e operações de persistência (`persist`, `merge`, `remove`).
-- **Benefícios**: Redução drástica de código boilerplate (try-catch-finally, manipulação de `ResultSet`), aumento da legibilidade e facilidade na troca do banco de dados.
+### Evolução da Arquitetura
 
-### Fase 2: Integração com Spring e UI Moderna
+#### **Fase 1: Fundação Sólida**
+- **JDBC → JPA/Hibernate**: Migração para mapeamento objeto-relacional moderno
+- **Entidades JPA**: Modelo de dados limpo com anotações (`@Entity`, `@Id`, `@OneToMany`)
+- **Serviços Transacionais**: Gerenciamento automático de transações com `@Transactional`
 
-A segunda refatoração introduziu o **Spring Framework** para gerenciamento de dependências e reestruturou a interface gráfica (UI) com JavaFX, seguindo padrões modernos.
+#### **Fase 2: Spring Boot Integration**
+- **Injeção de Dependência**: Spring gerencia o ciclo de vida dos componentes
+- **Arquitetura Modular**: Componentes desacoplados e reutilizáveis
+- **Configuração Automática**: Spring Boot configura automaticamente o ambiente
 
-- **Injeção de Dependência com Spring**: O Spring agora gerencia o ciclo de vida dos componentes da aplicação (`@Service`, `@Component`). A `TaskManagerFacade`, que orquestra a lógica de negócio, é injetada automaticamente nos controllers da UI com `@Autowired`, eliminando o acoplamento manual.
+#### **Fase 3: Interface Moderna**
+- **JavaFX Components**: Interface baseada em componentes FXML reutilizáveis
+- **Padrão Observer**: Comunicação desacoplada entre componentes via callbacks
+- **UX Aprimorada**: Edição in-place, drag & drop, feedback visual
 
-- **Arquitetura de UI Baseada em Componentes**: A interface foi dividida em componentes FXML reutilizáveis (`card-view.fxml`, `column-view.fxml`), cada um com seu próprio controller. Isso torna a UI mais organizada e fácil de manter.
+### Benefícios da Arquitetura Atual
 
-- **Comunicação Desacoplada na UI**: A comunicação entre os controllers filhos e pais (ex: um card notificando o board sobre uma atualização) é feita através de *callbacks* (usando `BiConsumer`), um padrão que evita dependências diretas e promove o encapsulamento.
+- **🔧 Manutenibilidade**: Código organizado e fácil de manter
+- **🧪 Testabilidade**: Arquitetura que facilita testes unitários e de integração
+- **📈 Escalabilidade**: Fácil adição de novas funcionalidades
+- **🛡️ Robustez**: Tratamento de erros e validações adequadas
 
-- **Melhoria de Experiência do Usuário (UX)**:
-    - A edição de cards foi transformada de um dialog pop-up para uma **edição in-place**, permitindo que o usuário altere o título e a descrição diretamente no card com um duplo clique.
-    - Um botão "Salvar" explícito foi adicionado para tornar a ação de edição mais intuitiva.
-    - A identidade visual dos cards foi aprimorada com CSS para criar uma hierarquia clara entre título, descrição e metadados (datas).
+## <div id="testes">🧪 Testes</div>
 
-- **Gerenciamento do Banco de Dados via Script**: A partir da documentação do Spring Framework, Data Access, capítulo 3: Data Access with JDBCA, optamos por deixar de usar o hibernate, e passamos a adotar um conjuto de classes utilitárias. A inicialização do banco de dados em memória **H2** é gerenciada pelo Spring Boot. Ao iniciar, o Spring detecta e executa automaticamente o arquivo `schema.sql` presente no classpath. Este script é responsável por criar toda a estrutura de tabelas, garantindo um ambiente limpo e consistente a cada execução da aplicação, o que é ideal para desenvolvimento e demonstração.
-## <div id="testes">🧪 Testes Implementados</div>
+Para garantir qualidade e estabilidade, o projeto conta com uma suíte abrangente de testes:
 
-Para garantir a qualidade e a estabilidade do código, o projeto conta com uma suíte de testes que cobre as principais camadas da aplicação, utilizando **JUnit 5** e **Mockito**.
+### **Testes Unitários**
+- **Services**: Validação da lógica de negócio isolada
+- **Repositories**: Testes de acesso a dados
+- **Validators**: Verificação de regras de validação
 
-- **Testes de Unidade (Services)**: Focam em validar a lógica de negócio de cada serviço (`BoardService`, `CardService`) de forma isolada. As dependências externas, como os repositórios, são substituídas por *mocks* criados com o Mockito. Isso permite testar regras de negócio específicas (ex: a lógica de conclusão de um card ao ser movido para a coluna "Concluído") sem a necessidade de interagir com o banco de dados.
+### **Testes de Integração**
+- **Spring Context**: Testes que carregam o contexto completo
+- **Database Integration**: Validação da persistência com H2
+- **API Integration**: Testes de integração com Google Tasks API
 
-- **Testes de Integração (Facade e Camada de Persistência)**: Utilizando a anotação `@SpringBootTest`, estes testes carregam o contexto completo do Spring e validam a integração entre as diferentes camadas, desde a `TaskManagerFacade` até a camada de persistência com o banco de dados H2. Eles garantem que as entidades JPA estão corretamente mapeadas, que as consultas dos repositórios funcionam como esperado e que as transações (`@Transactional`) se comportam corretamente. O perfil `test` é ativado para garantir um ambiente de execução controlado e separado.
+### **Cobertura de Testes**
+- **JUnit 5**: Framework moderno de testes
+- **Mockito**: Mocking de dependências
+- **Spring Boot Test**: Utilitários para testes de integração
+
+## 🚀 Como Usar
+
+1. **Download**: Baixe o instalador para Windows
+2. **Instale**: Execute o instalador e siga as instruções
+3. **Execute**: Abra o aplicativo e comece a usar imediatamente
+4. **Produza**: Foque nas suas tarefas, não na ferramenta
+
+## 📦 Instalação
+
+### Windows
+```bash
+# Execute o instalador gerado
+./gradlew jpackage
+```
+
+### Desenvolvimento
+```bash
+# Clone o repositório
+git clone https://github.com/seu-usuario/simple-task-board-manager.git
+
+# Execute com Gradle
+./gradlew run
+
+# Ou compile e execute
+./gradlew build
+java -jar build/libs/simple-task-board-manager-1.0.0-all.jar
+```
+
+## 🤝 Contribuindo
+
+Contribuições são bem-vindas! Mantenha sempre o foco na **simplicidade e produtividade do usuário**.
+
+## 📄 Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+
+---
+
+**Desenvolvido com ❤️ para manter você focado no que realmente importa: suas tarefas.**
