@@ -36,7 +36,7 @@ public class TaskRepositoryTest {
 
     @BeforeEach
     void setup() {
-        Board testBoard = boardRepository.save(new Board(null, "Board de Teste para Tasks", LocalDateTime.now()));
+        Board testBoard = boardRepository.save(new Board(null, "Board de Teste para Tasks", LocalDateTime.now(), null, null));
         BoardColumn testColumn = columnRepository.save(new BoardColumn(null, "Coluna de Teste para Tasks", 0, BoardColumnKindEnum.INITIAL, testBoard.getId()));
         LocalDateTime now = LocalDateTime.now();
         testCard = cardRepository.save(new Card(null, "Card de Teste para Tasks", "Descrição", now, now, null, testColumn.getId()));

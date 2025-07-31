@@ -26,7 +26,7 @@ public class BoardRepositoryTest {
     void deveSalvarUmNovoBoardEAtribuirUmId() {
         // ARRANGE
         LocalDateTime creationTime = LocalDateTime.now();
-        Board newBoard = new Board(null, "New Test Board", creationTime);
+        Board newBoard = new Board(null, "New Test Board", creationTime, null, null);
 
         // ACT
         Board savedBoard = boardRepository.save(newBoard);
@@ -49,7 +49,7 @@ public class BoardRepositoryTest {
     void findById_shouldReturnBoard_whenBoardExists() {
         // ARRANGE
         LocalDateTime creationTime = LocalDateTime.now();
-        Board boardToSave = new Board(null, "Board de Teste", creationTime);
+        Board boardToSave = new Board(null, "Board de Teste", creationTime, null, null);
         Board savedBoard = boardRepository.save(boardToSave);
 
         // ACT
@@ -82,7 +82,7 @@ public class BoardRepositoryTest {
     void save_shouldUpdateName_whenBoardExists() {
         // ARRANGE
         LocalDateTime creationTime = LocalDateTime.now();
-        Board boardToSave = new Board(null, "Nome Antigo", creationTime);
+        Board boardToSave = new Board(null, "Nome Antigo", creationTime, null, null);
         Board savedBoard = boardRepository.save(boardToSave);
 
         // ACT
@@ -108,7 +108,7 @@ public class BoardRepositoryTest {
     @DisplayName("Deve deletar um board pelo seu ID")
     void deleteById_shouldRemoveBoard() {
         // ARRANGE
-        Board boardToSave = new Board(null, "Board a Deletar", LocalDateTime.now());
+        Board boardToSave = new Board(null, "Board a Deletar", LocalDateTime.now(), null, null);
         Board savedBoard = boardRepository.save(boardToSave);
         Long id = savedBoard.getId();
 

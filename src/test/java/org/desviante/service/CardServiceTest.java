@@ -128,11 +128,44 @@ class CardServiceTest {
     @DisplayName("Deve lançar ResourceNotFoundException quando cardId é null")
     void shouldThrowExceptionWhenCardIdIsNull() {
         // Act & Assert
-        assertThrows(ResourceNotFoundException.class, () -> cardService.deleteCard(null));
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class, 
+                () -> cardService.deleteCard(null),
+                "Deve lançar ResourceNotFoundException quando cardId é null"
+        );
 
         // Verify that findById was called (the method checks for existence even with null)
         verify(cardRepository).findById(null);
         verify(cardRepository, never()).deleteById(any());
+
+        // Verify the exception message contains appropriate information
+        assertTrue(exception.getMessage().contains("não encontrado"), 
+                "A mensagem de erro deve indicar que o card não foi encontrado.");
+        assertTrue(exception.getMessage().contains("null"), 
+                "A mensagem de erro deve mencionar que o ID é null.");
+    }
+
+    @Test
+    @DisplayName("Deve lançar ResourceNotFoundException quando cardId é null - cenário de borda")
+    void shouldThrowExceptionWhenCardIdIsNull_EdgeCase() {
+        // Arrange - Mock behavior for null ID
+        when(cardRepository.findById(null)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class, 
+                () -> cardService.deleteCard(null),
+                "Deve lançar ResourceNotFoundException mesmo com mock configurado para null"
+        );
+
+        // Verify the exact behavior
+        verify(cardRepository).findById(null);
+        verify(cardRepository, never()).deleteById(any());
+
+        // Verify exception details
+        assertNotNull(exception.getMessage(), "A exceção deve ter uma mensagem.");
+        assertTrue(exception.getMessage().contains("não encontrado"), 
+                "A mensagem deve indicar que o card não foi encontrado.");
     }
 
     @Test

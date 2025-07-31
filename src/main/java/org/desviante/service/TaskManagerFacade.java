@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.desviante.exception.ResourceNotFoundException;
 import org.desviante.model.Board;
 import org.desviante.model.BoardColumn;
+import org.desviante.model.BoardGroup;
 import org.desviante.model.Card;
 import org.desviante.model.enums.BoardColumnKindEnum;
 import org.desviante.service.dto.*;
@@ -26,6 +27,7 @@ public class TaskManagerFacade {
     private final BoardColumnService columnService;
     private final CardService cardService;
     private final TaskService taskService;
+    private final BoardGroupService boardGroupService;
 
     @Transactional(readOnly = true)
     public List<BoardSummaryDTO> getAllBoardSummaries() {
@@ -89,7 +91,7 @@ public class TaskManagerFacade {
 
         // Regra de negócio: Vazio
         if (totalCards == 0) {
-            return new BoardSummaryDTO(board.getId(), board.getName(), 0, 0, 0, "Vazio");
+            return new BoardSummaryDTO(board.getId(), board.getName(), 0, 0, 0, "Vazio", board.getGroup());
         }
 
         long initialCount = 0;
@@ -129,7 +131,8 @@ public class TaskManagerFacade {
                 percentInitial,
                 percentPending,
                 percentFinal,
-                boardStatus // Passa o novo status
+                boardStatus, // Passa o novo status
+                board.getGroup() // Inclui informações do grupo
         );
     }
 
@@ -140,7 +143,22 @@ public class TaskManagerFacade {
         columnService.createColumn("Em Andamento", 1, BoardColumnKindEnum.PENDING, newBoard.getId());
         columnService.createColumn("Concluído", 2, BoardColumnKindEnum.FINAL, newBoard.getId());
         // Um board recém-criado está sempre "Vazio".
-        return new BoardSummaryDTO(newBoard.getId(), newBoard.getName(), 0, 0, 0, "Vazio");
+        return new BoardSummaryDTO(newBoard.getId(), newBoard.getName(), 0, 0, 0, "Vazio", newBoard.getGroup());
+    }
+
+    @Transactional
+    public BoardSummaryDTO createNewBoardWithGroup(String name, Long groupId) {
+        var newBoard = boardService.createBoard(name);
+        
+        // Definir o grupo do board
+        newBoard.setGroupId(groupId);
+        boardService.updateBoard(newBoard);
+        
+        columnService.createColumn("A Fazer", 0, BoardColumnKindEnum.INITIAL, newBoard.getId());
+        columnService.createColumn("Em Andamento", 1, BoardColumnKindEnum.PENDING, newBoard.getId());
+        columnService.createColumn("Concluído", 2, BoardColumnKindEnum.FINAL, newBoard.getId());
+        // Um board recém-criado está sempre "Vazio".
+        return new BoardSummaryDTO(newBoard.getId(), newBoard.getName(), 0, 0, 0, "Vazio", newBoard.getGroup());
     }
 
     // ... O resto da classe permanece o mesmo ...
@@ -223,6 +241,15 @@ public class TaskManagerFacade {
     }
 
     @Transactional
+    public void updateBoardGroup(Long boardId, Long groupId) {
+        Board board = boardService.getBoardById(boardId)
+                .orElseThrow(() -> new ResourceNotFoundException("Board com ID " + boardId + " não encontrado."));
+        
+        board.setGroupId(groupId);
+        boardService.updateBoard(board);
+    }
+
+    @Transactional
     public void deleteBoard(Long boardId) {
         boardService.deleteBoard(boardId);
     }
@@ -268,5 +295,51 @@ public class TaskManagerFacade {
                 request.cardId()
         );
         System.out.println("Fachada: Criando tarefa para o card ID " + request.cardId());
+    }
+
+    // Novos métodos:
+    public List<BoardGroup> getAllBoardGroups() {
+        return boardGroupService.getAllBoardGroups();
+    }
+
+    public BoardGroup createBoardGroup(String name, String description, String color) {
+        return boardGroupService.createBoardGroup(name, description, color);
+    }
+
+    public BoardGroup updateBoardGroup(Long groupId, String name, String description, String color, String icon) {
+        return boardGroupService.updateBoardGroup(groupId, name, description, color, icon);
+    }
+
+    public void deleteBoardGroup(Long groupId) {
+        boardGroupService.deleteBoardGroup(groupId);
+    }
+
+    public List<BoardSummaryDTO> getBoardsByGroup(Long groupId) {
+        return boardGroupService.getBoardsByGroup(groupId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<BoardSummaryDTO> getBoardsWithoutGroup() {
+        List<Board> boardsWithoutGroup = boardService.getBoardsWithoutGroup();
+        if (boardsWithoutGroup.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // Otimização: Busca todos os dados necessários de uma vez
+        List<Long> boardIds = boardsWithoutGroup.stream().map(Board::getId).toList();
+        List<BoardColumn> allColumns = columnService.getColumnsForBoards(boardIds);
+        List<Long> allColumnIds = allColumns.stream().map(BoardColumn::getId).toList();
+        List<Card> allCards = cardService.getCardsForColumns(allColumnIds);
+
+        // Agrupa os dados em mapas para acesso rápido
+        Map<Long, List<BoardColumn>> columnsByBoardId = allColumns.stream()
+                .collect(Collectors.groupingBy(BoardColumn::getBoardId));
+        Map<Long, List<Card>> cardsByColumnId = allCards.stream()
+                .collect(Collectors.groupingBy(Card::getBoardColumnId));
+
+        // Usa o método de cálculo centralizado
+        return boardsWithoutGroup.stream()
+                .map(board -> calculateBoardSummary(board, columnsByBoardId, cardsByColumnId))
+                .collect(Collectors.toList());
     }
 }

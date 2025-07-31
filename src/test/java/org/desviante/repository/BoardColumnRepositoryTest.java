@@ -31,7 +31,7 @@ public class BoardColumnRepositoryTest {
 
     @BeforeEach
     void setup() {
-        Board boardToSave = new Board(null, "Board de Teste Base", LocalDateTime.now());
+        Board boardToSave = new Board(null, "Board de Teste Base", LocalDateTime.now(), null, null);
         testBoard = boardRepository.save(boardToSave);
     }
 

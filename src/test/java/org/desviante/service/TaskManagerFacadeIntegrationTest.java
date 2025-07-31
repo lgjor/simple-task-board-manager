@@ -5,6 +5,7 @@ import org.desviante.config.TestDataSourceConfig;
 import org.desviante.exception.ResourceNotFoundException;
 import org.desviante.model.Board;
 import org.desviante.model.BoardColumn;
+import org.desviante.model.BoardGroup;
 import org.desviante.model.Card;
 import org.desviante.model.enums.BoardColumnKindEnum;
 import org.desviante.service.dto.*;
@@ -25,6 +26,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Teste de integração para a TaskManagerFacade.
@@ -218,6 +220,71 @@ class TaskManagerFacadeIntegrationTest {
         assertTrue(deletedCardOpt.isEmpty(), "O card não deveria ser encontrado após a deleção.");
     }
 
+    @Test
+    @DisplayName("Deve lançar ResourceNotFoundException ao tentar deletar um card inexistente")
+    void deleteCard_shouldThrowException_whenCardNotFound() {
+        // --- Arrange ---
+        // 1. Criar um ID que sabemos que não existe no banco de dados.
+        Long nonExistentCardId = 99999L;
+
+        // Verificação de sanidade: garantir que o card realmente não existe.
+        assertTrue(cardService.getCardById(nonExistentCardId).isEmpty(), 
+                "O card não deveria existir antes da tentativa de deleção.");
+
+        // --- Act & Assert ---
+        // 2. Chamar o método da fachada e verificar se a exceção correta é lançada.
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> taskManagerFacade.deleteCard(nonExistentCardId),
+                "Deve lançar ResourceNotFoundException ao tentar deletar um card inexistente."
+        );
+
+        // 3. Verificar se a mensagem de erro é apropriada.
+        assertTrue(exception.getMessage().contains("não encontrado"), 
+                "A mensagem de erro deve indicar que o card não foi encontrado.");
+
+        // 4. VERIFICAÇÃO CRUCIAL: Confirmar que nenhum card foi afetado no banco de dados.
+        //    Isso garante que a operação de delete não teve efeitos colaterais.
+        assertTrue(cardService.getCardById(nonExistentCardId).isEmpty(), 
+                "O card ainda não deveria existir após a tentativa de deleção.");
+    }
+
+    @Test
+    @DisplayName("Deve lançar ResourceNotFoundException ao tentar deletar um card com ID nulo")
+    void deleteCard_shouldThrowException_whenCardIdIsNull() {
+        // --- Arrange ---
+        // 1. Não precisamos criar nada, pois vamos testar com ID nulo.
+        //    A verificação de sanidade é que não deve haver efeitos colaterais.
+
+        // --- Act & Assert ---
+        // 2. Chamar o método da fachada com ID nulo e verificar se a exceção correta é lançada.
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> taskManagerFacade.deleteCard(null),
+                "Deve lançar ResourceNotFoundException ao tentar deletar um card com ID nulo."
+        );
+
+        // 3. Verificar se a mensagem de erro é apropriada e contém informações sobre o ID nulo.
+        assertTrue(exception.getMessage().contains("não encontrado"), 
+                "A mensagem de erro deve indicar que o card não foi encontrado.");
+        assertTrue(exception.getMessage().contains("null") || exception.getMessage().contains("nulo"), 
+                "A mensagem de erro deve mencionar que o ID é nulo ou inválido.");
+
+        // 4. VERIFICAÇÃO CRUCIAL: Confirmar que nenhum card foi afetado no banco de dados.
+        //    Isso garante que a operação de delete não teve efeitos colaterais mesmo com ID nulo.
+        //    Vamos verificar se todos os cards existentes ainda estão lá.
+        var allBoards = boardService.getAllBoards();
+        for (Board board : allBoards) {
+            var boardDetails = taskManagerFacade.getBoardDetails(board.getId());
+            for (var column : boardDetails.columns()) {
+                for (var card : column.cards()) {
+                    assertTrue(cardService.getCardById(card.id()).isPresent(), 
+                            "Cards existentes não deveriam ser afetados pela tentativa de deleção com ID nulo.");
+                }
+            }
+        }
+    }
+
     /**
      * NOVO TESTE: Garante que o título e a descrição de um card são atualizados corretamente.
      */
@@ -255,5 +322,95 @@ class TaskManagerFacadeIntegrationTest {
                 !persistedCard.getLastUpdateDate().isBefore(persistedCard.getCreationDate()),
                 "A data de atualização não pode ser anterior à data de criação."
         );
+    }
+
+    @Test
+    @DisplayName("Deve lançar ResourceNotFoundException ao tentar atualizar um card inexistente")
+    void updateCardDetails_shouldThrowException_whenCardNotFound() {
+        // --- Arrange ---
+        // 1. Criar um ID que sabemos que não existe no banco de dados.
+        Long nonExistentCardId = 99999L;
+
+        // Verificação de sanidade: garantir que o card realmente não existe.
+        assertTrue(cardService.getCardById(nonExistentCardId).isEmpty(), 
+                "O card não deveria existir antes da tentativa de atualização.");
+
+        // 2. Criar o DTO de requisição com dados válidos.
+        var request = new UpdateCardDetailsDTO("Título Tentativo", "Descrição tentativa");
+
+        // --- Act & Assert ---
+        // 3. Chamar o método da fachada e verificar se a exceção correta é lançada.
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> taskManagerFacade.updateCardDetails(nonExistentCardId, request),
+                "Deve lançar ResourceNotFoundException ao tentar atualizar um card inexistente."
+        );
+
+        // 4. Verificar se a mensagem de erro é apropriada.
+        assertTrue(exception.getMessage().contains("não encontrado"), 
+                "A mensagem de erro deve indicar que o card não foi encontrado.");
+        assertTrue(exception.getMessage().contains("atualização") || exception.getMessage().contains("update"), 
+                "A mensagem de erro deve mencionar que é uma operação de atualização.");
+
+        // 5. VERIFICAÇÃO CRUCIAL: Confirmar que nenhum card foi afetado no banco de dados.
+        //    Isso garante que a operação de update não teve efeitos colaterais.
+        assertTrue(cardService.getCardById(nonExistentCardId).isEmpty(), 
+                "O card ainda não deveria existir após a tentativa de atualização.");
+
+        // 6. VERIFICAÇÃO ADICIONAL: Confirmar que cards existentes não foram afetados.
+        //    Vamos verificar se todos os cards existentes ainda estão lá e inalterados.
+        var allBoards = boardService.getAllBoards();
+        for (Board board : allBoards) {
+            var boardDetails = taskManagerFacade.getBoardDetails(board.getId());
+            for (var column : boardDetails.columns()) {
+                for (var card : column.cards()) {
+                    assertTrue(cardService.getCardById(card.id()).isPresent(), 
+                            "Cards existentes não deveriam ser afetados pela tentativa de atualização de card inexistente.");
+                }
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Deve atualizar o grupo de um board com sucesso")
+    void updateBoardGroup_shouldUpdateBoardGroupSuccessfully() {
+        // Given: Criar um board e um grupo
+        BoardGroup group = taskManagerFacade.createBoardGroup("Test Group", "Test Description", "#FF5733");
+        BoardSummaryDTO board = taskManagerFacade.createNewBoard("Test Board");
+        
+        // When: Atualizar o grupo do board
+        taskManagerFacade.updateBoardGroup(board.id(), group.getId());
+        
+        // Then: Verificar se o board foi atualizado
+        List<BoardSummaryDTO> boards = taskManagerFacade.getAllBoardSummaries();
+        BoardSummaryDTO updatedBoard = boards.stream()
+                .filter(b -> b.id().equals(board.id()))
+                .findFirst()
+                .orElse(null);
+        
+        assertThat(updatedBoard).isNotNull();
+        assertThat(updatedBoard.group()).isNotNull();
+        assertThat(updatedBoard.group().getName()).isEqualTo("Test Group");
+    }
+
+    @Test
+    @DisplayName("Deve remover o grupo de um board (definir como null)")
+    void updateBoardGroup_shouldRemoveBoardGroupSuccessfully() {
+        // Given: Criar um board com grupo
+        BoardGroup group = taskManagerFacade.createBoardGroup("Test Group", "Test Description", "#FF5733");
+        BoardSummaryDTO board = taskManagerFacade.createNewBoardWithGroup("Test Board", group.getId());
+        
+        // When: Remover o grupo do board (definir como null)
+        taskManagerFacade.updateBoardGroup(board.id(), null);
+        
+        // Then: Verificar se o grupo foi removido
+        List<BoardSummaryDTO> boards = taskManagerFacade.getAllBoardSummaries();
+        BoardSummaryDTO updatedBoard = boards.stream()
+                .filter(b -> b.id().equals(board.id()))
+                .findFirst()
+                .orElse(null);
+        
+        assertThat(updatedBoard).isNotNull();
+        assertThat(updatedBoard.group()).isNull();
     }
 }

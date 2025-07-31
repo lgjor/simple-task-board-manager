@@ -4,6 +4,18 @@ DROP TABLE IF EXISTS tasks CASCADE;
 DROP TABLE IF EXISTS cards CASCADE;
 DROP TABLE IF EXISTS board_columns CASCADE;
 DROP TABLE IF EXISTS boards CASCADE;
+DROP TABLE IF EXISTS board_groups CASCADE;
+
+-- Definição da tabela 'board_groups'
+CREATE TABLE board_groups (
+    id              BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name            VARCHAR(255) NOT NULL,
+    description     TEXT,
+    color           VARCHAR(7), -- Código hex da cor (ex: #FF5733)
+    icon            VARCHAR(50), -- Ícone do grupo (ex: "work", "personal", "study")
+    creation_date   TIMESTAMP NOT NULL
+    -- Removido is_default - não precisamos mais de grupo padrão
+);
 
 -- Definição da tabela 'boards'
 CREATE TABLE boards (
@@ -17,7 +29,15 @@ CREATE TABLE boards (
     name           VARCHAR(255) NOT NULL,
 
     -- NOT NULL garante que a data de criação seja sempre registrada.
-    creation_date  TIMESTAMP NOT NULL
+    creation_date  TIMESTAMP NOT NULL,
+    
+    -- Chave estrangeira para a tabela 'board_groups'.
+    -- NULL = board sem grupo específico
+    group_id       BIGINT,
+    
+    -- Garante que o group_id se refira a um grupo existente
+    -- e que ao deletar um grupo, os boards fiquem sem grupo (SET NULL).
+    CONSTRAINT fk_boards_to_board_groups FOREIGN KEY (group_id) REFERENCES board_groups(id) ON DELETE SET NULL
 );
 
 -- Definição da tabela 'board_columns'
@@ -68,3 +88,6 @@ CREATE TABLE tasks (
 CREATE INDEX idx_board_columns_board_id ON board_columns(board_id);
 CREATE INDEX idx_cards_board_column_id ON cards(board_column_id);
 CREATE INDEX idx_tasks_card_id ON tasks(card_id);
+CREATE INDEX idx_boards_group_id ON boards(group_id);
+
+-- Não inserimos mais grupo padrão - boards sem grupo terão group_id = NULL

@@ -22,6 +22,11 @@ public class BoardService {
     }
 
     @Transactional(readOnly = true)
+    public List<Board> getBoardsWithoutGroup() {
+        return boardRepository.findBoardsWithoutGroup();
+    }
+
+    @Transactional(readOnly = true)
     public Optional<Board> getBoardById(Long id) {
         return boardRepository.findById(id);
     }
@@ -41,6 +46,11 @@ public class BoardService {
                     board.setName(newName);
                     return boardRepository.save(board);
                 });
+    }
+
+    @Transactional
+    public Board updateBoard(Board board) {
+        return boardRepository.save(board);
     }
 
     @Transactional

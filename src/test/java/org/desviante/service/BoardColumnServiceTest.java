@@ -38,7 +38,7 @@ class BoardColumnServiceTest {
         // Arrange
         long boardId = 1L;
         // CORREÇÃO: Usamos o construtor correto que inclui a data de criação.
-        Board parentBoard = new Board(boardId, "Board Pai", LocalDateTime.now());
+        Board parentBoard = new Board(boardId, "Board Pai", LocalDateTime.now(), null, null);
 
         // Mocking: Fingir que o board pai foi encontrado.
         when(boardRepository.findById(boardId)).thenReturn(Optional.of(parentBoard));

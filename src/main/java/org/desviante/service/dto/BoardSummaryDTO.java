@@ -1,8 +1,10 @@
 package org.desviante.service.dto;
 
+import org.desviante.model.BoardGroup;
+
 /**
  * DTO para o resumo de um Board, exibido na tabela principal.
- * AGORA INCLUI OS PERCENTUAIS DE STATUS.
+ * AGORA INCLUI OS PERCENTUAIS DE STATUS E INFORMAÇÕES DO GRUPO.
  */
 public record BoardSummaryDTO(
         Long id,
@@ -10,6 +12,7 @@ public record BoardSummaryDTO(
         Integer percentInitial,
         Integer percentPending,
         Integer percentFinal,
-        String status
+        String status,
+        BoardGroup group
 ) {
 }

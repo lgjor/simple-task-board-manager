@@ -35,7 +35,7 @@ public class CardRepositoryTest {
 
     @BeforeEach
     void setup() {
-        Board testBoard = boardRepository.save(new Board(null, "Board de Teste", LocalDateTime.now()));
+        Board testBoard = boardRepository.save(new Board(null, "Board de Teste", LocalDateTime.now(), null, null));
         testColumn = columnRepository.save(new BoardColumn(null, "Coluna de Teste", 0, BoardColumnKindEnum.INITIAL, testBoard.getId()));
     }
 

@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Separator?>
@@ -28,6 +29,11 @@
                         <Button fx:id="editBoardButton" onAction="#handleEditBoard" text="Editar Board" />
                         <Button fx:id="deleteBoardButton" onAction="#handleDeleteBoard" text="Excluir Board" />
                         <Separator orientation="VERTICAL" />
+                        <Button fx:id="createGroupButton" onAction="#handleCreateGroup" text="Criar Grupo" styleClass="create-group-button" />
+                        <Separator orientation="VERTICAL" />
+                        <Label text="Filtrar por Grupo:" styleClass="filter-label" />
+                        <ComboBox fx:id="groupFilterComboBox" onAction="#handleGroupFilterChange" promptText="Todos os Grupos" styleClass="group-filter-combo" />
+                        <Separator orientation="VERTICAL" />
                         <Button fx:id="refreshButton" onAction="#handleRefresh" text="Atualizar" />
                         <Separator orientation="VERTICAL" />
                         <Button fx:id="googleTaskButton" onAction="#handleGoogleTask" text="Google Task" />
@@ -50,9 +56,10 @@
                 </Label>
                 <TableView fx:id="boardsTableView" prefHeight="200.0">
                     <columns>
-                        <TableColumn fx:id="boardIdColumn" prefWidth="50.0" text="ID" />
-                        <!-- Largura da coluna de nome ajustada para dar espaço -->
+                        <!-- Coluna de nome do board -->
                         <TableColumn fx:id="boardNameColumn" prefWidth="250.0" text="Nome" />
+                        <!-- Coluna do grupo do board -->
+                        <TableColumn fx:id="boardGroupColumn" prefWidth="150.0" text="Grupo" styleClass="group-column" />
                         <!-- COLUNA DE STATUS -->
                         <TableColumn fx:id="boardStatusColumn" prefWidth="120.0" text="Status" />
                         <TableColumn fx:id="statusInitialColumn" prefWidth="120.0" text="Não Iniciado (%)" />

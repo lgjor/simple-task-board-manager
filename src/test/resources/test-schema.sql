@@ -4,12 +4,26 @@ DROP TABLE IF EXISTS tasks CASCADE;
 DROP TABLE IF EXISTS cards CASCADE;
 DROP TABLE IF EXISTS board_columns CASCADE;
 DROP TABLE IF EXISTS boards CASCADE;
+DROP TABLE IF EXISTS board_groups CASCADE;
+
+-- Definição da tabela 'board_groups' (deve vir primeiro por causa das foreign keys)
+CREATE TABLE board_groups (
+    id              BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name            VARCHAR(255) NOT NULL,
+    description     TEXT,
+    color           VARCHAR(7), -- Código hex da cor (ex: #FF5733)
+    icon            VARCHAR(50), -- Ícone do grupo (ex: "work", "personal", "study")
+    creation_date   TIMESTAMP NOT NULL
+    -- Removido is_default - não precisamos mais de grupo padrão
+);
 
 -- Definição da tabela 'boards'
 CREATE TABLE boards (
     id             BIGINT AUTO_INCREMENT PRIMARY KEY,
     name           VARCHAR(255) NOT NULL,
-    creation_date  TIMESTAMP NOT NULL
+    creation_date  TIMESTAMP NOT NULL,
+    group_id       BIGINT,
+    CONSTRAINT fk_boards_to_board_groups FOREIGN KEY (group_id) REFERENCES board_groups(id) ON DELETE SET NULL
 );
 
 -- Definição da tabela 'board_columns'
@@ -19,6 +33,7 @@ CREATE TABLE board_columns (
     order_index   INT NOT NULL,
     kind          VARCHAR(50) NOT NULL,
     board_id      BIGINT NOT NULL,
+
     CONSTRAINT fk_board_columns_to_boards FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE
 );
 
@@ -31,10 +46,11 @@ CREATE TABLE cards (
     last_update_date  TIMESTAMP NOT NULL,
     completion_date   TIMESTAMP,
     board_column_id   BIGINT NOT NULL,
+
     CONSTRAINT fk_cards_to_board_columns FOREIGN KEY (board_column_id) REFERENCES board_columns(id) ON DELETE CASCADE
 );
 
--- Definição da tabela 'tasks'
+-- Definição da tabela 'tasks' (para integração com Google Tasks)
 CREATE TABLE tasks (
     id                 BIGINT AUTO_INCREMENT PRIMARY KEY,
     list_title         VARCHAR(255),
@@ -46,10 +62,14 @@ CREATE TABLE tasks (
     card_id            BIGINT,
     creation_date      TIMESTAMP,
     last_update_date   TIMESTAMP,
+
     CONSTRAINT fk_tasks_to_cards FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE
 );
 
--- Índices para performance
+-- Cria índices para as chaves estrangeiras, melhorando a performance de joins e buscas.
 CREATE INDEX idx_board_columns_board_id ON board_columns(board_id);
 CREATE INDEX idx_cards_board_column_id ON cards(board_column_id);
 CREATE INDEX idx_tasks_card_id ON tasks(card_id);
+CREATE INDEX idx_boards_group_id ON boards(group_id);
+
+-- Não inserimos mais grupo padrão - boards sem grupo terão group_id = NULL
