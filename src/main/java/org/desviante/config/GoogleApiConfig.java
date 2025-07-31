@@ -9,7 +9,7 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.tasks.Tasks;
 import com.google.api.services.tasks.TasksScopes;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,7 +25,7 @@ import java.util.List;
 
 @Configuration
 @Profile("!test")
-@Slf4j
+@Log
 public class GoogleApiConfig {
 
     // --- Constants (no changes) ---
@@ -63,8 +63,7 @@ public class GoogleApiConfig {
      */
     @Bean
     public Tasks tasksService(
-            GoogleAuthorizationCodeFlow flow,
-            @Value("${spring.application.name}") String applicationName // Inject the property
+            GoogleAuthorizationCodeFlow flow
     ) throws GeneralSecurityException, IOException {
         // This is the critical change. We only LOAD the credential.
         Credential credential = flow.loadCredential(USER_ID);
@@ -74,7 +73,7 @@ public class GoogleApiConfig {
         if (credential == null) {
             // This exception will be thrown during the AOT process if you haven't authenticated yet.
             // To fix the build, run the app normally once to generate the token file.
-            log.error("User credentials not found at {}. Please run the application in interactive mode once to authorize.", TOKENS_DIRECTORY_PATH);
+            log.severe("User credentials not found at " + TOKENS_DIRECTORY_PATH + ". Please run the application in interactive mode once to authorize.");
             throw new IOException("User credentials not found. Please run the application in interactive mode once to authorize.");
         }
 
@@ -83,8 +82,8 @@ public class GoogleApiConfig {
 
         log.info("Successfully loaded existing user credentials.");
         return new Tasks.Builder(GoogleNetHttpTransport.newTrustedTransport(), JSON_FACTORY, credential)
-                // Use the injected application name
-                .setApplicationName(applicationName)
+                // Use a hardcoded application name
+                .setApplicationName("SimpleTaskBoardManager")
                 .build();
     }
 }

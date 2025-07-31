@@ -1,6 +1,7 @@
 package org.desviante;
 
 import javafx.application.Application;
+import lombok.Getter;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 
@@ -12,6 +13,14 @@ import org.springframework.context.ConfigurableApplicationContext;
 @SpringBootApplication
 public class SimpleTaskBoardManagerApplication {
 
+    /**
+     * -- GETTER --
+     *  Um método helper estático para que a classe MainApp possa obter o contexto
+     *  do Spring que foi inicializado aqui.
+     *
+     * @return O contexto da aplicação Spring.
+     */
+    @Getter
     private static ConfigurableApplicationContext springContext;
 
     /**
@@ -34,12 +43,4 @@ public class SimpleTaskBoardManagerApplication {
         Application.launch(MainApp.class, args);
     }
 
-    /**
-     * Um método helper estático para que a classe MainApp possa obter o contexto
-     * do Spring que foi inicializado aqui.
-     * @return O contexto da aplicação Spring.
-     */
-    public static ConfigurableApplicationContext getSpringContext() {
-        return springContext;
-    }
 }

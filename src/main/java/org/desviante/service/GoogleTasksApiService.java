@@ -4,7 +4,7 @@ import com.google.api.services.tasks.Tasks;
 import com.google.api.services.tasks.model.Task;
 import com.google.api.services.tasks.model.TaskList;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.java.Log;
 import org.desviante.exception.GoogleApiServiceException; // Importe a exceção customizada
 import org.desviante.service.dto.CreateTaskRequest; // Importe o DTO
 import org.springframework.context.annotation.Profile;
@@ -19,7 +19,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
+@Log
 @Profile("!test")
 public class GoogleTasksApiService {
 
@@ -67,7 +67,7 @@ public class GoogleTasksApiService {
             }
 
             // 4. Loga e insere a nova tarefa.
-            log.info("Criando tarefa '{}' na lista '{}' com vencimento em {}", request.title(), request.listTitle(), taskPayload.getDue());
+            log.info("Criando tarefa '" + request.title() + "' na lista '" + request.listTitle() + "' com vencimento em " + taskPayload.getDue());
             return tasksService.tasks().insert(targetList.getId(), taskPayload).execute();
 
         } catch (IOException e) {
@@ -89,7 +89,7 @@ public class GoogleTasksApiService {
                 .findFirst()
                 .orElseGet(() -> {
                     try {
-                        log.info("Lista de tarefas '{}' não encontrada. Criando...", listTitle);
+                        log.info("Lista de tarefas "+ listTitle + " não encontrada. Criando...");
                         TaskList newList = new TaskList().setTitle(listTitle);
                         return tasksService.tasklists().insert(newList).execute();
                     } catch (IOException e) {

@@ -1,3 +1,12 @@
+import java.io.File
+
+val platform = when {
+    org.gradle.internal.os.OperatingSystem.current().isWindows -> "win"
+    org.gradle.internal.os.OperatingSystem.current().isLinux -> "linux"
+    org.gradle.internal.os.OperatingSystem.current().isMacOsX -> "mac"
+    else -> throw GradleException("Unsupported OS")
+}
+
 // --- Helper para o JPackage (usando a API padrão do Java) ---
 val osName = System.getProperty("os.name").lowercase()
 val javafxOsClassifier = when {
@@ -7,21 +16,16 @@ val javafxOsClassifier = when {
     else -> throw GradleException("Unsupported OS for JavaFX: $osName")
 }
 
-// Definir a versão como uma constante simples no topo do script.
-val javafxVersion = "21"
-
-// Usando o bloco de plugins moderno e correto.
 plugins {
     id("org.springframework.boot") version "3.2.5"
     id("io.spring.dependency-management") version "1.1.5"
     id("java")
     id("application")
-    id("org.openjfx.javafxplugin") version "0.1.0"
-    id("org.beryx.jlink") version "3.0.1"
+    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 group = "org.desviante"
-version = "1.0-SNAPSHOT"
+version = "1.0.0"
 
 repositories {
     mavenCentral()
@@ -32,33 +36,71 @@ java {
     targetCompatibility = JavaVersion.VERSION_21
 }
 
-javafx {
-    // Usa a constante simples definida acima.
-    version = javafxVersion
-    modules = listOf("javafx.controls", "javafx.fxml")
-}
-
 // A exclusão do commons-logging continua sendo uma boa prática.
 configurations.all {
+    exclude(group = "org.springframework.boot", module = "spring-boot-starter-logging")
     exclude(group = "commons-logging", module = "commons-logging")
+    exclude(group = "org.apache.logging.log4j", module = "log4j-to-slf4j")
+    exclude(group = "org.apache.logging.log4j", module = "log4j-api")
+    exclude(group = "javax.servlet")
+    exclude(group = "ch.qos.logback")
 }
 
 dependencies {
-    // As dependências da aplicação principal não mudam.
+
+    val javafxVersion = "21.0.4"
+    val javafxOsClassifier = when {
+        org.gradle.internal.os.OperatingSystem.current().isWindows -> "win"
+        org.gradle.internal.os.OperatingSystem.current().isLinux -> "linux"
+        org.gradle.internal.os.OperatingSystem.current().isMacOsX -> "mac"
+        else -> throw GradleException("Unsupported OS for JavaFX")
+    }
+
+    //micrometer e blockhound
+    implementation(platform("io.micrometer:micrometer-bom:1.15.2"))
+    implementation("io.micrometer:micrometer-observation")
+    implementation("io.micrometer:context-propagation:1.1.3") // substitui micrometer-context
+    implementation("io.projectreactor.tools:blockhound:1.0.9.RELEASE") // versão compatível
+    implementation("com.fasterxml:classmate:1.5.1")
+
+    // logger
+    implementation("ch.qos.logback:logback-classic:1.4.14")
+
+    // Dependências da aplicação principal
     implementation("org.hibernate.validator:hibernate-validator:8.0.1.Final")
-    implementation("org.springframework.boot:spring-boot-starter-jdbc")
+    implementation("org.jboss.logging:jboss-logging:3.5.3.Final")
+    implementation("jakarta.validation:jakarta.validation-api:3.0.2")
+    implementation("org.glassfish:jakarta.el:4.0.2")
+    implementation("org.springframework.boot:spring-boot-starter-jdbc"){
+        exclude(group = "org.springframework.boot", module = "spring-boot-starter-logging")
+        exclude(group = "org.apache.logging.log4j")
+    }
+    implementation("org.slf4j:slf4j-simple:2.0.13")
     runtimeOnly("com.h2database:h2:2.3.232")
     compileOnly("org.projectlombok:lombok:1.18.32")
     annotationProcessor("org.projectlombok:lombok:1.18.32")
     implementation("com.google.apis:google-api-services-tasks:v1-rev20240630-2.0.0")
     implementation("com.google.api-client:google-api-client:2.4.0")
     implementation("com.google.api-client:google-api-client-jackson2:2.4.0")
+    implementation("com.google.auth:google-auth-library-oauth2-http:1.24.1")
+    implementation("com.google.auth:google-auth-library-credentials:1.24.1")
     implementation("com.google.oauth-client:google-oauth-client-java6:1.36.0")
     implementation("com.google.oauth-client:google-oauth-client-jetty:1.36.0")
     implementation("com.google.http-client:google-http-client-jackson2:1.45.0")
 
-    // As dependências de teste não mudam.
+    // Dependências de teste
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+
+    // Adiciona as dependências JavaFX (necessárias para o jlink)
+    implementation("org.openjfx:javafx-base:$javafxVersion:$javafxOsClassifier")
+    implementation("org.openjfx:javafx-graphics:$javafxVersion:$javafxOsClassifier")
+    implementation("org.openjfx:javafx-controls:$javafxVersion:$javafxOsClassifier")
+    implementation("org.openjfx:javafx-fxml:$javafxVersion:$javafxOsClassifier")
+
+    // Adiciona dependências Jackson básicas
+    implementation("com.fasterxml.jackson.core:jackson-core:2.17.0")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.0")
+    implementation("com.fasterxml.jackson.core:jackson-annotations:2.17.0")
 
     // Usa a constante simples para garantir que o compilador não se confunda.
     testImplementation("org.openjfx:javafx-graphics:$javafxVersion:$javafxOsClassifier")
@@ -69,6 +111,35 @@ dependencies {
 application {
     // A classe de entrada para o usuário final continua a mesma.
     mainClass.set("org.desviante.SimpleTaskBoardManagerApplication")
+    mainModule.set("org.desviante")
+    applicationDefaultJvmArgs = listOf(
+        "--add-opens=com.fasterxml.jackson.databind/com.fasterxml.jackson.databind=com.google.http.client.jackson2"
+    )
+}
+
+// Configuração do Spring Boot
+springBoot {
+    buildInfo()
+}
+
+
+
+configurations.configureEach {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "com.fasterxml.jackson.core") {
+            useVersion("2.13.3")
+            because("Evitar substituição automática pelo jackson-bom da API do Google")
+        }
+    }
+}
+
+tasks.shadowJar {
+    mergeServiceFiles()
+    archiveClassifier.set("all")
+}
+
+tasks.named<JavaCompile>("compileJava") {
+    options.compilerArgs.addAll(listOf("--module-path", project.configurations.compileClasspath.get().asPath))
 }
 
 // A configuração do bootJar continua a mesma, mas não será usada pelo jlink.
@@ -81,64 +152,38 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
-// A configuração padrão e correta para o plugin jlink.
-jlink {
-    // Opções para otimizar a imagem Java gerada.
-    options.set(listOf(
-        "--strip-debug",
-        "--compress", "2",
-        "--no-header-files",
-        "--no-man-pages"
-    ))
-
-    // Configuração crucial para aplicações com Spring e outras bibliotecas dinâmicas.
-    mergedModule {
-        additive = true
-        // Jackson (usado pelo Google Client)
-        uses("com.fasterxml.jackson.core.JsonFactory")
-        uses("com.fasterxml.jackson.databind.Module")
-
-        // Database Driver (H2)
-        uses("java.sql.Driver")
-
-        // Google Auth
-        uses("com.google.auth.oauth2.CredentialsProvider")
-
-        // Hibernate Validator
-        uses("org.hibernate.integrator.spi.Integrator")
-        uses("org.hibernate.service.spi.ServiceContributor")
-        uses("org.hibernate.bytecode.spi.BytecodeProvider")
-        uses("org.hibernate.dialect.Dialect")
-    }
-
-    // Configura o lançador (o .exe dentro da pasta de instalação).
-    launcher {
-        name = "SimpleTaskBoardManager" // Nome do executável
-        jvmArgs = listOf(
-            "-Xmx2048m",
-            // Adiciona permissões de reflexão necessárias para o Jackson funcionar bem com o Google Client.
-            "--add-opens=com.fasterxml.jackson.databind/com.fasterxml.jackson.databind=com.google.http.client.jackson2"
-        )
-    }
-
-    // Bloco 'jpackage' único para configurar o instalador final.
-    jpackage {
-        // A linha 'mainJar' foi REMOVIDA.
-        // O plugin agora usará a convenção do plugin 'application' para encontrar o JAR correto.
-
-        // O nome do arquivo do instalador (ex: SimpleTaskBoardManager-1.0-SNAPSHOT.exe)
-        installerName = "SimpleTaskBoardManager"
-
-        // Opções específicas para o instalador do Windows.
-        installerOptions = listOf(
-            "--win-dir-chooser",
-            "--win-menu",
-            "--win-shortcut",
-            "--vendor", "AuDesviante"
-        )
-        // Usa a versão do projeto dinamicamente.
-        appVersion = project.version.toString()
-        // Define o ícone da aplicação.
-        icon = project.file("src/main/resources/icon.ico").absolutePath
+// Configuração para jpackage (instalador Windows)
+tasks.register<Exec>("jpackage") {
+    dependsOn("shadowJar")
+    
+    val shadowJar = tasks.shadowJar.get().archiveFile.get().asFile
+    val appName = "SimpleTaskBoardManager"
+    val iconFile = file("src/main/resources/icon.ico")
+    
+    commandLine(
+        "jpackage",
+        "--input", shadowJar.parent,
+        "--name", appName,
+        "--main-jar", shadowJar.name,
+        "--main-class", "org.desviante.SimpleTaskBoardManagerApplication",
+        "--type", "exe",
+        "--dest", "${layout.buildDirectory.get()}/dist",
+        "--java-options", "-Xmx2048m",
+        "--win-dir-chooser",
+        "--win-menu",
+        "--win-shortcut",
+        "--vendor", "AuDesviante",
+        "--app-version", "1.0.0",
+        "--icon", iconFile.absolutePath
+    )
+    
+    doFirst {
+        // Cria o diretório de destino se não existir
+        file("${layout.buildDirectory.get()}/dist").mkdirs()
+        
+        // Verifica se o ícone existe
+        if (!iconFile.exists()) {
+            throw GradleException("Ícone não encontrado: ${iconFile.absolutePath}")
+        }
     }
 }
