@@ -80,13 +80,13 @@ dependencies {
     compileOnly("org.projectlombok:lombok:1.18.32")
     annotationProcessor("org.projectlombok:lombok:1.18.32")
     implementation("com.google.apis:google-api-services-tasks:v1-rev20240630-2.0.0")
-    implementation("com.google.api-client:google-api-client:2.4.0")
-    implementation("com.google.api-client:google-api-client-jackson2:2.4.0")
-    implementation("com.google.auth:google-auth-library-oauth2-http:1.24.1")
-    implementation("com.google.auth:google-auth-library-credentials:1.24.1")
-    implementation("com.google.oauth-client:google-oauth-client-java6:1.36.0")
-    implementation("com.google.oauth-client:google-oauth-client-jetty:1.36.0")
-    implementation("com.google.http-client:google-http-client-jackson2:1.45.0")
+    implementation("com.google.api-client:google-api-client:2.2.0")
+    implementation("com.google.api-client:google-api-client-jackson2:2.2.0")
+    implementation("com.google.auth:google-auth-library-oauth2-http:1.19.0")
+    implementation("com.google.auth:google-auth-library-credentials:1.19.0")
+    implementation("com.google.oauth-client:google-oauth-client:1.34.1")
+    implementation("com.google.oauth-client:google-oauth-client-jetty:1.34.1")
+    implementation("com.google.http-client:google-http-client-jackson2:1.42.3")
 
     // Dependências de teste
     testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -111,7 +111,6 @@ dependencies {
 application {
     // A classe de entrada para o usuário final continua a mesma.
     mainClass.set("org.desviante.SimpleTaskBoardManagerApplication")
-    mainModule.set("org.desviante")
     applicationDefaultJvmArgs = listOf(
         "--add-opens=com.fasterxml.jackson.databind/com.fasterxml.jackson.databind=com.google.http.client.jackson2"
     )
