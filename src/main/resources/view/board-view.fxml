@@ -35,6 +35,9 @@
                         <Label text="Filtrar por Grupo:" styleClass="filter-label" />
                         <ComboBox fx:id="groupFilterComboBox" onAction="#handleGroupFilterChange" promptText="Todos os Grupos" styleClass="group-filter-combo" />
                         <Separator orientation="VERTICAL" />
+                        <Label text="Filtrar de Board:" styleClass="filter-label" />
+                        <ComboBox fx:id="statusFilterComboBox" onAction="#handleStatusFilterChange" promptText="Todos os Status" styleClass="status-filter-combo" />
+                        <Separator orientation="VERTICAL" />
                         <Button fx:id="refreshButton" onAction="#handleRefresh" text="Atualizar" />
                         <Separator orientation="VERTICAL" />
                         <Button fx:id="googleTaskButton" onAction="#handleGoogleTask" text="Google Task" />

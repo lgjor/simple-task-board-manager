@@ -25,7 +25,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -130,20 +129,19 @@ class BoardGroupServiceTest {
         // Arrange
         String name = "Trabalho";
         String description = "Grupo para tarefas do trabalho";
-        String color = "#FF5733";
         
-        BoardGroup expectedGroup = new BoardGroup(1L, name, description, color, "📁", LocalDateTime.now());
+        BoardGroup expectedGroup = new BoardGroup(1L, name, description, "#FF6B6B", "📁", LocalDateTime.now());
         when(boardGroupRepository.save(any(BoardGroup.class))).thenReturn(expectedGroup);
 
         // Act
-        BoardGroup result = boardGroupService.createBoardGroup(name, description, color, "📁");
+        BoardGroup result = boardGroupService.createBoardGroup(name, description, "📁");
 
         // Assert
         assertNotNull(result);
         assertEquals(1L, result.getId());
         assertEquals(name, result.getName());
         assertEquals(description, result.getDescription());
-        assertEquals(color, result.getColor());
+        assertNotNull(result.getColor()); // Cor é gerada automaticamente
         assertEquals("📁", result.getIcon());
         // Removido assert isDefault - não precisamos mais de grupo padrão
         
@@ -156,19 +154,18 @@ class BoardGroupServiceTest {
     void shouldCreateGroupWithEmptyDescriptionWhenDescriptionIsNull() {
         // Arrange
         String name = "Pessoal";
-        String color = "#33FF57";
         
-        BoardGroup expectedGroup = new BoardGroup(1L, name, "", color, "📁", LocalDateTime.now());
+        BoardGroup expectedGroup = new BoardGroup(1L, name, "", "#4ECDC4", "📁", LocalDateTime.now());
         when(boardGroupRepository.save(any(BoardGroup.class))).thenReturn(expectedGroup);
 
         // Act
-        BoardGroup result = boardGroupService.createBoardGroup(name, null, color, "📁");
+        BoardGroup result = boardGroupService.createBoardGroup(name, null, "📁");
 
         // Assert
         assertNotNull(result);
         assertEquals(name, result.getName());
         assertEquals("", result.getDescription());
-        assertEquals(color, result.getColor());
+        assertNotNull(result.getColor()); // Cor é gerada automaticamente
         
         // Verify
         ArgumentCaptor<BoardGroup> groupCaptor = ArgumentCaptor.forClass(BoardGroup.class);
@@ -183,7 +180,7 @@ class BoardGroupServiceTest {
     void shouldThrowExceptionWhenNameIsNull() {
         // Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> boardGroupService.createBoardGroup(null, "Descrição", "#FF5733", "📁"));
+                () -> boardGroupService.createBoardGroup(null, "Descrição", "📁"));
         
         assertEquals("Nome do grupo é obrigatório", exception.getMessage());
         
@@ -196,7 +193,7 @@ class BoardGroupServiceTest {
     void shouldThrowExceptionWhenNameIsEmpty() {
         // Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> boardGroupService.createBoardGroup("", "Descrição", "#FF5733", "📁"));
+                () -> boardGroupService.createBoardGroup("", "Descrição", "📁"));
         
         assertEquals("Nome do grupo é obrigatório", exception.getMessage());
         
@@ -209,61 +206,9 @@ class BoardGroupServiceTest {
     void shouldThrowExceptionWhenNameHasOnlySpaces() {
         // Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> boardGroupService.createBoardGroup("   ", "Descrição", "#FF5733", "📁"));
+                () -> boardGroupService.createBoardGroup("   ", "Descrição", "📁"));
         
         assertEquals("Nome do grupo é obrigatório", exception.getMessage());
-        
-        // Verify
-        verifyNoInteractions(boardGroupRepository);
-    }
-
-    @Test
-    @DisplayName("Deve lançar IllegalArgumentException quando cor é null")
-    void shouldThrowExceptionWhenColorIsNull() {
-        // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> boardGroupService.createBoardGroup("Trabalho", "Descrição", null, "📁"));
-        
-        assertEquals("Cor do grupo é obrigatória", exception.getMessage());
-        
-        // Verify
-        verifyNoInteractions(boardGroupRepository);
-    }
-
-    @Test
-    @DisplayName("Deve lançar IllegalArgumentException quando cor está vazia")
-    void shouldThrowExceptionWhenColorIsEmpty() {
-        // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> boardGroupService.createBoardGroup("Trabalho", "Descrição", "", "📁"));
-        
-        assertEquals("Cor do grupo é obrigatória", exception.getMessage());
-        
-        // Verify
-        verifyNoInteractions(boardGroupRepository);
-    }
-
-    @Test
-    @DisplayName("Deve lançar IllegalArgumentException quando formato da cor é inválido")
-    void shouldThrowExceptionWhenColorFormatIsInvalid() {
-        // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> boardGroupService.createBoardGroup("Trabalho", "Descrição", "FF5733", "📁"));
-        
-        assertEquals("Cor deve estar no formato hexadecimal (#RRGGBB)", exception.getMessage());
-        
-        // Verify
-        verifyNoInteractions(boardGroupRepository);
-    }
-
-    @Test
-    @DisplayName("Deve lançar IllegalArgumentException quando cor tem formato inválido")
-    void shouldThrowExceptionWhenColorHasInvalidFormat() {
-        // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> boardGroupService.createBoardGroup("Trabalho", "Descrição", "#GGGGGG", "📁"));
-        
-        assertEquals("Cor deve estar no formato hexadecimal (#RRGGBB)", exception.getMessage());
         
         // Verify
         verifyNoInteractions(boardGroupRepository);
@@ -275,18 +220,18 @@ class BoardGroupServiceTest {
         // Arrange
         String name = "  Trabalho  ";
         String description = "  Descrição com espaços  ";
-        String color = "#FF5733";
         
-        BoardGroup expectedGroup = new BoardGroup(1L, "Trabalho", "Descrição com espaços", color, "📁", LocalDateTime.now());
+        BoardGroup expectedGroup = new BoardGroup(1L, "Trabalho", "Descrição com espaços", "#45B7D1", "📁", LocalDateTime.now());
         when(boardGroupRepository.save(any(BoardGroup.class))).thenReturn(expectedGroup);
 
         // Act
-        BoardGroup result = boardGroupService.createBoardGroup(name, description, color, "📁");
+        BoardGroup result = boardGroupService.createBoardGroup(name, description, "📁");
 
         // Assert
         assertNotNull(result);
         assertEquals("Trabalho", result.getName());
         assertEquals("Descrição com espaços", result.getDescription());
+        assertNotNull(result.getColor()); // Cor é gerada automaticamente
         
         // Verify
         ArgumentCaptor<BoardGroup> groupCaptor = ArgumentCaptor.forClass(BoardGroup.class);
@@ -605,20 +550,20 @@ class BoardGroupServiceTest {
         // Arrange
         Long groupId = 1L;
         BoardGroup existingGroup = new BoardGroup(groupId, "Grupo Antigo", "Descrição antiga", "#FF5733", "📁", LocalDateTime.now());
-        BoardGroup updatedGroup = new BoardGroup(groupId, "Grupo Atualizado", "Descrição atualizada", "#33FF57", "🎯", LocalDateTime.now());
+        BoardGroup updatedGroup = new BoardGroup(groupId, "Grupo Atualizado", "Descrição atualizada", "#FF5733", "🎯", LocalDateTime.now());
         
         when(boardGroupRepository.findById(groupId)).thenReturn(Optional.of(existingGroup));
         when(boardGroupRepository.save(any(BoardGroup.class))).thenReturn(updatedGroup);
 
         // Act
-        BoardGroup result = boardGroupService.updateBoardGroup(groupId, "Grupo Atualizado", "Descrição atualizada", "#33FF57", "🎯");
+        BoardGroup result = boardGroupService.updateBoardGroup(groupId, "Grupo Atualizado", "Descrição atualizada", "🎯");
 
         // Assert
         assertNotNull(result);
         assertEquals(groupId, result.getId());
         assertEquals("Grupo Atualizado", result.getName());
         assertEquals("Descrição atualizada", result.getDescription());
-        assertEquals("#33FF57", result.getColor());
+        assertEquals("#FF5733", result.getColor()); // Cor permanece a mesma
         assertEquals("🎯", result.getIcon());
         // Removido assert isDefault - não precisamos mais de grupo padrão
         
@@ -633,19 +578,19 @@ class BoardGroupServiceTest {
         // Arrange
         Long groupId = 1L;
         BoardGroup existingGroup = new BoardGroup(groupId, "Grupo Teste", "Descrição", "#FF5733", "📁", LocalDateTime.now());
-        BoardGroup updatedGroup = new BoardGroup(groupId, "Grupo Atualizado", "Descrição atualizada", "#33FF57", "📁", LocalDateTime.now());
+        BoardGroup updatedGroup = new BoardGroup(groupId, "Grupo Atualizado", "Descrição atualizada", "#FF5733", "📁", LocalDateTime.now());
         
         when(boardGroupRepository.findById(groupId)).thenReturn(Optional.of(existingGroup));
         when(boardGroupRepository.save(any(BoardGroup.class))).thenReturn(updatedGroup);
 
         // Act
-        BoardGroup result = boardGroupService.updateBoardGroup(groupId, "Grupo Atualizado", "Descrição atualizada", "#33FF57", null);
+        BoardGroup result = boardGroupService.updateBoardGroup(groupId, "Grupo Atualizado", "Descrição atualizada", null);
 
         // Assert
         assertNotNull(result);
         assertEquals("Grupo Atualizado", result.getName());
         assertEquals("Descrição atualizada", result.getDescription());
-        assertEquals("#33FF57", result.getColor());
+        assertEquals("#FF5733", result.getColor()); // Cor permanece a mesma
         assertEquals("📁", result.getIcon()); // Ícone padrão
         
         // Verify
@@ -662,13 +607,13 @@ class BoardGroupServiceTest {
         // Arrange
         Long groupId = 1L;
         BoardGroup existingGroup = new BoardGroup(groupId, "Grupo Teste", "Descrição", "#FF5733", "📁", LocalDateTime.now());
-        BoardGroup updatedGroup = new BoardGroup(groupId, "Grupo Limpo", "Descrição Limpa", "#33FF57", "🎯", LocalDateTime.now());
+        BoardGroup updatedGroup = new BoardGroup(groupId, "Grupo Limpo", "Descrição Limpa", "#FF5733", "🎯", LocalDateTime.now());
         
         when(boardGroupRepository.findById(groupId)).thenReturn(Optional.of(existingGroup));
         when(boardGroupRepository.save(any(BoardGroup.class))).thenReturn(updatedGroup);
 
         // Act
-        BoardGroup result = boardGroupService.updateBoardGroup(groupId, "  Grupo Limpo  ", "  Descrição Limpa  ", "#33FF57", "🎯");
+        BoardGroup result = boardGroupService.updateBoardGroup(groupId, "  Grupo Limpo  ", "  Descrição Limpa  ", "🎯");
 
         // Assert
         assertNotNull(result);
@@ -693,7 +638,7 @@ class BoardGroupServiceTest {
 
         // Act & Assert
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
-                () -> boardGroupService.updateBoardGroup(groupId, "Nome", "Descrição", "#FF5733", "🎯"));
+                () -> boardGroupService.updateBoardGroup(groupId, "Nome", "Descrição", "🎯"));
         
         assertEquals("Grupo com ID 999 não encontrado.", exception.getMessage());
         
@@ -712,7 +657,7 @@ class BoardGroupServiceTest {
 
         // Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> boardGroupService.updateBoardGroup(groupId, null, "Descrição", "#FF5733", "🎯"));
+                () -> boardGroupService.updateBoardGroup(groupId, null, "Descrição", "🎯"));
         
         assertEquals("Nome do grupo é obrigatório", exception.getMessage());
         
@@ -731,47 +676,9 @@ class BoardGroupServiceTest {
 
         // Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> boardGroupService.updateBoardGroup(groupId, "", "Descrição", "#FF5733", "🎯"));
+                () -> boardGroupService.updateBoardGroup(groupId, "", "Descrição", "🎯"));
         
         assertEquals("Nome do grupo é obrigatório", exception.getMessage());
-        
-        // Verify
-        verify(boardGroupRepository).findById(groupId);
-        verifyNoMoreInteractions(boardGroupRepository);
-    }
-
-    @Test
-    @DisplayName("Deve lançar IllegalArgumentException quando cor é null na atualização")
-    void shouldThrowExceptionWhenColorIsNullInUpdate() {
-        // Arrange
-        Long groupId = 1L;
-        BoardGroup existingGroup = new BoardGroup(groupId, "Grupo Teste", "Descrição", "#FF5733", "📁", LocalDateTime.now());
-        when(boardGroupRepository.findById(groupId)).thenReturn(Optional.of(existingGroup));
-
-        // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> boardGroupService.updateBoardGroup(groupId, "Nome", "Descrição", null, "🎯"));
-        
-        assertEquals("Cor do grupo é obrigatória", exception.getMessage());
-        
-        // Verify
-        verify(boardGroupRepository).findById(groupId);
-        verifyNoMoreInteractions(boardGroupRepository);
-    }
-
-    @Test
-    @DisplayName("Deve lançar IllegalArgumentException quando formato da cor é inválido na atualização")
-    void shouldThrowExceptionWhenColorFormatIsInvalidInUpdate() {
-        // Arrange
-        Long groupId = 1L;
-        BoardGroup existingGroup = new BoardGroup(groupId, "Grupo Teste", "Descrição", "#FF5733", "📁", LocalDateTime.now());
-        when(boardGroupRepository.findById(groupId)).thenReturn(Optional.of(existingGroup));
-
-        // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> boardGroupService.updateBoardGroup(groupId, "Nome", "Descrição", "FF5733", "🎯"));
-        
-        assertEquals("Cor deve estar no formato hexadecimal (#RRGGBB)", exception.getMessage());
         
         // Verify
         verify(boardGroupRepository).findById(groupId);

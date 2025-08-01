@@ -302,12 +302,12 @@ public class TaskManagerFacade {
         return boardGroupService.getAllBoardGroups();
     }
 
-    public BoardGroup createBoardGroup(String name, String description, String color, String icon) {
-        return boardGroupService.createBoardGroup(name, description, color, icon);
+    public BoardGroup createBoardGroup(String name, String description, String icon) {
+        return boardGroupService.createBoardGroup(name, description, icon);
     }
 
-    public BoardGroup updateBoardGroup(Long groupId, String name, String description, String color, String icon) {
-        return boardGroupService.updateBoardGroup(groupId, name, description, color, icon);
+    public BoardGroup updateBoardGroup(Long groupId, String name, String description, String icon) {
+        return boardGroupService.updateBoardGroup(groupId, name, description, icon);
     }
 
     public void deleteBoardGroup(Long groupId) {

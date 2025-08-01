@@ -8,8 +8,7 @@ import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
+
 import javafx.geometry.Insets;
 import javafx.application.Platform;
 import javafx.scene.image.Image;
@@ -23,11 +22,9 @@ import org.desviante.service.dto.CardDetailDTO;
 import org.desviante.service.dto.UpdateCardDetailsDTO;
 import org.desviante.view.component.CardViewController;
 import org.desviante.view.component.ColumnViewController;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -68,6 +65,10 @@ public class BoardViewController {
     @FXML
     private ComboBox<Object> groupFilterComboBox;
 
+    // --- Filtro de Status ---
+    @FXML
+    private ComboBox<String> statusFilterComboBox;
+
     // --- Container para o Kanban ---
     @FXML
     private HBox kanbanContainer;
@@ -102,6 +103,7 @@ public class BoardViewController {
         }
     }
 
+
     public BoardViewController(TaskManagerFacade facade) {
         this.facade = facade;
     }
@@ -111,6 +113,7 @@ public class BoardViewController {
         System.out.println("BoardViewController inicializado.");
         setupBoardsTable();
         setupGroupFilter();
+        setupStatusFilter();
 
         editBoardButton.disableProperty().bind(
                 boardsTableView.getSelectionModel().selectedItemProperty().isNull()
@@ -243,6 +246,52 @@ public class BoardViewController {
         loadBoardGroups();
     }
 
+    private void setupStatusFilter() {
+        // Configurar o ComboBox para mostrar o status
+        statusFilterComboBox.setCellFactory(param -> new ListCell<String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText("Todos os Status");
+                } else {
+                    setText(item);
+                }
+            }
+        });
+
+        // Configurar o botão do ComboBox para mostrar o status
+        statusFilterComboBox.setButtonCell(new ListCell<String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText("Todos os Status");
+                } else {
+                    setText(item);
+                }
+            }
+        });
+
+        // Carregar opções de status
+        loadStatusOptions();
+    }
+
+    private void loadStatusOptions() {
+        try {
+            statusFilterComboBox.getItems().clear();
+            statusFilterComboBox.getItems().add(null); // Opção "Todos os Status"
+            statusFilterComboBox.getItems().add("Vazio");
+            statusFilterComboBox.getItems().add("Não iniciado");
+            statusFilterComboBox.getItems().add("Em andamento");
+            statusFilterComboBox.getItems().add("Concluído");
+            statusFilterComboBox.setValue(null); // Selecionar "Todos os Status" por padrão
+        } catch (Exception e) {
+            e.printStackTrace();
+            showError("Erro ao Carregar Status", "Não foi possível carregar as opções de status: " + e.getMessage());
+        }
+    }
+
     private void loadBoardGroups() {
         try {
             List<BoardGroup> groups = facade.getAllBoardGroups();
@@ -259,25 +308,54 @@ public class BoardViewController {
 
     @FXML
     private void handleGroupFilterChange() {
-        Object selectedItem = groupFilterComboBox.getValue();
-        loadBoardsByGroup(selectedItem);
+        Object selectedGroup = groupFilterComboBox.getValue();
+        String selectedStatus = statusFilterComboBox.getValue();
+        loadBoardsWithFilters(selectedGroup, selectedStatus);
     }
 
-    private void loadBoardsByGroup(Object selectedItem) {
+    @FXML
+    private void handleStatusFilterChange() {
+        Object selectedGroup = groupFilterComboBox.getValue();
+        String selectedStatus = statusFilterComboBox.getValue();
+        loadBoardsWithFilters(selectedGroup, selectedStatus);
+    }
+
+    private void loadBoards() {
+        try {
+            // Aplicar filtros combinados
+            Object selectedGroup = groupFilterComboBox.getValue();
+            String selectedStatus = statusFilterComboBox.getValue();
+            loadBoardsWithFilters(selectedGroup, selectedStatus);
+        } catch (Exception e) {
+            e.printStackTrace();
+            showError("Erro ao Carregar Boards", "Não foi possível carregar os boards: " + e.getMessage());
+        }
+    }
+
+    private void loadBoardsWithFilters(Object selectedGroup, String selectedStatus) {
         try {
             List<BoardSummaryDTO> boards;
-            if (selectedItem == null) {
+            
+            // Primeiro, filtrar por grupo
+            if (selectedGroup == null) {
                 // Carregar todos os boards
                 boards = facade.getAllBoardSummaries();
-            } else if (selectedItem instanceof NoGroupOption) {
+            } else if (selectedGroup instanceof NoGroupOption) {
                 // Carregar boards sem grupo
                 boards = facade.getBoardsWithoutGroup();
-            } else if (selectedItem instanceof BoardGroup) {
+            } else if (selectedGroup instanceof BoardGroup) {
                 // Carregar boards do grupo selecionado
-                boards = facade.getBoardsByGroup(((BoardGroup) selectedItem).getId());
+                boards = facade.getBoardsByGroup(((BoardGroup) selectedGroup).getId());
             } else {
                 // Fallback: carregar todos os boards
                 boards = facade.getAllBoardSummaries();
+            }
+            
+            // Depois, filtrar por status
+            if (selectedStatus != null) {
+                boards = boards.stream()
+                    .filter(board -> selectedStatus.equals(board.status()))
+                    .toList();
             }
             
             boardsTableView.getItems().clear();
@@ -291,17 +369,6 @@ public class BoardViewController {
         } catch (Exception e) {
             e.printStackTrace();
             showError("Erro ao Filtrar Boards", "Não foi possível filtrar os boards: " + e.getMessage());
-        }
-    }
-
-    private void loadBoards() {
-        try {
-            // Usar o filtro de grupo atual
-            Object selectedItem = groupFilterComboBox.getValue();
-            loadBoardsByGroup(selectedItem);
-        } catch (Exception e) {
-            e.printStackTrace();
-            showError("Erro ao Carregar Boards", "Não foi possível carregar os boards: " + e.getMessage());
         }
     }
 
@@ -503,15 +570,14 @@ public class BoardViewController {
                 }
 
                 try {
-                    BoardSummaryDTO newBoard;
                     if (selectedGroup != null) {
-                        newBoard = facade.createNewBoardWithGroup(boardName, selectedGroup.getId());
+                        facade.createNewBoardWithGroup(boardName, selectedGroup.getId());
                     } else {
-                        newBoard = facade.createNewBoard(boardName);
+                        facade.createNewBoard(boardName);
                     }
                     
                     showInfo("Board Criado", "Board '" + boardName + "' criado com sucesso!");
-                    return new CreateBoardResult(boardName, selectedGroup);
+                    return new CreateBoardResult();
                 } catch (Exception e) {
                     showError("Erro ao Criar Board", "Não foi possível criar o board: " + e.getMessage());
                     return null;
@@ -523,24 +589,18 @@ public class BoardViewController {
         // Mostrar dialog e processar resultado
         Optional<CreateBoardResult> result = dialog.showAndWait();
         if (result.isPresent()) {
-            // Recarregar boards e grupos
+            // Recarregar boards, grupos e status
             loadBoardGroups();
+            loadStatusOptions();
             loadBoards();
         }
     }
 
     // Classe auxiliar para o resultado do dialog
     private static class CreateBoardResult {
-        private final String boardName;
-        private final BoardGroup group;
-
-        public CreateBoardResult(String boardName, BoardGroup group) {
-            this.boardName = boardName;
-            this.group = group;
+        public CreateBoardResult() {
+            // Marker class - no data needed
         }
-
-        public String getBoardName() { return boardName; }
-        public BoardGroup getGroup() { return group; }
     }
 
     @FXML
@@ -695,6 +755,7 @@ public class BoardViewController {
             } else {
                 // Board foi atualizado
                 loadBoardGroups();
+                loadStatusOptions();
                 loadBoards();
             }
         }
@@ -703,15 +764,12 @@ public class BoardViewController {
     // Classe auxiliar para o resultado do dialog de edição
     private static class EditBoardResult {
         private final String boardName;
-        private final BoardGroup group;
 
         public EditBoardResult(String boardName, BoardGroup group) {
             this.boardName = boardName;
-            this.group = group;
         }
 
         public String getBoardName() { return boardName; }
-        public BoardGroup getGroup() { return group; }
     }
 
     @FXML
@@ -738,8 +796,9 @@ public class BoardViewController {
     @FXML
     private void handleRefresh() {
         try {
-            // Recarregar grupos primeiro
+            // Recarregar grupos e status primeiro
             loadBoardGroups();
+            loadStatusOptions();
             // Depois recarregar boards com o filtro atual
             loadBoards();
             
@@ -749,7 +808,7 @@ public class BoardViewController {
                 loadKanbanViewForBoard(selectedBoard.id());
             }
             
-            System.out.println("Boards e grupos recarregados com sucesso.");
+            System.out.println("Boards, grupos e status recarregados com sucesso.");
         } catch (Exception e) {
             e.printStackTrace();
             showError("Erro ao Atualizar", "Não foi possível atualizar os dados: " + e.getMessage());
@@ -791,8 +850,6 @@ public class BoardViewController {
         descriptionField.setPromptText("Descrição (opcional)");
         descriptionField.setPrefRowCount(3);
         descriptionField.setWrapText(true);
-        ColorPicker colorPicker = new ColorPicker(Color.BLUE);
-        colorPicker.setPromptText("Cor do grupo");
 
         // Lista de códigos de emojis PNG disponíveis (50 ícones verificados e existentes)
         String[] availableIcons = {
@@ -885,10 +942,8 @@ public class BoardViewController {
         grid.add(nameField, 1, 0);
         grid.add(new Label("Descrição:"), 0, 1);
         grid.add(descriptionField, 1, 1);
-        grid.add(new Label("Cor:"), 0, 2);
-        grid.add(colorPicker, 1, 2);
-        grid.add(new Label("Ícone:"), 0, 3);
-        grid.add(iconComboBox, 1, 3);
+        grid.add(new Label("Ícone:"), 0, 2);
+        grid.add(iconComboBox, 1, 2);
 
         dialog.getDialogPane().setContent(grid);
 
@@ -900,10 +955,6 @@ public class BoardViewController {
             if (dialogButton == createButtonType) {
                 String name = nameField.getText().trim();
                 String description = descriptionField.getText().trim();
-                String color = String.format("#%02X%02X%02X",
-                        (int) (colorPicker.getValue().getRed() * 255),
-                        (int) (colorPicker.getValue().getGreen() * 255),
-                        (int) (colorPicker.getValue().getBlue() * 255));
                 String icon = iconComboBox.getValue();
 
                 if (name.isEmpty()) {
@@ -912,7 +963,7 @@ public class BoardViewController {
                 }
 
                 try {
-                    BoardGroup newGroup = facade.createBoardGroup(name, description, color, icon);
+                    BoardGroup newGroup = facade.createBoardGroup(name, description, icon);
                     showInfo("Grupo Criado", "Grupo '" + name + "' criado com sucesso!");
                     return newGroup;
                 } catch (Exception e) {
@@ -1078,22 +1129,6 @@ public class BoardViewController {
         descriptionField.setPrefRowCount(3);
         descriptionField.setWrapText(true);
         
-        ColorPicker colorPicker = new ColorPicker();
-        if (groupToEdit.getColor() != null && groupToEdit.getColor().startsWith("#")) {
-            try {
-                String colorStr = groupToEdit.getColor();
-                int r = Integer.parseInt(colorStr.substring(1, 3), 16);
-                int g = Integer.parseInt(colorStr.substring(3, 5), 16);
-                int b = Integer.parseInt(colorStr.substring(5, 7), 16);
-                colorPicker.setValue(Color.rgb(r, g, b));
-            } catch (Exception e) {
-                colorPicker.setValue(Color.BLUE);
-            }
-        } else {
-            colorPicker.setValue(Color.BLUE);
-        }
-        colorPicker.setPromptText("Cor do grupo");
-
         // Lista de códigos de emojis PNG disponíveis (50 ícones verificados e existentes)
         String[] availableIcons = {
             // 📁 Pastas e Arquivos
@@ -1185,10 +1220,8 @@ public class BoardViewController {
         grid.add(nameField, 1, 0);
         grid.add(new Label("Descrição:"), 0, 1);
         grid.add(descriptionField, 1, 1);
-        grid.add(new Label("Cor:"), 0, 2);
-        grid.add(colorPicker, 1, 2);
-        grid.add(new Label("Ícone:"), 0, 3);
-        grid.add(iconComboBox, 1, 3);
+        grid.add(new Label("Ícone:"), 0, 2);
+        grid.add(iconComboBox, 1, 2);
 
         dialog.getDialogPane().setContent(grid);
 
@@ -1200,10 +1233,6 @@ public class BoardViewController {
             if (dialogButton == saveButtonType) {
                 String name = nameField.getText().trim();
                 String description = descriptionField.getText().trim();
-                String color = String.format("#%02X%02X%02X",
-                        (int) (colorPicker.getValue().getRed() * 255),
-                        (int) (colorPicker.getValue().getGreen() * 255),
-                        (int) (colorPicker.getValue().getBlue() * 255));
                 String icon = iconComboBox.getValue();
 
                 if (name.isEmpty()) {
@@ -1212,7 +1241,7 @@ public class BoardViewController {
                 }
 
                 try {
-                    BoardGroup updatedGroup = facade.updateBoardGroup(groupToEdit.getId(), name, description, color, icon);
+                    BoardGroup updatedGroup = facade.updateBoardGroup(groupToEdit.getId(), name, description, icon);
                     showInfo("Grupo Atualizado", "Grupo '" + name + "' atualizado com sucesso!");
                     return updatedGroup;
                 } catch (Exception e) {

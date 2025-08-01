@@ -37,19 +37,10 @@ public class BoardGroupService {
     }
     
     @Transactional
-    public BoardGroup createBoardGroup(String name, String description, String color, String icon) {
+    public BoardGroup createBoardGroup(String name, String description, String icon) {
         // Validação dos parâmetros obrigatórios
         if (!StringUtils.hasText(name)) {
             throw new IllegalArgumentException("Nome do grupo é obrigatório");
-        }
-        
-        if (!StringUtils.hasText(color)) {
-            throw new IllegalArgumentException("Cor do grupo é obrigatória");
-        }
-        
-        // Validação do formato da cor (código hex)
-        if (!color.matches("^#[0-9A-Fa-f]{6}$")) {
-            throw new IllegalArgumentException("Cor deve estar no formato hexadecimal (#RRGGBB)");
         }
         
         // Validação de unicidade do nome (case-insensitive)
@@ -57,6 +48,9 @@ public class BoardGroupService {
         if (boardGroupRepository.findByName(trimmedName).isPresent()) {
             throw new IllegalArgumentException("Já existe um grupo com o nome '" + trimmedName + "'. Escolha um nome diferente.");
         }
+        
+        // Gerar cor aleatória no backend
+        String color = generateRandomColor();
         
         // Criação do novo grupo
         BoardGroup newGroup = new BoardGroup();
@@ -71,7 +65,7 @@ public class BoardGroupService {
     }
 
     @Transactional
-    public BoardGroup updateBoardGroup(Long groupId, String name, String description, String color, String icon) {
+    public BoardGroup updateBoardGroup(Long groupId, String name, String description, String icon) {
         // Validação do grupo existente
         BoardGroup existingGroup = boardGroupRepository.findById(groupId)
                 .orElseThrow(() -> new ResourceNotFoundException("Grupo com ID " + groupId + " não encontrado."));
@@ -79,12 +73,6 @@ public class BoardGroupService {
         // Validações de entrada
         if (!StringUtils.hasText(name)) {
             throw new IllegalArgumentException("Nome do grupo é obrigatório");
-        }
-        if (!StringUtils.hasText(color)) {
-            throw new IllegalArgumentException("Cor do grupo é obrigatória");
-        }
-        if (!color.matches("^#[0-9A-Fa-f]{6}$")) {
-            throw new IllegalArgumentException("Cor deve estar no formato hexadecimal (#RRGGBB)");
         }
         
         // Removida validação de grupo padrão - não precisamos mais proteger grupo especial
@@ -98,7 +86,7 @@ public class BoardGroupService {
         // Atualização dos campos
         existingGroup.setName(trimmedName);
         existingGroup.setDescription(description != null ? description.trim() : "");
-        existingGroup.setColor(color);
+        // Manter a cor existente - não alterar a cor no update
         existingGroup.setIcon(icon != null ? icon : "📁"); // Ícone padrão se não fornecido
         
         return boardGroupRepository.save(existingGroup);
@@ -217,5 +205,33 @@ public class BoardGroupService {
                 boardStatus,
                 board.getGroup()
         );
+    }
+
+    /**
+     * Gera uma cor hexadecimal aleatória
+     */
+    private String generateRandomColor() {
+        // Array de cores predefinidas para garantir boa legibilidade
+        String[] predefinedColors = {
+            "#FF6B6B", // Vermelho
+            "#4ECDC4", // Turquesa
+            "#45B7D1", // Azul
+            "#96CEB4", // Verde claro
+            "#FFEAA7", // Amarelo
+            "#DDA0DD", // Lavanda
+            "#98D8C8", // Verde água
+            "#F7DC6F", // Dourado
+            "#BB8FCE", // Roxo
+            "#85C1E9", // Azul claro
+            "#F8C471", // Laranja
+            "#82E0AA", // Verde
+            "#F1948A", // Rosa
+            "#85C1E9", // Azul
+            "#F7DC6F"  // Amarelo
+        };
+        
+        // Selecionar uma cor aleatória do array
+        int randomIndex = (int) (Math.random() * predefinedColors.length);
+        return predefinedColors[randomIndex];
     }
 }
