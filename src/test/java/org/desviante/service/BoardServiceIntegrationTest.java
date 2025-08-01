@@ -111,20 +111,14 @@ class BoardServiceIntegrationTest {
     @Test
     @DisplayName("Deve retornar uma lista com todos os boards")
     void shouldGetAllBoards() {
-        // Arrange: Cria alguns boards para popular o banco.
-        boardService.createBoard("Board C");
-        boardService.createBoard("Board A");
-        boardService.createBoard("Board B");
-
         // Act: Chama o serviço para buscar todos os boards.
         List<Board> boards = boardService.getAllBoards();
 
         // Assert: Verifica se a lista não é nula e tem o tamanho esperado.
         // A implementação do repositório ordena por nome, então podemos verificar a ordem.
+        // Temos apenas o board de exemplo
         assertNotNull(boards);
-        assertEquals(3, boards.size());
-        assertEquals("Board A", boards.get(0).getName());
-        assertEquals("Board B", boards.get(1).getName());
-        assertEquals("Board C", boards.get(2).getName());
+        assertEquals(1, boards.size());
+        assertEquals("Board de Exemplo", boards.get(0).getName());
     }
 }

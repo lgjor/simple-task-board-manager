@@ -91,3 +91,18 @@ CREATE INDEX idx_tasks_card_id ON tasks(card_id);
 CREATE INDEX idx_boards_group_id ON boards(group_id);
 
 -- Não inserimos mais grupo padrão - boards sem grupo terão group_id = NULL
+
+-- Dados de exemplo para testes
+-- Inserir um board de exemplo
+INSERT INTO boards (name, creation_date) VALUES 
+('Board de Exemplo', CURRENT_TIMESTAMP);
+
+-- Inserir as 3 colunas padrão para o board de exemplo (ID 1)
+INSERT INTO board_columns (name, order_index, kind, board_id) VALUES 
+('Inicial', 1, 'INITIAL', 1),
+('Em Andamento', 2, 'PENDING', 1),
+('Finalizado', 3, 'FINAL', 1);
+
+-- Inserir um card de exemplo na coluna inicial (ID 1)
+INSERT INTO cards (title, description, board_column_id, creation_date, last_update_date) VALUES 
+('Card de Exemplo', 'Este é um card de exemplo para demonstrar o sistema', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);

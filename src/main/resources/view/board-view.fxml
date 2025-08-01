@@ -30,6 +30,7 @@
                         <Button fx:id="deleteBoardButton" onAction="#handleDeleteBoard" text="Excluir Board" />
                         <Separator orientation="VERTICAL" />
                         <Button fx:id="createGroupButton" onAction="#handleCreateGroup" text="Criar Grupo" styleClass="create-group-button" />
+                        <Button fx:id="editGroupButton" onAction="#handleEditGroup" text="Editar Grupo" styleClass="edit-group-button" />
                         <Separator orientation="VERTICAL" />
                         <Label text="Filtrar por Grupo:" styleClass="filter-label" />
                         <ComboBox fx:id="groupFilterComboBox" onAction="#handleGroupFilterChange" promptText="Todos os Grupos" styleClass="group-filter-combo" />

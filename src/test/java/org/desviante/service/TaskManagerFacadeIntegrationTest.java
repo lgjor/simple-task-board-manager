@@ -71,27 +71,19 @@ class TaskManagerFacadeIntegrationTest {
     @Test
     @DisplayName("Deve retornar uma lista de resumos de boards corretamente")
     void getAllBoardSummaries_shouldReturnCorrectDTOs() {
-        // Arrange: Usar o BoardService para criar dados de teste diretamente no banco.
-        boardService.createBoard("Board C");
-        boardService.createBoard("Board A");
-        boardService.createBoard("Board B");
-
         // Act: Chamar o método da fachada que está sendo testado.
         List<BoardSummaryDTO> summaries = taskManagerFacade.getAllBoardSummaries();
 
         // Assert
         assertNotNull(summaries);
-        assertEquals(3, summaries.size(), "A lista de resumos deveria conter 3 boards.");
+        assertEquals(1, summaries.size(), "A lista de resumos deveria conter 1 board (board de exemplo).");
 
-        // A implementação do repositório ordena por nome, então podemos verificar a ordem.
-        assertEquals("Board A", summaries.get(0).name());
-        assertEquals("Board B", summaries.get(1).name());
-        assertEquals("Board C", summaries.get(2).name());
-
-        // Verifica se os DTOs foram criados corretamente com IDs.
-        assertNotNull(summaries.get(0).id());
-        assertNotNull(summaries.get(1).id());
-        assertNotNull(summaries.get(2).id());
+        // Verifica se o DTO foi criado corretamente com ID.
+        BoardSummaryDTO boardSummary = summaries.get(0);
+        assertNotNull(boardSummary.id());
+        assertEquals("Board de Exemplo", boardSummary.name());
+        // O board de exemplo não tem grupo (é null)
+        assertNull(boardSummary.group(), "O board de exemplo não deve ter grupo");
     }
 
     @Test

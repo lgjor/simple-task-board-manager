@@ -159,3 +159,55 @@
 .create-group-button:pressed {
     -fx-background-color: #0f6674; /* Azul ainda mais escuro quando pressionado */
 }
+
+/* Botão de Editar Grupo: Estilo de ação secundária */
+.edit-group-button {
+    -fx-background-color: #6f42c1; /* Roxo vibrante */
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5;
+    -fx-border-color: transparent;
+    -fx-padding: 8 16;
+}
+
+.edit-group-button:hover {
+    -fx-background-color: #5a32a3; /* Roxo mais escuro no hover */
+}
+
+.edit-group-button:pressed {
+    -fx-background-color: #4c2b8a; /* Roxo ainda mais escuro quando pressionado */
+}
+
+/* Botão de Excluir no Dialog: Estilo de ação destrutiva */
+.dialog-pane .button[text="Excluir"] {
+    -fx-background-color: #DC3545; /* Vermelho vibrante */
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5;
+    -fx-border-color: transparent;
+}
+
+.dialog-pane .button[text="Excluir"]:hover {
+    -fx-background-color: #C82333; /* Vermelho mais escuro no hover */
+}
+
+.dialog-pane .button[text="Excluir"]:pressed {
+    -fx-background-color: #BD2130; /* Vermelho ainda mais escuro quando pressionado */
+}
+
+/* Botão de Excluir no Dialog de Edição de Grupo: Estilo de ação destrutiva */
+.dialog-pane .button[text="Excluir"] {
+    -fx-background-color: #DC3545; /* Vermelho vibrante */
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5;
+    -fx-border-color: transparent;
+}
+
+.dialog-pane .button[text="Excluir"]:hover {
+    -fx-background-color: #C82333; /* Vermelho mais escuro no hover */
+}
+
+.dialog-pane .button[text="Excluir"]:pressed {
+    -fx-background-color: #BD2130; /* Vermelho ainda mais escuro quando pressionado */
+}

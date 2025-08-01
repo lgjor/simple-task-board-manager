@@ -77,6 +77,8 @@ public class BoardViewController {
     @FXML
     private Button createGroupButton;
     @FXML
+    private Button editGroupButton;
+    @FXML
     private Button refreshButton;
     // O botão linkGoogleButton foi removido
     @FXML
@@ -525,7 +527,8 @@ public class BoardViewController {
 
         // Configurar botões
         ButtonType saveButtonType = new ButtonType("Salvar", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
+        ButtonType deleteButtonType = new ButtonType("Excluir", ButtonBar.ButtonData.OTHER);
+        dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, deleteButtonType, ButtonType.CANCEL);
 
         // Criar campos do formulário
         GridPane grid = new GridPane();
@@ -628,6 +631,25 @@ public class BoardViewController {
                     showError("Erro ao Atualizar Board", "Não foi possível atualizar o board: " + e.getMessage());
                     return null;
                 }
+            } else if (dialogButton == deleteButtonType) {
+                // Confirmar exclusão
+                Alert confirmationDialog = new Alert(Alert.AlertType.CONFIRMATION);
+                confirmationDialog.setTitle("Confirmar Exclusão");
+                confirmationDialog.setHeaderText("Excluir o board '" + selectedBoard.name() + "'?");
+                confirmationDialog.setContentText("Esta ação é irreversível e também excluirá todas as colunas e cards associados a este board.");
+
+                Optional<ButtonType> confirmationResult = confirmationDialog.showAndWait();
+                if (confirmationResult.isPresent() && confirmationResult.get() == ButtonType.OK) {
+                    try {
+                        facade.deleteBoard(selectedBoard.id());
+                        showInfo("Board Excluído", "Board '" + selectedBoard.name() + "' foi excluído com sucesso!");
+                        return new EditBoardResult(null, null); // Indica que foi excluído
+                    } catch (Exception e) {
+                        showError("Erro ao Excluir Board", "Não foi possível excluir o board: " + e.getMessage());
+                        return null;
+                    }
+                }
+                return null; // Usuário cancelou a exclusão
             }
             return null;
         });
@@ -635,9 +657,15 @@ public class BoardViewController {
         // Mostrar dialog e processar resultado
         Optional<EditBoardResult> result = dialog.showAndWait();
         if (result.isPresent()) {
-            // Recarregar boards e grupos
-            loadBoardGroups();
-            loadBoards();
+            EditBoardResult editResult = result.get();
+            if (editResult.getBoardName() == null) {
+                // Board foi excluído
+                loadBoards();
+            } else {
+                // Board foi atualizado
+                loadBoardGroups();
+                loadBoards();
+            }
         }
     }
 
@@ -784,6 +812,243 @@ public class BoardViewController {
             if (currentFilter != null) {
                 // Se estava filtrando por um grupo específico, manter
                 groupFilterComboBox.setValue(currentFilter);
+            }
+        }
+    }
+
+    @FXML
+    private void handleEditGroup() {
+        // Primeiro, mostrar dialog para selecionar o grupo a editar
+        Dialog<BoardGroup> selectDialog = new Dialog<>();
+        selectDialog.setTitle("Selecionar Grupo para Editar");
+        selectDialog.setHeaderText("Escolha o grupo que você deseja editar");
+
+        // Configurar botões
+        ButtonType selectButtonType = new ButtonType("Editar", ButtonBar.ButtonData.OK_DONE);
+        ButtonType deleteButtonType = new ButtonType("Excluir", ButtonBar.ButtonData.OTHER);
+        selectDialog.getDialogPane().getButtonTypes().addAll(selectButtonType, deleteButtonType, ButtonType.CANCEL);
+
+        // Criar ComboBox para selecionar grupo
+        ComboBox<BoardGroup> groupComboBox = new ComboBox<>();
+        groupComboBox.setPromptText("Selecione um grupo");
+        
+        // Configurar o ComboBox para mostrar o nome do grupo
+        groupComboBox.setCellFactory(param -> new ListCell<BoardGroup>() {
+            @Override
+            protected void updateItem(BoardGroup item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText("Selecione um grupo");
+                } else {
+                    setText(item.getName());
+                }
+            }
+        });
+
+        groupComboBox.setButtonCell(new ListCell<BoardGroup>() {
+            @Override
+            protected void updateItem(BoardGroup item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText("Selecione um grupo");
+                } else {
+                    setText(item.getName());
+                }
+            }
+        });
+
+        // Carregar grupos existentes
+        try {
+            List<BoardGroup> groups = facade.getAllBoardGroups();
+            if (groups.isEmpty()) {
+                showError("Nenhum Grupo", "Não há grupos para editar. Crie um grupo primeiro.");
+                return;
+            }
+            groupComboBox.getItems().addAll(groups);
+        } catch (Exception e) {
+            e.printStackTrace();
+            showError("Erro ao Carregar Grupos", "Não foi possível carregar os grupos: " + e.getMessage());
+            return;
+        }
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        grid.add(new Label("Grupo:"), 0, 0);
+        grid.add(groupComboBox, 1, 0);
+
+        selectDialog.getDialogPane().setContent(grid);
+
+        // Focar no ComboBox
+        Platform.runLater(groupComboBox::requestFocus);
+
+        // Converter resultado da seleção
+        selectDialog.setResultConverter(dialogButton -> {
+            if (dialogButton == selectButtonType) {
+                return groupComboBox.getValue();
+            } else if (dialogButton == deleteButtonType) {
+                BoardGroup selectedGroup = groupComboBox.getValue();
+                if (selectedGroup == null) {
+                    showError("Nenhum Grupo Selecionado", "Por favor, selecione um grupo para excluir.");
+                    return null;
+                }
+                
+                // Confirmar exclusão
+                Alert confirmationDialog = new Alert(Alert.AlertType.CONFIRMATION);
+                confirmationDialog.setTitle("Confirmar Exclusão");
+                confirmationDialog.setHeaderText("Excluir o grupo '" + selectedGroup.getName() + "'?");
+                confirmationDialog.setContentText("Esta ação é irreversível. Todos os boards deste grupo ficarão sem grupo (Sem Grupo).");
+
+                Optional<ButtonType> confirmationResult = confirmationDialog.showAndWait();
+                if (confirmationResult.isPresent() && confirmationResult.get() == ButtonType.OK) {
+                    try {
+                        facade.deleteBoardGroup(selectedGroup.getId());
+                        showInfo("Grupo Excluído", "Grupo '" + selectedGroup.getName() + "' foi excluído com sucesso!");
+                        return new BoardGroup(); // Retorna um objeto vazio para indicar que foi excluído
+                    } catch (Exception e) {
+                        showError("Erro ao Excluir Grupo", "Não foi possível excluir o grupo: " + e.getMessage());
+                        return null;
+                    }
+                }
+                return null; // Usuário cancelou a exclusão
+            }
+            return null;
+        });
+
+        // Mostrar dialog de seleção
+        Optional<BoardGroup> selectedGroup = selectDialog.showAndWait();
+        if (selectedGroup.isPresent()) {
+            BoardGroup groupResult = selectedGroup.get();
+            if (groupResult.getId() == null) {
+                // Grupo foi excluído
+                loadBoardGroups();
+                loadBoards();
+            } else {
+                // Agora mostrar dialog para editar o grupo selecionado
+                showEditGroupDialog(groupResult);
+            }
+        }
+    }
+
+    private void showEditGroupDialog(BoardGroup groupToEdit) {
+        // Criar dialog para editar grupo
+        Dialog<BoardGroup> dialog = new Dialog<>();
+        dialog.setTitle("Editar Grupo");
+        dialog.setHeaderText("Editando o grupo: " + groupToEdit.getName());
+
+        // Configurar botões
+        ButtonType saveButtonType = new ButtonType("Salvar", ButtonBar.ButtonData.OK_DONE);
+        ButtonType deleteButtonType = new ButtonType("Excluir", ButtonBar.ButtonData.OTHER);
+        dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, deleteButtonType, ButtonType.CANCEL);
+
+        // Criar campos do formulário
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        TextField nameField = new TextField(groupToEdit.getName());
+        nameField.setPromptText("Nome do grupo");
+        
+        TextArea descriptionField = new TextArea(groupToEdit.getDescription() != null ? groupToEdit.getDescription() : "");
+        descriptionField.setPromptText("Descrição (opcional)");
+        descriptionField.setPrefRowCount(3);
+        descriptionField.setWrapText(true);
+        
+        ColorPicker colorPicker = new ColorPicker();
+        if (groupToEdit.getColor() != null && groupToEdit.getColor().startsWith("#")) {
+            try {
+                String colorStr = groupToEdit.getColor();
+                int r = Integer.parseInt(colorStr.substring(1, 3), 16);
+                int g = Integer.parseInt(colorStr.substring(3, 5), 16);
+                int b = Integer.parseInt(colorStr.substring(5, 7), 16);
+                colorPicker.setValue(Color.rgb(r, g, b));
+            } catch (Exception e) {
+                colorPicker.setValue(Color.BLUE);
+            }
+        } else {
+            colorPicker.setValue(Color.BLUE);
+        }
+        colorPicker.setPromptText("Cor do grupo");
+
+        grid.add(new Label("Nome:"), 0, 0);
+        grid.add(nameField, 1, 0);
+        grid.add(new Label("Descrição:"), 0, 1);
+        grid.add(descriptionField, 1, 1);
+        grid.add(new Label("Cor:"), 0, 2);
+        grid.add(colorPicker, 1, 2);
+
+        dialog.getDialogPane().setContent(grid);
+
+        // Focar no campo nome
+        Platform.runLater(nameField::requestFocus);
+
+        // Converter resultado
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == saveButtonType) {
+                String name = nameField.getText().trim();
+                String description = descriptionField.getText().trim();
+                String color = String.format("#%02X%02X%02X",
+                        (int) (colorPicker.getValue().getRed() * 255),
+                        (int) (colorPicker.getValue().getGreen() * 255),
+                        (int) (colorPicker.getValue().getBlue() * 255));
+
+                if (name.isEmpty()) {
+                    showError("Erro de Validação", "O nome do grupo é obrigatório.");
+                    return null;
+                }
+
+                try {
+                    BoardGroup updatedGroup = facade.updateBoardGroup(groupToEdit.getId(), name, description, color, groupToEdit.getIcon());
+                    showInfo("Grupo Atualizado", "Grupo '" + name + "' atualizado com sucesso!");
+                    return updatedGroup;
+                } catch (Exception e) {
+                    showError("Erro ao Atualizar Grupo", "Não foi possível atualizar o grupo: " + e.getMessage());
+                    return null;
+                }
+            } else if (dialogButton == deleteButtonType) {
+                // Confirmar exclusão
+                Alert confirmationDialog = new Alert(Alert.AlertType.CONFIRMATION);
+                confirmationDialog.setTitle("Confirmar Exclusão");
+                confirmationDialog.setHeaderText("Excluir o grupo '" + groupToEdit.getName() + "'?");
+                confirmationDialog.setContentText("Esta ação é irreversível. Todos os boards deste grupo ficarão sem grupo (Sem Grupo).");
+
+                Optional<ButtonType> confirmationResult = confirmationDialog.showAndWait();
+                if (confirmationResult.isPresent() && confirmationResult.get() == ButtonType.OK) {
+                    try {
+                        facade.deleteBoardGroup(groupToEdit.getId());
+                        showInfo("Grupo Excluído", "Grupo '" + groupToEdit.getName() + "' foi excluído com sucesso!");
+                        return new BoardGroup(); // Retorna um objeto vazio para indicar que foi excluído
+                    } catch (Exception e) {
+                        showError("Erro ao Excluir Grupo", "Não foi possível excluir o grupo: " + e.getMessage());
+                        return null;
+                    }
+                }
+                return null; // Usuário cancelou a exclusão
+            }
+            return null;
+        });
+
+        // Mostrar dialog e processar resultado
+        Optional<BoardGroup> result = dialog.showAndWait();
+        if (result.isPresent()) {
+            BoardGroup groupResult = result.get();
+            if (groupResult.getId() == null) {
+                // Grupo foi excluído
+                loadBoardGroups();
+                loadBoards();
+            } else {
+                // Grupo foi atualizado
+                loadBoardGroups();
+                loadBoards();
+                // Manter o filtro atual
+                Object currentFilter = groupFilterComboBox.getValue();
+                if (currentFilter != null) {
+                    // Se estava filtrando por um grupo específico, manter
+                    groupFilterComboBox.setValue(currentFilter);
+                }
             }
         }
     }
