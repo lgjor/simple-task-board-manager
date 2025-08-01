@@ -367,7 +367,7 @@ class TaskManagerFacadeIntegrationTest {
     @DisplayName("Deve atualizar o grupo de um board com sucesso")
     void updateBoardGroup_shouldUpdateBoardGroupSuccessfully() {
         // Given: Criar um board e um grupo
-        BoardGroup group = taskManagerFacade.createBoardGroup("Test Group", "Test Description", "#FF5733");
+        BoardGroup group = taskManagerFacade.createBoardGroup("Test Group", "Test Description", "#FF5733", "📁");
         BoardSummaryDTO board = taskManagerFacade.createNewBoard("Test Board");
         
         // When: Atualizar o grupo do board
@@ -389,7 +389,7 @@ class TaskManagerFacadeIntegrationTest {
     @DisplayName("Deve remover o grupo de um board (definir como null)")
     void updateBoardGroup_shouldRemoveBoardGroupSuccessfully() {
         // Given: Criar um board com grupo
-        BoardGroup group = taskManagerFacade.createBoardGroup("Test Group", "Test Description", "#FF5733");
+        BoardGroup group = taskManagerFacade.createBoardGroup("Test Group", "Test Description", "#FF5733", "📁");
         BoardSummaryDTO board = taskManagerFacade.createNewBoardWithGroup("Test Board", group.getId());
         
         // When: Remover o grupo do board (definir como null)

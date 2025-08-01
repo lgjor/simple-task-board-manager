@@ -14,7 +14,6 @@ CREATE TABLE board_groups (
     color           VARCHAR(7), -- Código hex da cor (ex: #FF5733)
     icon            VARCHAR(50), -- Ícone do grupo (ex: "work", "personal", "study")
     creation_date   TIMESTAMP NOT NULL
-    -- Removido is_default - não precisamos mais de grupo padrão
 );
 
 -- Definição da tabela 'boards'
@@ -71,8 +70,6 @@ CREATE INDEX idx_board_columns_board_id ON board_columns(board_id);
 CREATE INDEX idx_cards_board_column_id ON cards(board_column_id);
 CREATE INDEX idx_tasks_card_id ON tasks(card_id);
 CREATE INDEX idx_boards_group_id ON boards(group_id);
-
--- Não inserimos mais grupo padrão - boards sem grupo terão group_id = NULL
 
 -- Dados de exemplo para testes
 -- Inserir um board de exemplo

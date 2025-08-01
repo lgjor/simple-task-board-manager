@@ -18,7 +18,6 @@ public class BoardGroup {
     private String color;
     private String icon;
     private LocalDateTime creationDate;
-    // Removido isDefault - não precisamos mais de grupo padrão
     
     @Override
     public String toString() {

@@ -131,7 +131,7 @@
 
 /* Botão de Criar Tarefa: Estilo de ação secundária */
 .task-button {
-    -fx-background-color: #28a745; /* Verde vibrante */
+    -fx-background-color: #6c757d; /* Cinza médio */
     -fx-text-fill: white;
     -fx-font-weight: bold;
     -fx-background-radius: 5;
@@ -139,7 +139,7 @@
 }
 
 .task-button:hover {
-    -fx-background-color: #218838; /* Verde mais escuro no hover */
+    -fx-background-color: #5a6268; /* Cinza mais escuro no hover */
 }
 
 /* Botão de Criar Grupo: Estilo de ação primária */
@@ -210,4 +210,69 @@
 
 .dialog-pane .button[text="Excluir"]:pressed {
     -fx-background-color: #BD2130; /* Vermelho ainda mais escuro quando pressionado */
+}
+
+/* Estilos para o ComboBox de ícones */
+.icon-combo-box {
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: #dee2e6;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 8 12;
+    -fx-font-size: 14px;
+}
+
+.icon-combo-box:hover {
+    -fx-border-color: #adb5bd;
+    -fx-background-color: #e9ecef;
+}
+
+.icon-combo-box:focused {
+    -fx-border-color: #007bff;
+    -fx-background-color: white;
+}
+
+.icon-combo-box .list-cell {
+    -fx-font-size: 16px;
+    -fx-padding: 8 12;
+    -fx-background-color: transparent;
+}
+
+.icon-combo-box .list-cell:hover {
+    -fx-background-color: #e3f2fd;
+}
+
+.icon-combo-box .list-cell:selected {
+    -fx-background-color: #bbdefb;
+}
+
+.icon-combo-box .arrow-button {
+    -fx-background-color: transparent;
+}
+
+.icon-combo-box .arrow {
+    -fx-background-color: #6c757d;
+}
+
+/* Estilo para as células da lista de ícones */
+.icon-list-cell {
+    -fx-font-size: 16px;
+    -fx-padding: 8 12;
+    -fx-background-color: transparent;
+    -fx-text-fill: #212529;
+}
+
+.icon-list-cell:hover {
+    -fx-background-color: #e3f2fd;
+}
+
+.icon-list-cell:selected {
+    -fx-background-color: #bbdefb;
+}
+
+/* Estilo para o botão do ComboBox de ícones */
+.icon-combo-button {
+    -fx-font-size: 14px;
+    -fx-padding: 8 12;
+    -fx-background-color: transparent;
 }

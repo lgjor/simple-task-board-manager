@@ -57,10 +57,12 @@
                 </Label>
                 <TableView fx:id="boardsTableView" prefHeight="200.0">
                     <columns>
+                        <!-- Coluna do ícone do grupo -->
+                        <TableColumn fx:id="boardGroupIconColumn" prefWidth="50.0" text="Ícone" />
+                        <!-- Coluna do nome do grupo -->
+                        <TableColumn fx:id="boardGroupColumn" prefWidth="150.0" text="Grupo" styleClass="group-column" />
                         <!-- Coluna de nome do board -->
                         <TableColumn fx:id="boardNameColumn" prefWidth="250.0" text="Nome" />
-                        <!-- Coluna do grupo do board -->
-                        <TableColumn fx:id="boardGroupColumn" prefWidth="150.0" text="Grupo" styleClass="group-column" />
                         <!-- COLUNA DE STATUS -->
                         <TableColumn fx:id="boardStatusColumn" prefWidth="120.0" text="Status" />
                         <TableColumn fx:id="statusInitialColumn" prefWidth="120.0" text="Não Iniciado (%)" />

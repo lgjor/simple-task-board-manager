@@ -5,6 +5,7 @@ import org.desviante.model.Board;
 import org.desviante.model.BoardColumn;
 import org.desviante.model.Card;
 import org.desviante.model.enums.BoardColumnKindEnum;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,9 +19,11 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringJUnitConfig(classes = DataConfig.class)
 @Sql(scripts = "/test-schema.sql") // CORREÇÃO: Garante que o schema seja criado antes dos testes.
+@Transactional // Garante que cada teste rode em uma transação isolada e seja revertido
 public class CardRepositoryTest {
 
     @Autowired
@@ -32,11 +35,23 @@ public class CardRepositoryTest {
     private BoardColumnRepository columnRepository;
 
     private BoardColumn testColumn;
+    private Board testBoard;
 
     @BeforeEach
     void setup() {
-        Board testBoard = boardRepository.save(new Board(null, "Board de Teste", LocalDateTime.now(), null, null));
+        testBoard = boardRepository.save(new Board(null, "Board de Teste", LocalDateTime.now(), null, null));
         testColumn = columnRepository.save(new BoardColumn(null, "Coluna de Teste", 0, BoardColumnKindEnum.INITIAL, testBoard.getId()));
+    }
+
+    @AfterEach
+    void cleanup() {
+        // Limpar dados de teste na ordem correta (devido às foreign keys)
+        if (testColumn != null) {
+            columnRepository.deleteById(testColumn.getId());
+        }
+        if (testBoard != null) {
+            boardRepository.deleteById(testBoard.getId());
+        }
     }
 
     @Test

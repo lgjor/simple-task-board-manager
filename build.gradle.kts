@@ -25,7 +25,7 @@ plugins {
 }
 
 group = "org.desviante"
-version = "1.0.1"
+version = "1.0.2"
 
 repositories {
     mavenCentral()
@@ -172,7 +172,7 @@ tasks.register<Exec>("jpackage") {
         "--win-menu",
         "--win-shortcut",
         "--vendor", "AuDesviante",
-        "--app-version", "1.0.1",
+        "--app-version", "1.0.2",
         "--icon", iconFile.absolutePath
     )
     

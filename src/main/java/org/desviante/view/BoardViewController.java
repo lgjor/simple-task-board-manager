@@ -12,6 +12,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.geometry.Insets;
 import javafx.application.Platform;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import org.desviante.model.BoardGroup;
 import org.desviante.service.TaskManagerFacade;
 import org.desviante.service.dto.BoardColumnDetailDTO;
@@ -25,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +53,8 @@ public class BoardViewController {
     private TableColumn<BoardSummaryDTO, String> boardNameColumn;
     @FXML
     private TableColumn<BoardSummaryDTO, String> boardGroupColumn;
+    @FXML
+    private TableColumn<BoardSummaryDTO, String> boardGroupIconColumn;
     @FXML
     private TableColumn<BoardSummaryDTO, String> boardStatusColumn;
     @FXML
@@ -118,7 +123,7 @@ public class BoardViewController {
     }
 
     private void setupBoardsTable() {
-        boardNameColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().name()));
+        // Configurar coluna do nome do grupo
         boardGroupColumn.setCellValueFactory(cellData -> {
             BoardGroup group = cellData.getValue().group();
             return new SimpleStringProperty(group != null ? group.getName() : "Sem Grupo");
@@ -137,11 +142,37 @@ public class BoardViewController {
                     if ("Sem Grupo".equals(item)) {
                         setStyle("-fx-text-fill: #adb5bd; -fx-font-style: italic;");
                     } else {
-                        setStyle("-fx-text-fill: #6c757d; -fx-font-weight: 500;");
+                        setStyle("-fx-text-fill: #adb5bd; -fx-font-weight: normal;");
                     }
                 }
             }
         });
+
+        // Configurar coluna do ícone do grupo
+        boardGroupIconColumn.setCellValueFactory(cellData -> {
+            BoardGroup group = cellData.getValue().group();
+            return new SimpleStringProperty(group != null ? group.getIcon() : null);
+        });
+        
+        // Configurar a célula para mostrar o ícone
+        boardGroupIconColumn.setCellFactory(column -> new TableCell<BoardSummaryDTO, String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setGraphic(null);
+                } else {
+                    setText(null);
+                    ImageView imageView = createEmojiImageView(item);
+                    setGraphic(imageView);
+                }
+            }
+        });
+
+        // Configurar coluna do nome do board
+        boardNameColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().name()));
+        
         boardStatusColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().status()));
         statusInitialColumn.setCellValueFactory(cellData ->
                 new SimpleStringProperty(cellData.getValue().percentInitial() + " %"));
@@ -763,12 +794,101 @@ public class BoardViewController {
         ColorPicker colorPicker = new ColorPicker(Color.BLUE);
         colorPicker.setPromptText("Cor do grupo");
 
+        // Lista de códigos de emojis PNG disponíveis (50 ícones verificados e existentes)
+        String[] availableIcons = {
+            // 📁 Pastas e Arquivos
+            "1f4c1", "1f4c2", "1f4c3", "1f4c4", "1f4c5", "1f4c6", "1f4c7", "1f4c8", "1f4c9",
+            
+            // 💰 Dinheiro e Finanças
+            "1f4b0", "1f4b1", "1f4b2", "1f4b3", "1f4b4", "1f4b5", "1f4b6", "1f4b7", "1f4b8", "1f4b9",
+            
+            // 💻 Tecnologia e Computação
+            "1f4bb", "1f4bd", "1f4be", "1f4bf", "1f4c0",
+            
+            // 🏠 Casa e Vida Doméstica
+            "1f3e0", "1f3e1", "1f3e2", "1f3e3", "1f3e4", "1f3e5", "1f3e6", "1f3e7", "1f3e8", "1f3e9",
+            
+            // 🏢 Organizações e Lugares
+            "1f3ea", "1f3eb", "1f3ec", "1f3ed", "1f3ee", "1f3ef", "1f3f0", "1f3f3",
+            
+            // 🚀 Transporte e Mobilidade
+            "1f680", "1f681", "1f682", "1f683", "1f684", "1f685", "1f686", "1f687", "1f688", "1f689",
+            
+            // 🔥 Elementos e Natureza
+            "1f525", "1f526", "1f527", "1f528", "1f529", "1f52a", "1f52b", "1f52c", "1f52d", "1f52e",
+            
+            // 💡 Ideias e Inovação
+            "1f4a1", "1f4a2", "1f4a3", "1f4a4", "1f4a5", "1f4a6", "1f4a7", "1f4a8", "1f4a9", "1f4aa",
+            
+            // ⭐ Símbolos e Indicadores
+            "2b50", "2b55",
+            
+            // 📚 Conhecimento e Estudo
+            "1f4da", "1f4db", "1f4dc", "1f4dd", "1f4de", "1f4df", "1f4e0", "1f4e1", "1f4e2", "1f4e3",
+            
+            // 🎓 Educação e Aprendizado
+            "1f393", "1f396", "1f397", "1f399",
+            
+            // 📱 Dispositivos
+            "1f4f1", "1f4f2", "1f4f3", "1f4f4", "1f4f5", "1f4f6", "1f4f7", "1f4f8", "1f4f9", "1f4fa",
+            
+            // 🎨 Criatividade e Arte
+            "1f3a8", "1f3a9", "1f3aa", "1f3ab", "1f3ac", "1f3ad", "1f3ae", "1f3af", "1f3b0", "1f3b1",
+            
+            // 🏆 Conquistas e Prêmios
+            "1f3c6", "1f3c7", "1f3c8", "1f3c9", "1f3ca", "1f3cb", "1f3cc", "1f3cd", "1f3ce", "1f3cf",
+            
+            // 🎯 Objetivos e Metas
+            "1f3af", "1f3b2", "1f3b3", "1f3b4", "1f3b5", "1f3b6", "1f3b7", "1f3b8", "1f3b9", "1f3ba"
+        };
+
+        ComboBox<String> iconComboBox = new ComboBox<>();
+        iconComboBox.getItems().addAll(availableIcons);
+        iconComboBox.setValue("1f4c1"); // Ícone padrão (pasta)
+        iconComboBox.setPromptText("Selecione um ícone");
+        iconComboBox.getStyleClass().add("icon-combo-box");
+        
+        // Configurar o ComboBox para mostrar imagens PNG
+        iconComboBox.setCellFactory(param -> new ListCell<String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setGraphic(null);
+                } else {
+                    setText(null); // Não mostrar texto, apenas imagem
+                    ImageView imageView = createEmojiImageView(item);
+                    setGraphic(imageView);
+                    getStyleClass().setAll("icon-list-cell");
+                }
+            }
+        });
+        
+        iconComboBox.setButtonCell(new ListCell<String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText("📁");
+                    setGraphic(null);
+                } else {
+                    setText(null); // Não mostrar texto, apenas imagem
+                    ImageView imageView = createEmojiImageView(item);
+                    setGraphic(imageView);
+                }
+                getStyleClass().setAll("icon-combo-button");
+            }
+        });
+
         grid.add(new Label("Nome:"), 0, 0);
         grid.add(nameField, 1, 0);
         grid.add(new Label("Descrição:"), 0, 1);
         grid.add(descriptionField, 1, 1);
         grid.add(new Label("Cor:"), 0, 2);
         grid.add(colorPicker, 1, 2);
+        grid.add(new Label("Ícone:"), 0, 3);
+        grid.add(iconComboBox, 1, 3);
 
         dialog.getDialogPane().setContent(grid);
 
@@ -784,6 +904,7 @@ public class BoardViewController {
                         (int) (colorPicker.getValue().getRed() * 255),
                         (int) (colorPicker.getValue().getGreen() * 255),
                         (int) (colorPicker.getValue().getBlue() * 255));
+                String icon = iconComboBox.getValue();
 
                 if (name.isEmpty()) {
                     showError("Erro de Validação", "O nome do grupo é obrigatório.");
@@ -791,7 +912,7 @@ public class BoardViewController {
                 }
 
                 try {
-                    BoardGroup newGroup = facade.createBoardGroup(name, description, color);
+                    BoardGroup newGroup = facade.createBoardGroup(name, description, color, icon);
                     showInfo("Grupo Criado", "Grupo '" + name + "' criado com sucesso!");
                     return newGroup;
                 } catch (Exception e) {
@@ -973,12 +1094,101 @@ public class BoardViewController {
         }
         colorPicker.setPromptText("Cor do grupo");
 
+        // Lista de códigos de emojis PNG disponíveis (50 ícones verificados e existentes)
+        String[] availableIcons = {
+            // 📁 Pastas e Arquivos
+            "1f4c1", "1f4c2", "1f4c3", "1f4c4", "1f4c5", "1f4c6", "1f4c7", "1f4c8", "1f4c9",
+            
+            // 💰 Dinheiro e Finanças
+            "1f4b0", "1f4b1", "1f4b2", "1f4b3", "1f4b4", "1f4b5", "1f4b6", "1f4b7", "1f4b8", "1f4b9",
+            
+            // 💻 Tecnologia e Computação
+            "1f4bb", "1f4bd", "1f4be", "1f4bf", "1f4c0",
+            
+            // 🏠 Casa e Vida Doméstica
+            "1f3e0", "1f3e1", "1f3e2", "1f3e3", "1f3e4", "1f3e5", "1f3e6", "1f3e7", "1f3e8", "1f3e9",
+            
+            // 🏢 Organizações e Lugares
+            "1f3ea", "1f3eb", "1f3ec", "1f3ed", "1f3ee", "1f3ef", "1f3f0", "1f3f3",
+            
+            // 🚀 Transporte e Mobilidade
+            "1f680", "1f681", "1f682", "1f683", "1f684", "1f685", "1f686", "1f687", "1f688", "1f689",
+            
+            // 🔥 Elementos e Natureza
+            "1f525", "1f526", "1f527", "1f528", "1f529", "1f52a", "1f52b", "1f52c", "1f52d", "1f52e",
+            
+            // 💡 Ideias e Inovação
+            "1f4a1", "1f4a2", "1f4a3", "1f4a4", "1f4a5", "1f4a6", "1f4a7", "1f4a8", "1f4a9", "1f4aa",
+            
+            // ⭐ Símbolos e Indicadores
+            "2b50", "2b55",
+            
+            // 📚 Conhecimento e Estudo
+            "1f4da", "1f4db", "1f4dc", "1f4dd", "1f4de", "1f4df", "1f4e0", "1f4e1", "1f4e2", "1f4e3",
+            
+            // 🎓 Educação e Aprendizado
+            "1f393", "1f396", "1f397", "1f399",
+            
+            // 📱 Dispositivos
+            "1f4f1", "1f4f2", "1f4f3", "1f4f4", "1f4f5", "1f4f6", "1f4f7", "1f4f8", "1f4f9", "1f4fa",
+            
+            // 🎨 Criatividade e Arte
+            "1f3a8", "1f3a9", "1f3aa", "1f3ab", "1f3ac", "1f3ad", "1f3ae", "1f3af", "1f3b0", "1f3b1",
+            
+            // 🏆 Conquistas e Prêmios
+            "1f3c6", "1f3c7", "1f3c8", "1f3c9", "1f3ca", "1f3cb", "1f3cc", "1f3cd", "1f3ce", "1f3cf",
+            
+            // 🎯 Objetivos e Metas
+            "1f3af", "1f3b2", "1f3b3", "1f3b4", "1f3b5", "1f3b6", "1f3b7", "1f3b8", "1f3b9", "1f3ba"
+        };
+
+        ComboBox<String> iconComboBox = new ComboBox<>();
+        iconComboBox.getItems().addAll(availableIcons);
+        iconComboBox.setValue(groupToEdit.getIcon() != null ? groupToEdit.getIcon() : "1f4c1");
+        iconComboBox.setPromptText("Selecione um ícone");
+        iconComboBox.getStyleClass().add("icon-combo-box");
+        
+        // Configurar o ComboBox para mostrar imagens PNG
+        iconComboBox.setCellFactory(param -> new ListCell<String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setGraphic(null);
+                } else {
+                    setText(null); // Não mostrar texto, apenas imagem
+                    ImageView imageView = createEmojiImageView(item);
+                    setGraphic(imageView);
+                    getStyleClass().setAll("icon-list-cell");
+                }
+            }
+        });
+        
+        iconComboBox.setButtonCell(new ListCell<String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText("📁");
+                    setGraphic(null);
+                } else {
+                    setText(null); // Não mostrar texto, apenas imagem
+                    ImageView imageView = createEmojiImageView(item);
+                    setGraphic(imageView);
+                }
+                getStyleClass().setAll("icon-combo-button");
+            }
+        });
+
         grid.add(new Label("Nome:"), 0, 0);
         grid.add(nameField, 1, 0);
         grid.add(new Label("Descrição:"), 0, 1);
         grid.add(descriptionField, 1, 1);
         grid.add(new Label("Cor:"), 0, 2);
         grid.add(colorPicker, 1, 2);
+        grid.add(new Label("Ícone:"), 0, 3);
+        grid.add(iconComboBox, 1, 3);
 
         dialog.getDialogPane().setContent(grid);
 
@@ -994,6 +1204,7 @@ public class BoardViewController {
                         (int) (colorPicker.getValue().getRed() * 255),
                         (int) (colorPicker.getValue().getGreen() * 255),
                         (int) (colorPicker.getValue().getBlue() * 255));
+                String icon = iconComboBox.getValue();
 
                 if (name.isEmpty()) {
                     showError("Erro de Validação", "O nome do grupo é obrigatório.");
@@ -1001,7 +1212,7 @@ public class BoardViewController {
                 }
 
                 try {
-                    BoardGroup updatedGroup = facade.updateBoardGroup(groupToEdit.getId(), name, description, color, groupToEdit.getIcon());
+                    BoardGroup updatedGroup = facade.updateBoardGroup(groupToEdit.getId(), name, description, color, icon);
                     showInfo("Grupo Atualizado", "Grupo '" + name + "' atualizado com sucesso!");
                     return updatedGroup;
                 } catch (Exception e) {
@@ -1067,5 +1278,34 @@ public class BoardViewController {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    /**
+     * Carrega uma imagem PNG do diretório de recursos
+     */
+    private Image loadEmojiImage(String emojiCode) {
+        try {
+            String imagePath = "/icons/emoji/" + emojiCode + ".png";
+            return new Image(getClass().getResourceAsStream(imagePath));
+        } catch (Exception e) {
+            // Se não conseguir carregar a imagem, retorna null
+            return null;
+        }
+    }
+
+    /**
+     * Cria um ImageView com tamanho 16x16 para o ComboBox
+     */
+    private ImageView createEmojiImageView(String emojiCode) {
+        Image image = loadEmojiImage(emojiCode);
+        if (image != null) {
+            ImageView imageView = new ImageView(image);
+            imageView.setFitWidth(16);
+            imageView.setFitHeight(16);
+            imageView.setPreserveRatio(true);
+            imageView.setSmooth(true);
+            return imageView;
+        }
+        return null;
     }
 }

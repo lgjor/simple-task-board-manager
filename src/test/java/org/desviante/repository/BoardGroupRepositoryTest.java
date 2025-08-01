@@ -14,9 +14,11 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringJUnitConfig(classes = DataConfig.class)
 @Sql(scripts = "/test-schema.sql")
+@Transactional // Garante que cada teste rode em uma transação isolada e seja revertido
 class BoardGroupRepositoryTest {
 
     @Autowired

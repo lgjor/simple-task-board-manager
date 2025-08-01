@@ -4,12 +4,14 @@ import org.desviante.config.DataConfig;
 import org.desviante.model.Board;
 import org.desviante.model.BoardColumn;
 import org.desviante.model.enums.BoardColumnKindEnum;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql; // Import necessário
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringJUnitConfig(classes = DataConfig.class)
 @Sql(scripts = "/test-schema.sql") // CORREÇÃO: Garante que o schema seja criado antes dos testes.
+@Transactional // Garante que cada teste rode em uma transação isolada e seja revertido
 public class BoardColumnRepositoryTest {
 
     @Autowired
@@ -33,6 +36,14 @@ public class BoardColumnRepositoryTest {
     void setup() {
         Board boardToSave = new Board(null, "Board de Teste Base", LocalDateTime.now(), null, null);
         testBoard = boardRepository.save(boardToSave);
+    }
+
+    @AfterEach
+    void cleanup() {
+        // Limpar dados de teste na ordem correta (devido às foreign keys)
+        if (testBoard != null) {
+            boardRepository.deleteById(testBoard.getId());
+        }
     }
 
     @Test

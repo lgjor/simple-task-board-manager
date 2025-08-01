@@ -6,12 +6,14 @@ import org.desviante.model.BoardColumn;
 import org.desviante.model.Card;
 import org.desviante.model.Task;
 import org.desviante.model.enums.BoardColumnKindEnum;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql; // Import necessário
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -20,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringJUnitConfig(classes = DataConfig.class)
 @Sql(scripts = "/test-schema.sql") // CORREÇÃO: Garante que o schema seja criado antes dos testes.
+@Transactional // Garante que cada teste rode em uma transação isolada e seja revertido
 public class TaskRepositoryTest {
 
     @Autowired
@@ -33,13 +36,29 @@ public class TaskRepositoryTest {
     private BoardRepository boardRepository;
 
     private Card testCard;
+    private Board testBoard;
+    private BoardColumn testColumn;
 
     @BeforeEach
     void setup() {
-        Board testBoard = boardRepository.save(new Board(null, "Board de Teste para Tasks", LocalDateTime.now(), null, null));
-        BoardColumn testColumn = columnRepository.save(new BoardColumn(null, "Coluna de Teste para Tasks", 0, BoardColumnKindEnum.INITIAL, testBoard.getId()));
+        testBoard = boardRepository.save(new Board(null, "Board de Teste para Tasks", LocalDateTime.now(), null, null));
+        testColumn = columnRepository.save(new BoardColumn(null, "Coluna de Teste para Tasks", 0, BoardColumnKindEnum.INITIAL, testBoard.getId()));
         LocalDateTime now = LocalDateTime.now();
         testCard = cardRepository.save(new Card(null, "Card de Teste para Tasks", "Descrição", now, now, null, testColumn.getId()));
+    }
+
+    @AfterEach
+    void cleanup() {
+        // Limpar dados de teste na ordem correta (devido às foreign keys)
+        if (testCard != null) {
+            cardRepository.deleteById(testCard.getId());
+        }
+        if (testColumn != null) {
+            columnRepository.deleteById(testColumn.getId());
+        }
+        if (testBoard != null) {
+            boardRepository.deleteById(testBoard.getId());
+        }
     }
 
     @Test

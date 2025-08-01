@@ -37,7 +37,7 @@ public class BoardGroupService {
     }
     
     @Transactional
-    public BoardGroup createBoardGroup(String name, String description, String color) {
+    public BoardGroup createBoardGroup(String name, String description, String color, String icon) {
         // Validação dos parâmetros obrigatórios
         if (!StringUtils.hasText(name)) {
             throw new IllegalArgumentException("Nome do grupo é obrigatório");
@@ -63,7 +63,7 @@ public class BoardGroupService {
         newGroup.setName(trimmedName);
         newGroup.setDescription(description != null ? description.trim() : "");
         newGroup.setColor(color);
-        newGroup.setIcon("📁"); // Ícone padrão
+        newGroup.setIcon(icon != null ? icon : "📁"); // Usar ícone fornecido ou padrão
         newGroup.setCreationDate(LocalDateTime.now());
         // Removido setDefault - não precisamos mais de grupo padrão
         
