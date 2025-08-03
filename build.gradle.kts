@@ -186,3 +186,13 @@ tasks.register<Exec>("jpackage") {
         }
     }
 }
+
+tasks.withType<Javadoc> {
+    options.encoding = "UTF-8"
+    options.charSet = "UTF-8"
+    options.docEncoding = "UTF-8"
+    
+    // Opcional: incluir links para APIs externas
+    options.links("https://docs.oracle.com/en/java/javase/11/docs/api/")
+    options.links("https://docs.spring.io/spring-framework/docs/current/javadoc-api/")
+}
