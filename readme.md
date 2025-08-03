@@ -147,7 +147,7 @@ Contribuições são bem-vindas! Mantenha sempre o foco na **simplicidade e prod
 
 ## 📄 Licença
 
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+Este projeto está sob a licença GNU General Public License v3.0. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
 
 ---
 
