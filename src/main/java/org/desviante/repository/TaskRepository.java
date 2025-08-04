@@ -17,12 +17,36 @@ import java.time.ZoneOffset;     // Import necessário
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Gerencia as operações de persistência para tarefas sincronizadas com Google Tasks.
+ * 
+ * <p>Responsável por todas as operações de banco de dados relacionadas
+ * às tarefas que são sincronizadas com a API do Google Tasks, incluindo
+ * CRUD básico e controle de estado de sincronização.</p>
+ * 
+ * <p>As tarefas mantêm informações específicas para integração com Google Tasks,
+ * como google_task_id, sent (status de envio), list_title (nome da lista no Google),
+ * due (data de vencimento com fuso horário) e notes (descrições das tarefas).</p>
+ * 
+ * <p>Utiliza JDBC direto com NamedParameterJdbcTemplate para operações
+ * de banco, mantendo controle total sobre as consultas SQL.</p>
+ * 
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @version 1.0
+ * @since 1.0
+ * @see Task
+ */
 @Repository
 public class TaskRepository {
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final SimpleJdbcInsert jdbcInsert;
 
+    /**
+     * Construtor que inicializa os templates JDBC necessários.
+     * 
+     * @param dataSource fonte de dados para conexão com o banco
+     */
     public TaskRepository(DataSource dataSource) {
         this.jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
         this.jdbcInsert = new SimpleJdbcInsert(dataSource)
@@ -31,6 +55,16 @@ public class TaskRepository {
                 .usingGeneratedKeyColumns("id");
     }
 
+    /**
+     * Mapeia os resultados do banco para objetos Task.
+     * 
+     * <p>Trata adequadamente campos que podem ser nulos, como due, creation_date
+     * e last_update_date. Converte timestamps para OffsetDateTime (para due)
+     * e LocalDateTime (para outras datas) para uso no sistema.</p>
+     * 
+     * <p>A conversão de due usa ZoneOffset.UTC para manter consistência
+     * com a API do Google Tasks.</p>
+     */
     private final RowMapper<Task> taskRowMapper = (ResultSet rs, int rowNum) -> {
         Task task = new Task();
         task.setId(rs.getLong("id"));
@@ -39,7 +73,7 @@ public class TaskRepository {
         // Trata campos que podem ser nulos
         Timestamp dueTimestamp = rs.getTimestamp("due");
         if (dueTimestamp != null) {
-            // CORREÇÃO: Converte o Instant para um OffsetDateTime usando o fuso UTC.
+            // Converte o Instant para um OffsetDateTime usando o fuso UTC.
             task.setDue(dueTimestamp.toInstant().atOffset(ZoneOffset.UTC));
         }
         task.setNotes(rs.getString("notes"));
@@ -57,6 +91,11 @@ public class TaskRepository {
         return task;
     };
 
+    /**
+     * Busca todas as tarefas sincronizadas.
+     * 
+     * @return lista de todas as tarefas no sistema
+     */
     public List<Task> findAll() {
         String sql = "SELECT * FROM tasks";
         return jdbcTemplate.query(sql, taskRowMapper);
@@ -74,8 +113,7 @@ public class TaskRepository {
 
     @Transactional
     public Task save(Task task) {
-        // A lógica de definir datas foi removida do repositório.
-        // Isso deve ser responsabilidade de um serviço.
+
         var params = new MapSqlParameterSource()
                 .addValue("list_title", task.getListTitle())
                 .addValue("title", task.getTitle())

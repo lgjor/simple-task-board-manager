@@ -16,12 +16,38 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Gerencia as operações de persistência para quadros (boards).
+ * 
+ * <p>Responsável por todas as operações de banco de dados relacionadas
+ * aos quadros, incluindo CRUD básico e consultas específicas como
+ * busca por grupo, quadros sem grupo, etc.</p>
+ * 
+ * <p>Utiliza JDBC direto com NamedParameterJdbcTemplate para operações
+ * de banco, mantendo controle total sobre as consultas SQL e performance.
+ * As consultas incluem JOIN com board_groups para carregar informações
+ * completas dos grupos associados.</p>
+ * 
+ * <p>Implementa transações para operações de escrita (save, delete)
+ * garantindo consistência dos dados.</p>
+ * 
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @version 1.0
+ * @since 1.0
+ * @see Board
+ * @see BoardGroup
+ */
 @Repository
 public class BoardRepository {
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final SimpleJdbcInsert jdbcInsert;
 
+    /**
+     * Construtor que inicializa os templates JDBC necessários.
+     * 
+     * @param dataSource fonte de dados para conexão com o banco
+     */
     public BoardRepository(DataSource dataSource) {
         this.jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
         this.jdbcInsert = new SimpleJdbcInsert(dataSource)
@@ -31,6 +57,12 @@ public class BoardRepository {
                 .usingGeneratedKeyColumns("id");
     }
 
+    /**
+     * Mapeia os resultados do banco para objetos Board.
+     * 
+     * <p>Carrega informações completas do quadro incluindo dados do grupo
+     * associado através de JOIN com a tabela board_groups.</p>
+     */
     private final RowMapper<Board> boardRowMapper = (ResultSet rs, int rowNum) -> {
         Board board = new Board();
         board.setId(rs.getLong("id"));
@@ -59,6 +91,14 @@ public class BoardRepository {
         return board;
     };
 
+    /**
+     * Busca todos os quadros ordenados por nome.
+     * 
+     * <p>Executa uma consulta que carrega todos os quadros com suas
+     * informações de grupo através de LEFT JOIN.</p>
+     * 
+     * @return lista de todos os quadros ordenados por nome
+     */
     public List<Board> findAll() {
         String sql = "SELECT b.*, bg.name as group_name, bg.description as group_description, " +
                     "bg.color as group_color, bg.icon as group_icon, bg.creation_date as group_creation_date " +
@@ -68,6 +108,12 @@ public class BoardRepository {
         return jdbcTemplate.query(sql, boardRowMapper);
     }
 
+    /**
+     * Busca um quadro específico pelo ID.
+     * 
+     * @param id identificador único do quadro
+     * @return Optional contendo o quadro se encontrado, vazio caso contrário
+     */
     public Optional<Board> findById(Long id) {
         String sql = "SELECT b.*, bg.name as group_name, bg.description as group_description, " +
                     "bg.color as group_color, bg.icon as group_icon, bg.creation_date as group_creation_date " +
@@ -82,6 +128,12 @@ public class BoardRepository {
         }
     }
 
+    /**
+     * Busca todos os quadros de um grupo específico.
+     * 
+     * @param groupId identificador do grupo
+     * @return lista de quadros do grupo ordenados por nome
+     */
     public List<Board> findByGroupId(Long groupId) {
         String sql = "SELECT b.*, bg.name as group_name, bg.description as group_description, " +
                     "bg.color as group_color, bg.icon as group_icon, bg.creation_date as group_creation_date " +
@@ -93,6 +145,14 @@ public class BoardRepository {
         return jdbcTemplate.query(sql, params, boardRowMapper);
     }
 
+    /**
+     * Busca todos os quadros que não possuem grupo associado.
+     * 
+     * <p>Útil para exibir quadros "órfãos" que não foram organizados
+     * em grupos específicos.</p>
+     * 
+     * @return lista de quadros sem grupo ordenados por nome
+     */
     public List<Board> findBoardsWithoutGroup() {
         String sql = "SELECT b.*, bg.name as group_name, bg.description as group_description, " +
                     "bg.color as group_color, bg.icon as group_icon, bg.creation_date as group_creation_date " +
@@ -103,6 +163,15 @@ public class BoardRepository {
         return jdbcTemplate.query(sql, boardRowMapper);
     }
 
+    /**
+     * Salva ou atualiza um quadro no banco de dados.
+     * 
+     * <p>Se o quadro não possui ID, executa INSERT e retorna o ID gerado.
+     * Se possui ID, executa UPDATE dos campos modificáveis.</p>
+     * 
+     * @param board quadro a ser salvo
+     * @return quadro com ID atualizado (em caso de inserção)
+     */
     @Transactional
     public Board save(Board board) {
         // Usamos MapSqlParameterSource para mapear explicitamente as propriedades para as colunas.
@@ -122,6 +191,11 @@ public class BoardRepository {
         return board;
     }
 
+    /**
+     * Remove um quadro do banco de dados pelo ID.
+     * 
+     * @param id identificador do quadro a ser removido
+     */
     @Transactional
     public void deleteById(Long id) {
         String sql = "DELETE FROM boards WHERE id = :id";

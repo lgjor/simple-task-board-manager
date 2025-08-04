@@ -16,12 +16,37 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Gerencia as operações de persistência para cards (tarefas).
+ * 
+ * <p>Responsável por todas as operações de banco de dados relacionadas
+ * aos cards, incluindo CRUD básico e consultas específicas como
+ * busca por coluna, ordenação por data de criação, etc.</p>
+ * 
+ * <p>Os cards são as unidades fundamentais de trabalho no sistema,
+ * representando tarefas que podem ser movidas entre colunas de um quadro.
+ * Cada card possui datas de criação, atualização e conclusão para
+ * rastreamento completo do ciclo de vida.</p>
+ * 
+ * <p>Utiliza JDBC direto com NamedParameterJdbcTemplate para operações
+ * de banco, mantendo controle total sobre as consultas SQL.</p>
+ * 
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @version 1.0
+ * @since 1.0
+ * @see Card
+ */
 @Repository
 public class CardRepository {
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final SimpleJdbcInsert jdbcInsert;
 
+    /**
+     * Construtor que inicializa os templates JDBC necessários.
+     * 
+     * @param dataSource fonte de dados para conexão com o banco
+     */
     public CardRepository(DataSource dataSource) {
         this.jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
         this.jdbcInsert = new SimpleJdbcInsert(dataSource)
@@ -30,6 +55,13 @@ public class CardRepository {
                 .usingGeneratedKeyColumns("id");
     }
 
+    /**
+     * Mapeia os resultados do banco para objetos Card.
+     * 
+     * <p>Trata adequadamente campos que podem ser nulos, como
+     * completion_date, garantindo a integridade dos dados.
+     * Converte timestamps para LocalDateTime para uso no sistema.</p>
+     */
     private final RowMapper<Card> cardRowMapper = (ResultSet rs, int rowNum) -> {
         Card card = new Card();
         card.setId(rs.getLong("id"));
@@ -46,6 +78,12 @@ public class CardRepository {
         return card;
     };
 
+    /**
+     * Busca um card específico pelo ID.
+     * 
+     * @param id identificador único do card
+     * @return Optional contendo o card se encontrado, vazio caso contrário
+     */
     public Optional<Card> findById(Long id) {
         String sql = "SELECT * FROM cards WHERE id = :id";
         var params = new MapSqlParameterSource("id", id);
@@ -56,6 +94,17 @@ public class CardRepository {
         }
     }
 
+    /**
+     * Busca cards de múltiplas colunas de uma vez.
+     * 
+     * <p>Método otimizado para carregar cards de várias colunas
+     * em uma única consulta, reduzindo o número de acessos ao banco.
+     * Os cards são retornados ordenados por data de criação (ASC)
+     * para manter a sequência cronológica.</p>
+     * 
+     * @param columnIds lista de identificadores das colunas
+     * @return lista de cards ordenados por data de criação
+     */
     public List<Card> findByBoardColumnIdIn(List<Long> columnIds) {
         if (columnIds == null || columnIds.isEmpty()) {
             return Collections.emptyList();
@@ -65,6 +114,17 @@ public class CardRepository {
         return jdbcTemplate.query(sql, params, cardRowMapper);
     }
 
+    /**
+     * Salva ou atualiza um card no banco de dados.
+     * 
+     * <p>Se o card não possui ID, executa INSERT e retorna o ID gerado.
+     * Se possui ID, executa UPDATE dos campos modificáveis.
+     * A data de criação não é atualizada em operações de UPDATE,
+     * apenas last_update_date é atualizada automaticamente.</p>
+     * 
+     * @param card card a ser salvo
+     * @return card com ID atualizado (em caso de inserção)
+     */
     @Transactional
     public Card save(Card card) {
         var params = new MapSqlParameterSource()
@@ -94,6 +154,11 @@ public class CardRepository {
         return card;
     }
 
+    /**
+     * Remove um card do banco de dados pelo ID.
+     * 
+     * @param id identificador do card a ser removido
+     */
     @Transactional
     public void deleteById(Long id) {
         String sql = "DELETE FROM cards WHERE id = :id";

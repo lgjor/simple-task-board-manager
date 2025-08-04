@@ -16,12 +16,37 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Gerencia as operações de persistência para colunas de quadros.
+ * 
+ * <p>Responsável por todas as operações de banco de dados relacionadas
+ * às colunas dos quadros, incluindo CRUD básico e consultas específicas
+ * como busca por quadro, ordenação por índice, etc.</p>
+ * 
+ * <p>As colunas são organizadas por order_index para manter a sequência
+ * visual no quadro (esquerda para direita). Cada coluna possui um tipo
+ * (kind) que define seu comportamento no fluxo de trabalho.</p>
+ * 
+ * <p>Utiliza JDBC direto com NamedParameterJdbcTemplate para operações
+ * de banco, mantendo controle total sobre as consultas SQL.</p>
+ * 
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @version 1.0
+ * @since 1.0
+ * @see BoardColumn
+ * @see BoardColumnKindEnum
+ */
 @Repository
 public class BoardColumnRepository {
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final SimpleJdbcInsert jdbcInsert;
 
+    /**
+     * Construtor que inicializa os templates JDBC necessários.
+     * 
+     * @param dataSource fonte de dados para conexão com o banco
+     */
     public BoardColumnRepository(DataSource dataSource) {
         this.jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
         this.jdbcInsert = new SimpleJdbcInsert(dataSource)
@@ -30,6 +55,12 @@ public class BoardColumnRepository {
                 .usingGeneratedKeyColumns("id");
     }
 
+    /**
+     * Mapeia os resultados do banco para objetos BoardColumn.
+     * 
+     * <p>Converte o enum kind de String para BoardColumnKindEnum
+     * para manter a tipagem correta no sistema.</p>
+     */
     private final RowMapper<BoardColumn> columnRowMapper = (ResultSet rs, int rowNum) -> {
         BoardColumn column = new BoardColumn();
         column.setId(rs.getLong("id"));
@@ -40,6 +71,12 @@ public class BoardColumnRepository {
         return column;
     };
 
+    /**
+     * Busca uma coluna específica pelo ID.
+     * 
+     * @param id identificador único da coluna
+     * @return Optional contendo a coluna se encontrada, vazio caso contrário
+     */
     public Optional<BoardColumn> findById(Long id) {
         String sql = "SELECT * FROM board_columns WHERE id = :id";
         var params = new MapSqlParameterSource("id", id);
@@ -50,6 +87,15 @@ public class BoardColumnRepository {
         }
     }
 
+    /**
+     * Busca todas as colunas de um quadro específico.
+     * 
+     * <p>As colunas são retornadas ordenadas por order_index (ASC)
+     * para manter a sequência visual no quadro.</p>
+     * 
+     * @param boardId identificador do quadro
+     * @return lista de colunas do quadro ordenadas por posição
+     */
     public List<BoardColumn> findByBoardId(Long boardId) {
         String sql = "SELECT * FROM board_columns WHERE board_id = :boardId ORDER BY order_index ASC";
         var params = new MapSqlParameterSource("boardId", boardId);
@@ -57,8 +103,13 @@ public class BoardColumnRepository {
     }
 
     /**
-     * CORREÇÃO: Método adicionado para buscar colunas de múltiplos boards de uma vez.
-     * Isso resolve o erro de compilação no BoardColumnService.
+     * Busca colunas de múltiplos quadros de uma vez.
+     * 
+     * <p>Método otimizado para carregar colunas de vários quadros
+     * em uma única consulta, reduzindo o número de acessos ao banco.</p>
+     * 
+     * @param boardIds lista de identificadores dos quadros
+     * @return lista de colunas ordenadas por quadro e posição
      */
     public List<BoardColumn> findByBoardIdIn(List<Long> boardIds) {
         if (boardIds == null || boardIds.isEmpty()) {
@@ -69,6 +120,16 @@ public class BoardColumnRepository {
         return jdbcTemplate.query(sql, params, columnRowMapper);
     }
 
+    /**
+     * Salva ou atualiza uma coluna no banco de dados.
+     * 
+     * <p>Se a coluna não possui ID, executa INSERT e retorna o ID gerado.
+     * Se possui ID, executa UPDATE dos campos modificáveis.
+     * O enum kind é convertido para String usando .name().</p>
+     * 
+     * @param column coluna a ser salva
+     * @return coluna com ID atualizado (em caso de inserção)
+     */
     @Transactional
     public BoardColumn save(BoardColumn column) {
         var params = new MapSqlParameterSource()
@@ -88,6 +149,11 @@ public class BoardColumnRepository {
         return column;
     }
 
+    /**
+     * Remove uma coluna do banco de dados pelo ID.
+     * 
+     * @param id identificador da coluna a ser removida
+     */
     @Transactional
     public void deleteById(Long id) {
         String sql = "DELETE FROM board_columns WHERE id = :id";
