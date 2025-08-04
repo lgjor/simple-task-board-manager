@@ -5,8 +5,8 @@ import com.google.api.services.tasks.model.Task;
 import com.google.api.services.tasks.model.TaskList;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
-import org.desviante.exception.GoogleApiServiceException; // Importe a exceção customizada
-import org.desviante.service.dto.CreateTaskRequest; // Importe o DTO
+import org.desviante.exception.GoogleApiServiceException; // Importa a exceção customizada
+import org.desviante.service.dto.CreateTaskRequest; // Importa o DTO
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +17,29 @@ import java.time.ZoneOffset;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Gerencia a comunicação com a API do Google Tasks.
+ * 
+ * <p>Responsável por implementar todas as operações de comunicação com a
+ * API externa do Google Tasks, incluindo criação de tarefas e gerenciamento
+ * de listas. Esta camada de serviço abstrai a complexidade da API do Google
+ * e fornece uma interface simplificada para o sistema local.</p>
+ * 
+ * <p>Implementa funcionalidades específicas como construção inteligente de notas
+ * (incluindo informações de horário), formatação adequada de datas para RFC3339,
+ * e gerenciamento automático de listas de tarefas (criação se não existir).</p>
+ * 
+ * <p>Utiliza logging para rastreamento de operações e tratamento robusto de
+ * exceções para garantir que falhas na API externa sejam adequadamente
+ * propagadas para o sistema local.</p>
+ * 
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @version 1.0
+ * @since 1.0
+ * @see CreateTaskRequest
+ * @see GoogleApiServiceException
+ * @see Tasks
+ */
 @Service
 @RequiredArgsConstructor
 @Log
@@ -26,8 +49,20 @@ public class GoogleTasksApiService {
     private final Tasks tasksService;
 
     /**
-     * Cria uma tarefa no Google, anexando a informação de horário nas notas
-     * como uma solução para a limitação da API.
+     * Cria uma tarefa no Google Tasks com informações completas.
+     * 
+     * <p>Implementa lógica inteligente para construção de notas, incluindo
+     * informações de horário quando fornecidas pelo usuário. A API do Google
+     * Tasks tem limitações para horários específicos, então esta informação
+     * é anexada nas notas como solução alternativa.</p>
+     * 
+     * <p>Gerenciamento automático de listas: se a lista especificada não
+     * existir, ela é criada automaticamente. Formata adequadamente as datas
+     * para o padrão RFC3339 exigido pela API do Google.</p>
+     * 
+     * @param request dados da tarefa a ser criada (título, notas, data de vencimento)
+     * @return tarefa criada no Google Tasks com ID gerado
+     * @throws GoogleApiServiceException se houver falha na comunicação com a API
      */
     public Task createTaskInList(CreateTaskRequest request) {
         try {
@@ -76,8 +111,21 @@ public class GoogleTasksApiService {
     }
 
     /**
-     * Encontra uma lista de tarefas pelo título. Se não encontrar, cria uma nova.
-     * Este método é robusto e evita a criação de listas duplicadas.
+     * Encontra uma lista de tarefas pelo título ou cria uma nova se não existir.
+     * 
+     * <p>Implementa busca case-insensitive para evitar duplicação de listas.
+     * Se a lista não for encontrada, cria automaticamente uma nova lista
+     * com o título especificado. Utiliza streams para busca eficiente
+     * e tratamento elegante de criação condicional.</p>
+     * 
+     * <p>O método é robusto e evita a criação de listas duplicadas através
+     * de busca precisa antes da criação. Logs informativos para rastreamento
+     * de operações de criação de listas.</p>
+     * 
+     * @param listTitle título da lista a ser encontrada ou criada
+     * @return lista de tarefas existente ou recém-criada
+     * @throws IOException se houver falha na comunicação com a API
+     * @throws GoogleApiServiceException se houver falha ao criar nova lista
      */
     private TaskList findOrCreateTaskList(String listTitle) throws IOException {
         List<TaskList> lists = tasksService.tasklists().list().execute().getItems();

@@ -22,6 +22,28 @@ import org.springframework.util.StringUtils;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Gerencia as operações de negócio relacionadas aos grupos de quadros.
+ * 
+ * <p>Responsável por implementar a lógica de negócio para criação, atualização,
+ * consulta e remoção de grupos de quadros. Esta camada de serviço implementa
+ * validações importantes como unicidade de nomes, verificação de dependências
+ * antes da remoção e geração automática de cores para identificação visual.</p>
+ * 
+ * <p>Implementa funcionalidades avançadas como cálculo de resumos de quadros
+ * por grupo, incluindo estatísticas de progresso e status baseados na
+ * distribuição de cards entre colunas de diferentes tipos.</p>
+ * 
+ * <p>Utiliza transações para garantir consistência dos dados, com operações
+ * de leitura marcadas como readOnly para otimização de performance.</p>
+ * 
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @version 1.0
+ * @since 1.0
+ * @see BoardGroup
+ * @see BoardSummaryDTO
+ * @see BoardGroupRepository
+ */
 @Service
 @RequiredArgsConstructor
 public class BoardGroupService {
@@ -31,11 +53,29 @@ public class BoardGroupService {
     private final BoardColumnService columnService;
     private final CardService cardService;
 
+    /**
+     * Busca todos os grupos de quadros disponíveis no sistema.
+     * 
+     * @return lista de todos os grupos
+     */
     @Transactional(readOnly = true)
     public List<BoardGroup> getAllBoardGroups() {
         return boardGroupRepository.findAll();
     }
     
+    /**
+     * Cria um novo grupo de quadros com validações de integridade.
+     * 
+     * <p>Valida que o nome é obrigatório e único (case-insensitive).
+     * Gera automaticamente uma cor aleatória para identificação visual
+     * e define um ícone padrão se não fornecido.</p>
+     * 
+     * @param name nome do novo grupo
+     * @param description descrição opcional do grupo
+     * @param icon ícone opcional do grupo (usa "📁" como padrão)
+     * @return grupo criado com ID gerado
+     * @throws IllegalArgumentException se o nome for vazio ou já existir
+     */
     @Transactional
     public BoardGroup createBoardGroup(String name, String description, String icon) {
         // Validação dos parâmetros obrigatórios
@@ -64,6 +104,21 @@ public class BoardGroupService {
         return boardGroupRepository.save(newGroup);
     }
 
+    /**
+     * Atualiza um grupo de quadros existente.
+     * 
+     * <p>Valida a existência do grupo e a unicidade do novo nome
+     * (excluindo o próprio grupo da verificação). Mantém a cor
+     * existente para preservar a identidade visual do grupo.</p>
+     * 
+     * @param groupId identificador do grupo a ser atualizado
+     * @param name novo nome do grupo
+     * @param description nova descrição do grupo
+     * @param icon novo ícone do grupo
+     * @return grupo atualizado
+     * @throws ResourceNotFoundException se o grupo não for encontrado
+     * @throws IllegalArgumentException se o nome for vazio ou já existir
+     */
     @Transactional
     public BoardGroup updateBoardGroup(Long groupId, String name, String description, String icon) {
         // Validação do grupo existente
@@ -74,9 +129,7 @@ public class BoardGroupService {
         if (!StringUtils.hasText(name)) {
             throw new IllegalArgumentException("Nome do grupo é obrigatório");
         }
-        
-        // Removida validação de grupo padrão - não precisamos mais proteger grupo especial
-        
+            
         // Validação de unicidade do nome (case-insensitive, excluindo o próprio grupo)
         String trimmedName = name.trim();
         if (boardGroupRepository.findByNameExcludingId(trimmedName, groupId).isPresent()) {
@@ -92,13 +145,23 @@ public class BoardGroupService {
         return boardGroupRepository.save(existingGroup);
     }
 
+    /**
+     * Remove um grupo de quadros com validação de dependências.
+     * 
+     * <p>Verifica se existem quadros associados ao grupo antes de permitir
+     * a remoção, garantindo integridade referencial. Se houver quadros
+     * associados, lança exceção informando quantos quadros precisam ser
+     * movidos antes da remoção.</p>
+     * 
+     * @param groupId identificador do grupo a ser removido
+     * @throws ResourceNotFoundException se o grupo não for encontrado
+     * @throws IllegalArgumentException se existirem quadros associados ao grupo
+     */
     @Transactional
     public void deleteBoardGroup(Long groupId) {
         // Validação do grupo existente
         BoardGroup existingGroup = boardGroupRepository.findById(groupId)
                 .orElseThrow(() -> new ResourceNotFoundException("Grupo com ID " + groupId + " não encontrado."));
-        
-        // Removida validação de grupo padrão - não precisamos mais proteger grupo especial
         
         // Verificar se existem boards associados ao grupo
         List<Board> boardsInGroup = boardRepository.findByGroupId(groupId);
@@ -112,6 +175,21 @@ public class BoardGroupService {
         boardGroupRepository.deleteById(groupId);
     }
 
+    /**
+     * Busca resumos de todos os quadros de um grupo específico.
+     * 
+     * <p>Calcula estatísticas detalhadas de cada quadro, incluindo
+     * percentuais de progresso baseados na distribuição de cards
+     * entre colunas de diferentes tipos (INITIAL, PENDING, FINAL).
+     * Também determina o status geral do quadro baseado na distribuição.</p>
+     * 
+     * <p>Otimiza consultas através de busca em lote de colunas e cards
+     * para evitar problemas N+1 de performance.</p>
+     * 
+     * @param groupId identificador do grupo
+     * @return lista de resumos dos quadros do grupo
+     * @throws ResourceNotFoundException se o grupo não for encontrado
+     */
     @Transactional(readOnly = true)
     public List<BoardSummaryDTO> getBoardsByGroup(Long groupId) {
         // Validação do grupo
@@ -149,6 +227,18 @@ public class BoardGroupService {
                 .collect(Collectors.toList());
     }
     
+    /**
+     * Calcula o resumo estatístico de um quadro específico.
+     * 
+     * <p>Analisa a distribuição de cards entre colunas de diferentes tipos
+     * para determinar percentuais de progresso e status geral do quadro.
+     * Status possíveis: "Vazio", "Não iniciado", "Em andamento", "Concluído".</p>
+     * 
+     * @param board quadro para cálculo do resumo
+     * @param columnsByBoardId mapa de colunas agrupadas por quadro
+     * @param cardsByColumnId mapa de cards agrupados por coluna
+     * @return resumo estatístico do quadro
+     */
     private BoardSummaryDTO calculateBoardSummary(Board board, Map<Long, List<BoardColumn>> columnsByBoardId, Map<Long, List<Card>> cardsByColumnId) {
         List<BoardColumn> boardColumns = columnsByBoardId.getOrDefault(board.getId(), Collections.emptyList());
 
@@ -208,7 +298,12 @@ public class BoardGroupService {
     }
 
     /**
-     * Gera uma cor hexadecimal aleatória
+     * Gera uma cor hexadecimal aleatória para identificação visual do grupo.
+     * 
+     * <p>Utiliza um conjunto predefinido de cores para garantir boa
+     * legibilidade e contraste adequado na interface do usuário.</p>
+     * 
+     * @return cor hexadecimal no formato #RRGGBB
      */
     private String generateRandomColor() {
         // Array de cores predefinidas para garantir boa legibilidade
