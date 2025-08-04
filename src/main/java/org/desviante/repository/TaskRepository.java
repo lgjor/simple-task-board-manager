@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
-import java.time.OffsetDateTime; // Import necessário
 import java.time.ZoneOffset;     // Import necessário
 import java.util.List;
 import java.util.Optional;
