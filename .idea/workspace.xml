@@ -4,7 +4,87 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b78907ab-aa34-4801-8b43-a5a76adf664c" name="Changes" comment="" />
+    <list default="true" id="b78907ab-aa34-4801-8b43-a5a76adf664c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/EMOJI_SETUP.md" beforeDir="false" afterPath="$PROJECT_DIR$/EMOJI_SETUP.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LICENSE" beforeDir="false" afterPath="$PROJECT_DIR$/LICENSE" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/META-INF/MANIFEST.MF" beforeDir="false" afterPath="$PROJECT_DIR$/META-INF/MANIFEST.MF" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/added_mermaid_uml_diagram_on_readme_md.patch" beforeDir="false" afterPath="$PROJECT_DIR$/added_mermaid_uml_diagram_on_readme_md.patch" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/example-changelog.sql" beforeDir="false" afterPath="$PROJECT_DIR$/example-changelog.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/liquibase.advanced.flowfile.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/liquibase.advanced.flowfile.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/liquibase.checks-package.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/liquibase.checks-package.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/liquibase.endstage.flow" beforeDir="false" afterPath="$PROJECT_DIR$/liquibase.endstage.flow" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/liquibase.flowfile.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/liquibase.flowfile.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/liquibase.flowvariables.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/liquibase.flowvariables.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/liquibase.log" beforeDir="false" afterPath="$PROJECT_DIR$/liquibase.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/liquibase.properties" beforeDir="false" afterPath="$PROJECT_DIR$/liquibase.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/readme.md" beforeDir="false" afterPath="$PROJECT_DIR$/readme.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/MainApp.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/MainApp.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/SimpleTaskBoardManagerApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/SimpleTaskBoardManagerApplication.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/config/DataConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/config/DataConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/config/GoogleApiConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/config/GoogleApiConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/exception/CardBlockedException.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/exception/CardBlockedException.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/exception/CardFinishedException.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/exception/CardFinishedException.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/exception/EntityNotFoundException.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/exception/EntityNotFoundException.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/exception/GoogleApiServiceException.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/exception/GoogleApiServiceException.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/exception/ResourceNotFoundException.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/exception/ResourceNotFoundException.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/model/BoardGroup.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/model/BoardGroup.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/repository/BoardGroupRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/repository/BoardGroupRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/service/BoardColumnService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/service/BoardColumnService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/service/BoardGroupService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/service/BoardGroupService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/service/BoardService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/service/BoardService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/service/GoogleTasksApiService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/service/GoogleTasksApiService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/service/TaskManagerFacade.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/service/TaskManagerFacade.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/service/TaskService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/service/TaskService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/BoardColumnDetailDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/BoardColumnDetailDTO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/BoardDetailDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/BoardDetailDTO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/BoardSummaryDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/BoardSummaryDTO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/CardDetailDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/CardDetailDTO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/CreateCardRequestDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/CreateCardRequestDTO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/CreateTaskRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/CreateTaskRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/CreateTaskRequestDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/CreateTaskRequestDTO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/UpdateCardDetailsDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/UpdateCardDetailsDTO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/view/BoardViewController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/view/BoardViewController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/view/component/CardViewController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/view/component/CardViewController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/view/component/ColumnViewController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/view/component/ColumnViewController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/css/style.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/css/style.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/db/changelog/db.changelog-master.yml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/db/changelog/db.changelog-master.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202408191938.sql" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202408191938.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202408210954.sql" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202408210954.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202408211004.sql" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202408211004.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202408211005.sql" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202408211005.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202408281807.sql" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202408281807.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202505091124.sql" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202505091124.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202505120748.sql" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202505120748.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202505141400.sql" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202505141400.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202505161035.sql" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202505161035.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202505161208.sql" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202505161208.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202505161219.sql" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202505161219.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202505161242.sql" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202505161242.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202505161317.sql" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202505161317.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202506151017.sql" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202506151017.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202506211528.sql" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202506211528.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202507312050.sql" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/db/changelog/migrations/db.changelog-202507312050.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/liquibase.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/liquibase.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/schema.sql" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/schema.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/view/board-view.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/view/board-view.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/view/card-view.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/view/card-view.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/view/column-view.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/view/column-view.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/org/desviante/config/GoogleApiConfigTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/org/desviante/config/GoogleApiConfigTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/org/desviante/config/TestDataSourceConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/org/desviante/config/TestDataSourceConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/org/desviante/repository/BoardGroupRepositoryTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/org/desviante/repository/BoardGroupRepositoryTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/org/desviante/service/BoardColumnServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/org/desviante/service/BoardColumnServiceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/org/desviante/service/BoardGroupServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/org/desviante/service/BoardGroupServiceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/org/desviante/service/BoardServiceIntegrationTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/org/desviante/service/BoardServiceIntegrationTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/org/desviante/service/TaskManagerFacadeIntegrationTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/org/desviante/service/TaskManagerFacadeIntegrationTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/org/desviante/service/TaskServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/org/desviante/service/TaskServiceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/org/desviante/test/DataSourceConnectionTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/org/desviante/test/DataSourceConnectionTest.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -14,6 +94,18 @@
     <projectState path="$PROJECT_DIR$">
       <ProjectState />
     </projectState>
+  </component>
+  <component name="ExternalProjectsManager">
+    <system id="GRADLE">
+      <state>
+        <projects_view>
+          <tree_state>
+            <expand />
+            <select />
+          </tree_state>
+        </projects_view>
+      </state>
+    </system>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -27,7 +119,7 @@
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/lgjor/simple-task-board-manager.git&quot;,
-    &quot;accountId&quot;: &quot;4a9575a9-2586-4010-883b-7fe31fd5b45a&quot;
+    &quot;accountId&quot;: &quot;ed9f3ac8-8aed-4e4f-a956-db5513918249&quot;
   }
 }</component>
   <component name="ProjectColorInfo">{
@@ -47,21 +139,11 @@
     &quot;git-widget-placeholder&quot;: &quot;main&quot;,
     &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
     &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
   }
 }</component>
   <component name="RunManager">
-    <configuration default="true" type="JetRunConfigurationType">
-      <module name="simple-task-board-manager" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
-      <module name="simple-task-board-manager" />
-      <option name="filePath" />
-      <method v="2" />
-    </configuration>
     <configuration default="true" type="PythonConfigurationType" factoryName="Python">
       <module name="simple-task-board-manager" />
       <option name="ENV_FILES" value="" />

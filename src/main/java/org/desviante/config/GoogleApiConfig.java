@@ -11,6 +11,7 @@ import com.google.api.services.tasks.Tasks;
 import com.google.api.services.tasks.TasksScopes;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -41,49 +42,65 @@ public class GoogleApiConfig {
      * for creating and loading credentials.
      */
     @Bean
+    @ConditionalOnProperty(name = "google.api.enabled", havingValue = "true", matchIfMissing = false)
     public GoogleAuthorizationCodeFlow googleAuthorizationCodeFlow() throws IOException, GeneralSecurityException {
         final InputStream in = GoogleApiConfig.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
         if (in == null) {
-            throw new IOException("Resource not found: " + CREDENTIALS_FILE_PATH);
+            log.warning("Google API credentials not found. Google Tasks integration will be disabled.");
+            return null;
         }
-        GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
+        
+        try {
+            GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
 
-        return new GoogleAuthorizationCodeFlow.Builder(
-                GoogleNetHttpTransport.newTrustedTransport(), JSON_FACTORY, clientSecrets, SCOPES)
-                .setDataStoreFactory(new FileDataStoreFactory(new File(TOKENS_DIRECTORY_PATH)))
-                .setAccessType("offline")
-                .build();
+            return new GoogleAuthorizationCodeFlow.Builder(
+                    GoogleNetHttpTransport.newTrustedTransport(), JSON_FACTORY, clientSecrets, SCOPES)
+                    .setDataStoreFactory(new FileDataStoreFactory(new File(TOKENS_DIRECTORY_PATH)))
+                    .setAccessType("offline")
+                    .build();
+        } catch (Exception e) {
+            log.warning("Failed to initialize Google API flow: " + e.getMessage());
+            return null;
+        }
     }
 
     /**
      * Creates the final, authenticated Tasks service bean.
      * This bean is now NON-INTERACTIVE and safe for AOT processing. It will attempt
-     * to load existing credentials. If they don't exist, it will fail, and the
-     * application's UI layer should catch the error and trigger an interactive flow.
+     * to load existing credentials. If they don't exist, it will return null instead of throwing an exception.
      */
     @Bean
+    @ConditionalOnProperty(name = "google.api.enabled", havingValue = "true", matchIfMissing = false)
     public Tasks tasksService(
             GoogleAuthorizationCodeFlow flow
     ) throws GeneralSecurityException, IOException {
-        // This is the critical change. We only LOAD the credential.
-        Credential credential = flow.loadCredential(USER_ID);
-
-        // If no credential exists, we must not block.
-        // The application must handle this state and trigger the interactive flow.
-        if (credential == null) {
-            // This exception will be thrown during the AOT process if you haven't authenticated yet.
-            // To fix the build, run the app normally once to generate the token file.
-            log.severe("User credentials not found at " + TOKENS_DIRECTORY_PATH + ". Please run the application in interactive mode once to authorize.");
-            throw new IOException("User credentials not found. Please run the application in interactive mode once to authorize.");
+        // If no flow is available, return null
+        if (flow == null) {
+            log.warning("Google API flow not available. Google Tasks integration will be disabled.");
+            return null;
         }
 
-        // If the token is expired, the Google client library will attempt to refresh it automatically
-        // using the refresh token, which is a non-interactive network call. This is safe.
+        try {
+            // This is the critical change. We only LOAD the credential.
+            Credential credential = flow.loadCredential(USER_ID);
 
-        log.info("Successfully loaded existing user credentials.");
-        return new Tasks.Builder(GoogleNetHttpTransport.newTrustedTransport(), JSON_FACTORY, credential)
-                // Use a hardcoded application name
-                .setApplicationName("SimpleTaskBoardManager")
-                .build();
+            // If no credential exists, we return null instead of throwing an exception
+            if (credential == null) {
+                log.warning("User credentials not found at " + TOKENS_DIRECTORY_PATH + ". Google Tasks integration will be disabled.");
+                return null;
+            }
+
+            // If the token is expired, the Google client library will attempt to refresh it automatically
+            // using the refresh token, which is a non-interactive network call. This is safe.
+
+            log.info("Successfully loaded existing user credentials.");
+            return new Tasks.Builder(GoogleNetHttpTransport.newTrustedTransport(), JSON_FACTORY, credential)
+                    // Use a hardcoded application name
+                    .setApplicationName("SimpleTaskBoardManager")
+                    .build();
+        } catch (Exception e) {
+            log.warning("Failed to create Google Tasks service: " + e.getMessage());
+            return null;
+        }
     }
 }

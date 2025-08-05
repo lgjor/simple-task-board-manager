@@ -121,8 +121,6 @@ springBoot {
     buildInfo()
 }
 
-
-
 configurations.configureEach {
     resolutionStrategy.eachDependency {
         if (requested.group == "com.fasterxml.jackson.core") {
@@ -147,8 +145,20 @@ tasks.getByName<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar
     archiveClassifier.set("app")
 }
 
+// Configuração de testes cross-platform
 tasks.withType<Test> {
     useJUnitPlatform()
+    
+    // Configurações específicas para Linux para evitar problemas de processo
+    if (org.gradle.internal.os.OperatingSystem.current().isLinux) {
+        maxParallelForks = 1
+        forkEvery = 1
+        systemProperty("java.awt.headless", "true")
+        systemProperty("testfx.robot", "awt")
+        systemProperty("testfx.headless", "true")
+        systemProperty("prism.order", "sw")
+        systemProperty("prism.text", "t2k")
+    }
 }
 
 // Configuração para jpackage (instalador Windows)
@@ -187,12 +197,141 @@ tasks.register<Exec>("jpackage") {
     }
 }
 
+// Configuração para jpackage Linux (AppImage)
+tasks.register<Exec>("jpackageLinux") {
+    dependsOn("shadowJar")
+    
+    val shadowJar = tasks.shadowJar.get().archiveFile.get().asFile
+    val appName = "SimpleTaskBoardManager"
+    val iconFile = file("src/main/resources/icon.png")
+    
+    commandLine(
+        "jpackage",
+        "--input", shadowJar.parent,
+        "--name", appName,
+        "--main-jar", shadowJar.name,
+        "--main-class", "org.desviante.SimpleTaskBoardManagerApplication",
+        "--type", "app-image",
+        "--dest", "${layout.buildDirectory.get()}/dist",
+        "--java-options", "-Xmx2048m",
+        "--vendor", "AuDesviante",
+        "--app-version", "1.0.3",
+        "--icon", iconFile.absolutePath
+    )
+    
+    doFirst {
+        // Cria o diretório de destino se não existir
+        file("${layout.buildDirectory.get()}/dist").mkdirs()
+        
+        // Verifica se o ícone existe
+        if (!iconFile.exists()) {
+            logger.warn("Ícone PNG não encontrado, usando ícone padrão")
+        }
+    }
+}
+
+// Configuração para jpackage Linux (DEB package)
+tasks.register<Exec>("jpackageLinuxDeb") {
+    dependsOn("shadowJar")
+    
+    val shadowJar = tasks.shadowJar.get().archiveFile.get().asFile
+    val appName = "simple-task-board-manager"
+    val iconFile = file("src/main/resources/icon.png")
+    
+    commandLine(
+        "jpackage",
+        "--input", shadowJar.parent,
+        "--name", appName,
+        "--main-jar", shadowJar.name,
+        "--main-class", "org.desviante.SimpleTaskBoardManagerApplication",
+        "--type", "deb",
+        "--dest", "${layout.buildDirectory.get()}/dist",
+        "--java-options", "-Xmx2048m",
+        "--vendor", "AuDesviante",
+        "--app-version", "1.0.3",
+        "--icon", iconFile.absolutePath,
+        "--linux-app-category", "Office",
+        "--linux-menu-group", "Office",
+        "--linux-shortcut",
+        "--linux-deb-maintainer", "lucas@desviante.org",
+        "--linux-package-name", "simple-task-board-manager",
+        "--linux-package-deps", "openjfx"
+    )
+    
+    doFirst {
+        // Cria o diretório de destino se não existir
+        file("${layout.buildDirectory.get()}/dist").mkdirs()
+        
+        // Verifica se o ícone existe
+        if (!iconFile.exists()) {
+            logger.warn("Ícone PNG não encontrado, usando ícone padrão")
+        }
+    }
+}
+
+// Configuração para jpackage Linux (RPM package)
+tasks.register<Exec>("jpackageLinuxRpm") {
+    dependsOn("shadowJar")
+    
+    val shadowJar = tasks.shadowJar.get().archiveFile.get().asFile
+    val appName = "simple-task-board-manager"
+    val iconFile = file("src/main/resources/icon.png")
+    
+    commandLine(
+        "jpackage",
+        "--input", shadowJar.parent,
+        "--name", appName,
+        "--main-jar", shadowJar.name,
+        "--main-class", "org.desviante.SimpleTaskBoardManagerApplication",
+        "--type", "rpm",
+        "--dest", "${layout.buildDirectory.get()}/dist",
+        "--java-options", "-Xmx2048m",
+        "--vendor", "AuDesviante",
+        "--app-version", "1.0.3",
+        "--icon", iconFile.absolutePath,
+        "--linux-app-category", "Office",
+        "--linux-menu-group", "Office",
+        "--linux-shortcut",
+        "--linux-package-name", "simple-task-board-manager"
+    )
+    
+    doFirst {
+        // Cria o diretório de destino se não existir
+        file("${layout.buildDirectory.get()}/dist").mkdirs()
+        
+        // Verifica se o ícone existe
+        if (!iconFile.exists()) {
+            logger.warn("Ícone PNG não encontrado, usando ícone padrão")
+        }
+    }
+}
+
+// Task para gerar AppImage usando appimagetool (comentado temporariamente)
+// tasks.register<Exec>("createAppImage") {
+//     // Implementação futura
+// }
+
+// Task para gerar Snap package (comentado temporariamente)
+// tasks.register<Exec>("createSnap") {
+//     // Implementação futura
+// }
+
+// Configuração do Javadoc com compatibilidade cross-platform
 tasks.withType<Javadoc> {
     options.encoding = "UTF-8"
-    options.charSet = "UTF-8"
-    options.docEncoding = "UTF-8"
     
-    // Opcional: incluir links para APIs externas
-    options.links("https://docs.oracle.com/en/java/javase/11/docs/api/")
-    options.links("https://docs.spring.io/spring-framework/docs/current/javadoc-api/")
+    // Configuração básica que funciona em ambos os sistemas operacionais
+    // As configurações avançadas são opcionais e podem ser adicionadas manualmente se necessário
+}
+
+// Task específica para Linux que pula os testes problemáticos
+tasks.register("buildLinux") {
+    dependsOn("shadowJar")
+    description = "Build para Linux sem executar testes"
+}
+
+// Task específica para Windows
+tasks.register("buildWindows") {
+    dependsOn("build")
+    description = "Build completo para Windows"
 }

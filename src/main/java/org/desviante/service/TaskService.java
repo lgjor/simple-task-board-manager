@@ -6,6 +6,7 @@ import org.desviante.model.Task;
 import org.desviante.repository.CardRepository;
 import org.desviante.repository.TaskRepository;
 import org.desviante.service.dto.CreateTaskRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,12 +37,18 @@ import java.time.ZoneOffset;
  * @see TaskRepository
  */
 @Service
-@RequiredArgsConstructor
 public class TaskService {
 
     private final TaskRepository taskRepository;
     private final CardRepository cardRepository;
     private final GoogleTasksApiService googleApiService;
+
+    public TaskService(TaskRepository taskRepository, CardRepository cardRepository, 
+                      @Autowired(required = false) GoogleTasksApiService googleApiService) {
+        this.taskRepository = taskRepository;
+        this.cardRepository = cardRepository;
+        this.googleApiService = googleApiService;
+    }
 
     /**
      * Cria uma nova tarefa no Google Tasks e salva a entidade localmente.
@@ -71,6 +78,25 @@ public class TaskService {
         // Valida se o card pai existe.
         cardRepository.findById(cardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Card com ID " + cardId + " não encontrado."));
+
+        // Verifica se o Google API está disponível
+        if (googleApiService == null) {
+            // Cria apenas a entidade local sem sincronização com Google Tasks
+            Task localTask = new Task();
+            localTask.setCardId(cardId);
+            localTask.setListTitle(listTitle);
+            localTask.setTitle(title);
+            localTask.setNotes(notes);
+            localTask.setGoogleTaskId(null); // Sem ID do Google
+            localTask.setSent(false); // Não foi enviado
+
+            // Converte o LocalDateTime para OffsetDateTime para salvar no banco de dados local.
+            if (due != null) {
+                localTask.setDue(due.atOffset(ZoneOffset.UTC));
+            }
+
+            return taskRepository.save(localTask);
+        }
 
         // 1. Chama a API externa PRIMEIRO.
         var createTaskRequest = new CreateTaskRequest(listTitle, title, notes, due); // Passa o LocalDateTime

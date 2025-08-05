@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
 import org.desviante.exception.GoogleApiServiceException; // Importa a exceção customizada
 import org.desviante.service.dto.CreateTaskRequest; // Importa o DTO
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -44,6 +45,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Log
 @Profile("!test")
+@ConditionalOnProperty(name = "google.api.enabled", havingValue = "true", matchIfMissing = false)
 public class GoogleTasksApiService {
 
     private final Tasks tasksService;
@@ -65,6 +67,12 @@ public class GoogleTasksApiService {
      * @throws GoogleApiServiceException se houver falha na comunicação com a API
      */
     public Task createTaskInList(CreateTaskRequest request) {
+        // Verifica se o serviço do Google está disponível
+        if (tasksService == null) {
+            log.warning("Google Tasks API não está disponível. A tarefa não será criada no Google Tasks.");
+            throw new GoogleApiServiceException("Google Tasks API não está configurada. Verifique as credenciais do Google.", null);
+        }
+
         try {
             // 1. Encontra ou cria a lista de tarefas no Google.
             TaskList targetList = findOrCreateTaskList(request.listTitle());
@@ -128,6 +136,11 @@ public class GoogleTasksApiService {
      * @throws GoogleApiServiceException se houver falha ao criar nova lista
      */
     private TaskList findOrCreateTaskList(String listTitle) throws IOException {
+        // Verifica se o serviço do Google está disponível
+        if (tasksService == null) {
+            throw new GoogleApiServiceException("Google Tasks API não está configurada.", null);
+        }
+
         List<TaskList> lists = tasksService.tasklists().list().execute().getItems();
 
         // O 'orElseGet' é uma forma elegante de executar uma ação (criar a lista)
@@ -146,5 +159,14 @@ public class GoogleTasksApiService {
                         throw new GoogleApiServiceException("Falha ao criar a lista de tarefas '" + listTitle + "'.", e);
                     }
                 });
+    }
+
+    /**
+     * Verifica se o Google Tasks API está disponível.
+     * 
+     * @return true se o serviço estiver configurado, false caso contrário
+     */
+    public boolean isGoogleTasksAvailable() {
+        return tasksService != null;
     }
 }
