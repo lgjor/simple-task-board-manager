@@ -6,6 +6,7 @@ import org.desviante.model.BoardColumn;
 import org.desviante.model.BoardGroup;
 import org.desviante.model.Card;
 import org.desviante.model.enums.BoardColumnKindEnum;
+import org.desviante.model.enums.CardType;
 import org.desviante.repository.BoardGroupRepository;
 import org.desviante.repository.BoardRepository;
 import org.desviante.service.dto.BoardSummaryDTO;
@@ -256,8 +257,8 @@ class BoardGroupServiceTest {
         BoardColumn column2 = new BoardColumn(2L, "Em Andamento", 1, BoardColumnKindEnum.PENDING, 1L);
         BoardColumn column3 = new BoardColumn(3L, "Concluído", 2, BoardColumnKindEnum.FINAL, 1L);
         
-        Card card1 = new Card(1L, "Card 1", "Descrição 1", LocalDateTime.now(), LocalDateTime.now(), null, 1L);
-        Card card2 = new Card(2L, "Card 2", "Descrição 2", LocalDateTime.now(), LocalDateTime.now(), null, 2L);
+        Card card1 = new Card(1L, "Card 1", "Descrição 1", CardType.CARD, null, null, null, LocalDateTime.now(), LocalDateTime.now(), null, 1L);
+        Card card2 = new Card(2L, "Card 2", "Descrição 2", CardType.CARD, null, null, null, LocalDateTime.now(), LocalDateTime.now(), null, 2L);
         
         when(boardGroupRepository.findById(groupId)).thenReturn(Optional.of(group));
         when(boardRepository.findByGroupId(groupId)).thenReturn(Arrays.asList(board1, board2));
@@ -358,8 +359,8 @@ class BoardGroupServiceTest {
         Board board = new Board(1L, "Board Concluído", LocalDateTime.now(), groupId, null);
         BoardColumn column = new BoardColumn(1L, "Concluído", 0, BoardColumnKindEnum.FINAL, 1L);
         
-        Card card1 = new Card(1L, "Card 1", "Descrição 1", LocalDateTime.now(), LocalDateTime.now(), null, 1L);
-        Card card2 = new Card(2L, "Card 2", "Descrição 2", LocalDateTime.now(), LocalDateTime.now(), null, 1L);
+        Card card1 = new Card(1L, "Card 1", "Descrição 1", CardType.CARD, null, null, null, LocalDateTime.now(), LocalDateTime.now(), null, 1L);
+        Card card2 = new Card(2L, "Card 2", "Descrição 2", CardType.CARD, null, null, null, LocalDateTime.now(), LocalDateTime.now(), null, 1L);
         
         when(boardGroupRepository.findById(groupId)).thenReturn(Optional.of(group));
         when(boardRepository.findByGroupId(groupId)).thenReturn(Arrays.asList(board));
@@ -389,8 +390,8 @@ class BoardGroupServiceTest {
         Board board = new Board(1L, "Board Não Iniciado", LocalDateTime.now(), groupId, null);
         BoardColumn column = new BoardColumn(1L, "A Fazer", 0, BoardColumnKindEnum.INITIAL, 1L);
         
-        Card card1 = new Card(1L, "Card 1", "Descrição 1", LocalDateTime.now(), LocalDateTime.now(), null, 1L);
-        Card card2 = new Card(2L, "Card 2", "Descrição 2", LocalDateTime.now(), LocalDateTime.now(), null, 1L);
+        Card card1 = new Card(1L, "Card 1", "Descrição 1", CardType.CARD, null, null, null, LocalDateTime.now(), LocalDateTime.now(), null, 1L);
+        Card card2 = new Card(2L, "Card 2", "Descrição 2", CardType.CARD, null, null, null, LocalDateTime.now(), LocalDateTime.now(), null, 1L);
         
         when(boardGroupRepository.findById(groupId)).thenReturn(Optional.of(group));
         when(boardRepository.findByGroupId(groupId)).thenReturn(Arrays.asList(board));
@@ -423,9 +424,9 @@ class BoardGroupServiceTest {
         BoardColumn column2 = new BoardColumn(2L, "Em Andamento", 1, BoardColumnKindEnum.PENDING, 1L);
         BoardColumn column3 = new BoardColumn(3L, "Concluído", 2, BoardColumnKindEnum.FINAL, 1L);
         
-        Card card1 = new Card(1L, "Card 1", "Descrição 1", LocalDateTime.now(), LocalDateTime.now(), null, 1L);
-        Card card2 = new Card(2L, "Card 2", "Descrição 2", LocalDateTime.now(), LocalDateTime.now(), null, 2L);
-        Card card3 = new Card(3L, "Card 3", "Descrição 3", LocalDateTime.now(), LocalDateTime.now(), null, 3L);
+        Card card1 = new Card(1L, "Card 1", "Descrição 1", CardType.CARD, null, null, null, LocalDateTime.now(), LocalDateTime.now(), null, 1L);
+        Card card2 = new Card(2L, "Card 2", "Descrição 2", CardType.CARD, null, null, null, LocalDateTime.now(), LocalDateTime.now(), null, 2L);
+        Card card3 = new Card(3L, "Card 3", "Descrição 3", CardType.CARD, null, null, null, LocalDateTime.now(), LocalDateTime.now(), null, 3L);
         
         when(boardGroupRepository.findById(groupId)).thenReturn(Optional.of(group));
         when(boardRepository.findByGroupId(groupId)).thenReturn(Arrays.asList(board));
@@ -459,13 +460,13 @@ class BoardGroupServiceTest {
         BoardColumn column3 = new BoardColumn(3L, "Concluído", 2, BoardColumnKindEnum.FINAL, 1L);
         
         // 7 cards: 2 inicial, 3 pendente, 2 final
-        Card card1 = new Card(1L, "Card 1", "Descrição 1", LocalDateTime.now(), LocalDateTime.now(), null, 1L);
-        Card card2 = new Card(2L, "Card 2", "Descrição 2", LocalDateTime.now(), LocalDateTime.now(), null, 1L);
-        Card card3 = new Card(3L, "Card 3", "Descrição 3", LocalDateTime.now(), LocalDateTime.now(), null, 2L);
-        Card card4 = new Card(4L, "Card 4", "Descrição 4", LocalDateTime.now(), LocalDateTime.now(), null, 2L);
-        Card card5 = new Card(5L, "Card 5", "Descrição 5", LocalDateTime.now(), LocalDateTime.now(), null, 2L);
-        Card card6 = new Card(6L, "Card 6", "Descrição 6", LocalDateTime.now(), LocalDateTime.now(), null, 3L);
-        Card card7 = new Card(7L, "Card 7", "Descrição 7", LocalDateTime.now(), LocalDateTime.now(), null, 3L);
+        Card card1 = new Card(1L, "Card 1", "Descrição 1", CardType.CARD, null, null, null, LocalDateTime.now(), LocalDateTime.now(), null, 1L);
+        Card card2 = new Card(2L, "Card 2", "Descrição 2", CardType.CARD, null, null, null, LocalDateTime.now(), LocalDateTime.now(), null, 1L);
+        Card card3 = new Card(3L, "Card 3", "Descrição 3", CardType.CARD, null, null, null, LocalDateTime.now(), LocalDateTime.now(), null, 2L);
+        Card card4 = new Card(4L, "Card 4", "Descrição 4", CardType.CARD, null, null, null, LocalDateTime.now(), LocalDateTime.now(), null, 2L);
+        Card card5 = new Card(5L, "Card 5", "Descrição 5", CardType.CARD, null, null, null, LocalDateTime.now(), LocalDateTime.now(), null, 2L);
+        Card card6 = new Card(6L, "Card 6", "Descrição 6", CardType.CARD, null, null, null, LocalDateTime.now(), LocalDateTime.now(), null, 3L);
+        Card card7 = new Card(7L, "Card 7", "Descrição 7", CardType.CARD, null, null, null, LocalDateTime.now(), LocalDateTime.now(), null, 3L);
         
         when(boardGroupRepository.findById(groupId)).thenReturn(Optional.of(group));
         when(boardRepository.findByGroupId(groupId)).thenReturn(Arrays.asList(board));
@@ -522,7 +523,7 @@ class BoardGroupServiceTest {
         Board board = new Board(1L, "Board Card Órfão", LocalDateTime.now(), groupId, null);
         BoardColumn column = new BoardColumn(1L, "A Fazer", 0, BoardColumnKindEnum.INITIAL, 1L);
         
-        Card card = new Card(1L, "Card Órfão", "Descrição", LocalDateTime.now(), LocalDateTime.now(), null, 999L); // ID de coluna inexistente
+        Card card = new Card(1L, "Card Órfão", "Descrição", CardType.CARD, null, null, null, LocalDateTime.now(), LocalDateTime.now(), null, 999L); // ID de coluna inexistente
         
         when(boardGroupRepository.findById(groupId)).thenReturn(Optional.of(group));
         when(boardRepository.findByGroupId(groupId)).thenReturn(Arrays.asList(board));

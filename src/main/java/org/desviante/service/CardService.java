@@ -5,6 +5,7 @@ import org.desviante.exception.ResourceNotFoundException;
 import org.desviante.model.BoardColumn;
 import org.desviante.model.Card;
 import org.desviante.model.enums.BoardColumnKindEnum;
+import org.desviante.model.enums.CardType;
 import org.desviante.repository.BoardColumnRepository;
 import org.desviante.repository.CardRepository;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,9 @@ import java.util.Optional;
  * 
  * <p>Utiliza transações para garantir consistência dos dados, com operações
  * de leitura marcadas como readOnly para otimização de performance.</p>
+ * 
+ * <p>Progresso e status estão desacoplados: o progresso é independente da coluna
+ * onde o card está localizado, permitindo maior flexibilidade ao usuário.</p>
  * 
  * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
  * @version 1.0
@@ -51,14 +55,19 @@ public class CardService {
      * as datas de criação e última atualização, e garante que um
      * novo card nunca esteja concluído (completionDate = null).</p>
      * 
+     * <p>O tipo do card determina se ele suporta acompanhamento de progresso.
+     * Cards do tipo CARD não utilizam campos de progresso, enquanto outros
+     * tipos podem ter totalUnits e currentUnits definidos.</p>
+     * 
      * @param title título do novo card
      * @param description descrição do novo card
      * @param parentColumnId identificador da coluna pai
+     * @param type tipo do card (CARD, BOOK, VIDEO, COURSE)
      * @return card criado com ID gerado
      * @throws ResourceNotFoundException se a coluna pai não for encontrada
      */
     @Transactional
-    public Card createCard(String title, String description, Long parentColumnId) {
+    public Card createCard(String title, String description, Long parentColumnId, CardType type) {
         // Valida se a coluna pai existe antes de criar o card.
         columnRepository.findById(parentColumnId)
                 .orElseThrow(() -> new ResourceNotFoundException("Coluna com ID " + parentColumnId + " não encontrada."));
@@ -67,6 +76,18 @@ public class CardService {
         newCard.setTitle(title);
         newCard.setDescription(description);
         newCard.setBoardColumnId(parentColumnId);
+        newCard.setType(type);
+
+        // Configurar campos de progresso baseado no tipo do card
+        if (type != CardType.CARD) {
+            // Cards que suportam progresso devem ter totalUnits inicializado
+            newCard.setTotalUnits(0);
+            newCard.setCurrentUnits(0);
+        } else {
+            // Cards do tipo CARD não usam progresso
+            newCard.setTotalUnits(null);
+            newCard.setCurrentUnits(null);
+        }
 
         // LÓGICA DE NEGÓCIO: Definir as datas no serviço é a prática correta.
         LocalDateTime now = LocalDateTime.now();
@@ -130,6 +151,31 @@ public class CardService {
      */
     @Transactional
     public Card updateCardDetails(Long cardId, String newTitle, String newDescription) {
+        return updateCardDetails(cardId, newTitle, newDescription, null, null, null);
+    }
+
+    /**
+     * Atualiza os detalhes de um card (título, descrição e progresso).
+     * 
+     * <p>Valida a existência do card antes de tentar atualizá-lo,
+     * garantindo que apenas cards existentes sejam modificados.
+     * Atualiza automaticamente a data de última modificação para
+     * refletir a mudança.</p>
+     * 
+     * <p>Para cards que suportam progresso (BOOK, VIDEO, COURSE),
+     * atualiza também os campos totalUnits e currentUnits conforme
+     * fornecido nos parâmetros.</p>
+     * 
+     * @param cardId identificador do card a ser atualizado
+     * @param newTitle novo título do card
+     * @param newDescription nova descrição do card
+     * @param totalUnits total de unidades para progresso (pode ser null)
+     * @param currentUnits unidades atuais para progresso (pode ser null)
+     * @return card atualizado
+     * @throws ResourceNotFoundException se o card não for encontrado
+     */
+    @Transactional
+    public Card updateCardDetails(Long cardId, String newTitle, String newDescription, Integer totalUnits, Integer currentUnits, Integer manualProgress) {
         // 1. Encontra o card ou lança uma exceção se não existir.
         Card card = cardRepository.findById(cardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Card com ID " + cardId + " não encontrado para atualização."));
@@ -137,11 +183,22 @@ public class CardService {
         // 2. Atualiza as propriedades do objeto.
         card.setTitle(newTitle);
         card.setDescription(newDescription);
+        
+        // 3. Atualizar campos de progresso se fornecidos
+        if (totalUnits != null) {
+            card.setTotalUnits(totalUnits);
+        }
+        if (currentUnits != null) {
+            card.setCurrentUnits(currentUnits);
+        }
+        if (manualProgress != null) {
+            card.setManualProgress(manualProgress);
+        }
 
-        // 3. REGRA DE NEGÓCIO: Sempre atualiza a data da última modificação.
+        // 4. REGRA DE NEGÓCIO: Sempre atualiza a data da última modificação.
         card.setLastUpdateDate(LocalDateTime.now());
 
-        // 4. Salva e retorna a entidade atualizada.
+        // 5. Salva e retorna a entidade atualizada.
         return cardRepository.save(card);
     }
 
@@ -190,5 +247,19 @@ public class CardService {
             throw new ResourceNotFoundException("Card com ID " + id + " não encontrado para deleção.");
         }
         cardRepository.deleteById(id);
+    }
+
+    /**
+     * Obtém o ID do board a partir do card.
+     * 
+     * <p>Método auxiliar para encontrar o board de um card através de sua coluna.</p>
+     * 
+     * @param card card para obter o board
+     * @return ID do board ou null se não encontrado
+     */
+    private Long getBoardIdFromCard(Card card) {
+        return columnRepository.findById(card.getBoardColumnId())
+                .map(BoardColumn::getBoardId)
+                .orElse(null);
     }
 }

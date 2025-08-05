@@ -5,22 +5,46 @@ import org.desviante.model.Board;
 import org.desviante.model.BoardColumn;
 import org.desviante.model.Card;
 import org.desviante.model.enums.BoardColumnKindEnum;
+import org.desviante.model.enums.CardType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.jdbc.Sql; // Import necessário
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit; // Import necessário
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Testes de integração para o CardRepository.
+ * 
+ * <p>Estes testes verificam as operações CRUD básicas do CardRepository,
+ * incluindo inserção, busca, atualização e exclusão de cards. Os testes
+ * utilizam um banco de dados em memória configurado especificamente para
+ * testes, garantindo isolamento e limpeza automática dos dados.</p>
+ * 
+ * <p>Características dos testes:</p>
+ * <ul>
+ *   <li>Utilizam transações que são revertidas automaticamente</li>
+ *   <li>Configuram dados de teste antes de cada teste</li>
+ *   <li>Limpam dados de teste após cada teste</li>
+ *   <li>Verificam tanto casos de sucesso quanto casos de erro</li>
+ * </ul>
+ * 
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @version 1.0
+ * @since 1.0
+ * @see CardRepository
+ * @see Card
+ * @see BoardColumn
+ */
 @SpringJUnitConfig(classes = DataConfig.class)
 @Sql(scripts = "/test-schema.sql") // CORREÇÃO: Garante que o schema seja criado antes dos testes.
 @Transactional // Garante que cada teste rode em uma transação isolada e seja revertido
@@ -31,6 +55,7 @@ public class CardRepositoryTest {
 
     @Autowired
     private BoardRepository boardRepository;
+
     @Autowired
     private BoardColumnRepository columnRepository;
 
@@ -59,7 +84,7 @@ public class CardRepositoryTest {
     void save_shouldInsertNewCard() {
         // ARRANGE
         LocalDateTime now = LocalDateTime.now();
-        Card newCard = new Card(null, "Novo Card", "Descrição do card", now, now, null, testColumn.getId());
+        Card newCard = new Card(null, "Novo Card", "Descrição do card", CardType.CARD, null, null, null, now, now, null, testColumn.getId());
 
         // ACT
         Card savedCard = cardRepository.save(newCard);
@@ -80,7 +105,7 @@ public class CardRepositoryTest {
     @DisplayName("Deve encontrar um card pelo seu ID")
     void findById_shouldReturnCard_whenExists() {
         // ARRANGE
-        Card cardToSave = new Card(null, "Card para Busca", "...", LocalDateTime.now(), LocalDateTime.now(), null, testColumn.getId());
+        Card cardToSave = new Card(null, "Card para Busca", "...", CardType.CARD, null, null, null, LocalDateTime.now(), LocalDateTime.now(), null, testColumn.getId());
         Card savedCard = cardRepository.save(cardToSave);
 
         // ACT
@@ -96,7 +121,7 @@ public class CardRepositoryTest {
     void save_shouldUpdateExistingCard() {
         // ARRANGE
         LocalDateTime creationTime = LocalDateTime.now().minusHours(1);
-        Card cardToSave = new Card(null, "Título Original", "...", creationTime, creationTime, null, testColumn.getId());
+        Card cardToSave = new Card(null, "Título Original", "...", CardType.CARD, null, null, null, creationTime, creationTime, null, testColumn.getId());
         Card savedCard = cardRepository.save(cardToSave);
 
         // ACT
@@ -121,8 +146,8 @@ public class CardRepositoryTest {
     void findByBoardColumnIdIn_shouldReturnMatchingCards() {
         // ARRANGE
         LocalDateTime now = LocalDateTime.now();
-        cardRepository.save(new Card(null, "Card 1", "...", now, now, null, testColumn.getId()));
-        cardRepository.save(new Card(null, "Card 2", "...", now, now, null, testColumn.getId()));
+        cardRepository.save(new Card(null, "Card 1", "...", CardType.CARD, null, null, null, now, now, null, testColumn.getId()));
+        cardRepository.save(new Card(null, "Card 2", "...", CardType.CARD, null, null, null, now, now, null, testColumn.getId()));
 
         // ACT
         List<Card> foundCards = cardRepository.findByBoardColumnIdIn(List.of(testColumn.getId()));

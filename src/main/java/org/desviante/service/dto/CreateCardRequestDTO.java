@@ -1,5 +1,7 @@
 package org.desviante.service.dto;
 
+import org.desviante.model.enums.CardType;
+
 /**
  * DTO para encapsular dados de requisição para criação de um novo Card.
  * 
@@ -9,10 +11,10 @@ package org.desviante.service.dto;
  * de criação de cards, fornecendo todos os dados essenciais para a
  * persistência no banco de dados.</p>
  * 
- * <p>Contém o título e descrição do card que serão exibidos na interface,
- * além do identificador da coluna pai onde o card será criado. A coluna
- * pai determina a localização inicial do card no Kanban board e define
- * o contexto de trabalho onde o card será gerenciado.</p>
+ * <p>Contém o título, descrição e tipo do card que serão exibidos na interface,
+ * além do identificador da coluna pai onde o card será criado. O tipo do card
+ * determina se ele suporta acompanhamento de progresso e quais campos específicos
+ * estarão disponíveis.</p>
  * 
  * <p>Utilizado principalmente pela TaskManagerFacade para receber dados
  * da interface do usuário e delegar a criação do card para o CardService,
@@ -23,9 +25,11 @@ package org.desviante.service.dto;
  * @since 1.0
  * @see TaskManagerFacade
  * @see CardService
+ * @see CardType
  */
 public record CreateCardRequestDTO(
         String title,               // Título do card a ser criado
         String description,         // Descrição detalhada do card
-        Long parentColumnId         // ID da coluna onde o card será criado
+        Long parentColumnId,        // ID da coluna onde o card será criado
+        CardType type               // Tipo do card (CARD, BOOK, VIDEO, COURSE)
 ) {}

@@ -7,6 +7,7 @@ import org.desviante.model.BoardColumn;
 import org.desviante.model.BoardGroup;
 import org.desviante.model.Card;
 import org.desviante.model.enums.BoardColumnKindEnum;
+import org.desviante.model.enums.CardType;
 import org.desviante.service.dto.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -94,9 +95,9 @@ class TaskManagerFacadeIntegrationTest {
         BoardColumn col1 = columnService.createColumn("To Do", 0, BoardColumnKindEnum.INITIAL, board.getId());
         BoardColumn col2 = columnService.createColumn("Done", 1, BoardColumnKindEnum.FINAL, board.getId());
 
-        cardService.createCard("Tarefa 1", "Descrição 1", col1.getId());
-        cardService.createCard("Tarefa 2", "Descrição 2", col1.getId());
-        cardService.createCard("Tarefa 3", "Descrição 3", col2.getId());
+        cardService.createCard("Tarefa 1", "Descrição 1", col1.getId(), CardType.CARD);
+        cardService.createCard("Tarefa 2", "Descrição 2", col1.getId(), CardType.CARD);
+        cardService.createCard("Tarefa 3", "Descrição 3", col2.getId(), CardType.CARD);
 
         // --- Act ---
         // 2. Chama o método da fachada que estamos testando.
@@ -144,7 +145,7 @@ class TaskManagerFacadeIntegrationTest {
         BoardColumn column = columnService.createColumn("Coluna de Teste", 0, BoardColumnKindEnum.INITIAL, board.getId());
 
         // 2. Criar o objeto de requisição que a UI enviaria.
-        var request = new CreateCardRequestDTO("Nova Tarefa via Fachada", "Descrição da tarefa.", column.getId());
+        var request = new CreateCardRequestDTO("Nova Tarefa via Fachada", "Descrição da tarefa.", column.getId(), CardType.CARD);
 
         // --- Act ---
         // 3. Chamar o método da fachada que estamos testando.
@@ -161,6 +162,79 @@ class TaskManagerFacadeIntegrationTest {
         Optional<Card> persistedCardOpt = cardService.getCardById(resultDTO.id());
         assertTrue(persistedCardOpt.isPresent(), "O card deveria ter sido salvo no banco de dados.");
         assertEquals("Descrição da tarefa.", persistedCardOpt.get().getDescription());
+        assertEquals(CardType.CARD, persistedCardOpt.get().getType(), "O card deve ter o tipo CARD");
+    }
+
+    @Test
+    @DisplayName("Deve criar um card do tipo BOOK com sucesso")
+    void createNewBookCard_shouldCreateBookCardAndReturnDTO() {
+        // --- Arrange ---
+        Board board = boardService.createBoard("Board de Teste para Livros");
+        BoardColumn column = columnService.createColumn("Coluna de Teste", 0, BoardColumnKindEnum.INITIAL, board.getId());
+
+        var request = new CreateCardRequestDTO("Livro de Teste", "Descrição do livro.", column.getId(), CardType.BOOK);
+
+        // --- Act ---
+        CardDetailDTO resultDTO = taskManagerFacade.createNewCard(request);
+
+        // --- Assert ---
+        assertNotNull(resultDTO);
+        assertNotNull(resultDTO.id());
+        assertEquals("Livro de Teste", resultDTO.title());
+
+        Optional<Card> persistedCardOpt = cardService.getCardById(resultDTO.id());
+        assertTrue(persistedCardOpt.isPresent());
+        assertEquals("Descrição do livro.", persistedCardOpt.get().getDescription());
+        assertEquals(CardType.BOOK, persistedCardOpt.get().getType(), "O card deve ter o tipo BOOK");
+        assertTrue(persistedCardOpt.get().isProgressable(), "Cards do tipo BOOK devem suportar progresso");
+    }
+
+    @Test
+    @DisplayName("Deve criar um card do tipo VIDEO com sucesso")
+    void createNewVideoCard_shouldCreateVideoCardAndReturnDTO() {
+        // --- Arrange ---
+        Board board = boardService.createBoard("Board de Teste para Vídeos");
+        BoardColumn column = columnService.createColumn("Coluna de Teste", 0, BoardColumnKindEnum.INITIAL, board.getId());
+
+        var request = new CreateCardRequestDTO("Vídeo de Teste", "Descrição do vídeo.", column.getId(), CardType.VIDEO);
+
+        // --- Act ---
+        CardDetailDTO resultDTO = taskManagerFacade.createNewCard(request);
+
+        // --- Assert ---
+        assertNotNull(resultDTO);
+        assertNotNull(resultDTO.id());
+        assertEquals("Vídeo de Teste", resultDTO.title());
+
+        Optional<Card> persistedCardOpt = cardService.getCardById(resultDTO.id());
+        assertTrue(persistedCardOpt.isPresent());
+        assertEquals("Descrição do vídeo.", persistedCardOpt.get().getDescription());
+        assertEquals(CardType.VIDEO, persistedCardOpt.get().getType(), "O card deve ter o tipo VIDEO");
+        assertTrue(persistedCardOpt.get().isProgressable(), "Cards do tipo VIDEO devem suportar progresso");
+    }
+
+    @Test
+    @DisplayName("Deve criar um card do tipo COURSE com sucesso")
+    void createNewCourseCard_shouldCreateCourseCardAndReturnDTO() {
+        // --- Arrange ---
+        Board board = boardService.createBoard("Board de Teste para Cursos");
+        BoardColumn column = columnService.createColumn("Coluna de Teste", 0, BoardColumnKindEnum.INITIAL, board.getId());
+
+        var request = new CreateCardRequestDTO("Curso de Teste", "Descrição do curso.", column.getId(), CardType.COURSE);
+
+        // --- Act ---
+        CardDetailDTO resultDTO = taskManagerFacade.createNewCard(request);
+
+        // --- Assert ---
+        assertNotNull(resultDTO);
+        assertNotNull(resultDTO.id());
+        assertEquals("Curso de Teste", resultDTO.title());
+
+        Optional<Card> persistedCardOpt = cardService.getCardById(resultDTO.id());
+        assertTrue(persistedCardOpt.isPresent());
+        assertEquals("Descrição do curso.", persistedCardOpt.get().getDescription());
+        assertEquals(CardType.COURSE, persistedCardOpt.get().getType(), "O card deve ter o tipo COURSE");
+        assertTrue(persistedCardOpt.get().isProgressable(), "Cards do tipo COURSE devem suportar progresso");
     }
 
     @Test
@@ -171,7 +245,7 @@ class TaskManagerFacadeIntegrationTest {
         Board board = boardService.createBoard("Board de Teste de Movimentação");
         BoardColumn initialColumn = columnService.createColumn("Coluna A", 0, BoardColumnKindEnum.INITIAL, board.getId());
         BoardColumn targetColumn = columnService.createColumn("Coluna B", 1, BoardColumnKindEnum.PENDING, board.getId());
-        Card cardToMove = cardService.createCard("Card para Mover", "...", initialColumn.getId());
+        Card cardToMove = cardService.createCard("Card para Mover", "...", initialColumn.getId(), CardType.CARD);
 
         // --- Act ---
         // 2. Chamar o método da fachada para mover o card para a segunda coluna.
@@ -194,7 +268,7 @@ class TaskManagerFacadeIntegrationTest {
         // 1. Criar a estrutura completa para ter um card para deletar.
         Board board = boardService.createBoard("Board de Teste de Deleção");
         BoardColumn column = columnService.createColumn("Coluna A", 0, BoardColumnKindEnum.INITIAL, board.getId());
-        Card cardToDelete = cardService.createCard("Card a ser Deletado", "...", column.getId());
+        Card cardToDelete = cardService.createCard("Card a ser Deletado", "...", column.getId(), CardType.CARD);
         Long cardId = cardToDelete.getId();
 
         // Verificação de sanidade: garantir que o card existe antes de tentarmos deletá-lo.
@@ -286,10 +360,10 @@ class TaskManagerFacadeIntegrationTest {
         // 1. Criar a estrutura necessária para ter um card para editar.
         Board board = boardService.createBoard("Board de Teste");
         BoardColumn column = columnService.createColumn("Coluna de Teste", 0, BoardColumnKindEnum.INITIAL, board.getId());
-        Card originalCard = cardService.createCard("Título Antigo", "Descrição Antiga", column.getId());
+        Card originalCard = cardService.createCard("Título Antigo", "Descrição Antiga", column.getId(), CardType.CARD);
 
         // 2. Criar o DTO de requisição com os novos dados.
-        var request = new UpdateCardDetailsDTO("Título Novo e Melhorado", "Descrição nova e mais detalhada.");
+        var request = new UpdateCardDetailsDTO("Título Novo e Melhorado", "Descrição nova e mais detalhada.", null, null, null);
 
         // --- Act ---
         // 3. Chamar o método da fachada que estamos testando.
@@ -327,7 +401,7 @@ class TaskManagerFacadeIntegrationTest {
                 "O card não deveria existir antes da tentativa de atualização.");
 
         // 2. Criar o DTO de requisição com dados válidos.
-        var request = new UpdateCardDetailsDTO("Título Tentativo", "Descrição tentativa");
+        var request = new UpdateCardDetailsDTO("Título Tentativo", "Descrição tentativa", null, null, null);
 
         // --- Act & Assert ---
         // 3. Chamar o método da fachada e verificar se a exceção correta é lançada.

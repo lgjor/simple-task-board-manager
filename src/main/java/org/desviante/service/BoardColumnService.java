@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Gerencia as operações de negócio relacionadas às colunas dos quadros.
@@ -98,6 +99,17 @@ public class BoardColumnService {
         }
         // Delega a chamada para o método do repositório que busca por uma lista de IDs.
         return columnRepository.findByBoardIdIn(boardIds);
+    }
+
+    /**
+     * Busca uma coluna específica pelo ID.
+     * 
+     * @param columnId identificador da coluna
+     * @return Optional contendo a coluna se encontrada, vazio caso contrário
+     */
+    @Transactional(readOnly = true)
+    public Optional<BoardColumn> getColumnById(Long columnId) {
+        return columnRepository.findById(columnId);
     }
 
     /**

@@ -186,9 +186,14 @@ public class TaskManagerFacade {
                                     card.getId(),
                                     card.getTitle(),
                                     card.getDescription(),
+                                    card.getType(),
+                                    card.getTotalUnits(),
+                                    card.getCurrentUnits(),
+                                    card.getManualProgress(),
                                     formatDateTime(card.getCreationDate()),
                                     formatDateTime(card.getLastUpdateDate()),
-                                    formatDateTime(card.getCompletionDate())
+                                    formatDateTime(card.getCompletionDate()),
+                                    column.getKind() // Adicionar o tipo da coluna
                             ))
                             .collect(Collectors.toList());
                     return new BoardColumnDetailDTO(column.getId(), column.getName(), cardDTOs);
@@ -203,30 +208,50 @@ public class TaskManagerFacade {
         Card newCard = cardService.createCard(
                 request.title(),
                 request.description(),
-                request.parentColumnId()
+                request.parentColumnId(),
+                request.type()
         );
+
+        // Obter o tipo da coluna para incluir no DTO
+        BoardColumn column = columnService.getColumnById(request.parentColumnId())
+                .orElseThrow(() -> new ResourceNotFoundException("Coluna com ID " + request.parentColumnId() + " não encontrada."));
 
         return new CardDetailDTO(
                 newCard.getId(),
                 newCard.getTitle(),
                 newCard.getDescription(),
+                newCard.getType(),
+                newCard.getTotalUnits(),
+                newCard.getCurrentUnits(),
+                newCard.getManualProgress(),
                 formatDateTime(newCard.getCreationDate()),
                 formatDateTime(newCard.getLastUpdateDate()),
-                formatDateTime(newCard.getCompletionDate())
+                formatDateTime(newCard.getCompletionDate()),
+                column.getKind() // Adicionar o tipo da coluna
         );
     }
 
     @Transactional
     public CardDetailDTO moveCard(Long cardId, Long newColumnId) {
+        // Mover o card sem sincronizar progresso - progresso e status desacoplados
         Card updatedCard = cardService.moveCardToColumn(cardId, newColumnId);
+
+        // Obter o tipo da nova coluna
+        BoardColumn newColumn = columnService.getColumnById(newColumnId)
+                .orElseThrow(() -> new ResourceNotFoundException("Coluna com ID " + newColumnId + " não encontrada."));
 
         return new CardDetailDTO(
                 updatedCard.getId(),
                 updatedCard.getTitle(),
                 updatedCard.getDescription(),
+                updatedCard.getType(),
+                updatedCard.getTotalUnits(),
+                updatedCard.getCurrentUnits(),
+                updatedCard.getManualProgress(),
                 formatDateTime(updatedCard.getCreationDate()),
                 formatDateTime(updatedCard.getLastUpdateDate()),
-                formatDateTime(updatedCard.getCompletionDate())
+                formatDateTime(updatedCard.getCompletionDate()),
+                newColumn.getKind() // Adicionar o tipo da nova coluna
         );
     }
 
@@ -260,17 +285,32 @@ public class TaskManagerFacade {
     @Transactional
     public CardDetailDTO updateCardDetails(Long cardId, UpdateCardDetailsDTO request) {
         // 1. Delega a lógica de negócio para o serviço correspondente.
-        Card updatedCard = cardService.updateCardDetails(cardId, request.title(), request.description());
+        Card updatedCard = cardService.updateCardDetails(
+                cardId, 
+                request.title(), 
+                request.description(),
+                request.totalUnits(),
+                request.currentUnits(),
+                request.manualProgress()
+        );
 
-        // 2. Converte a entidade persistida de volta para um DTO para a resposta da API.
-        // CORREÇÃO: Aplicar o método formatDateTime para converter as datas em Strings.
+        // 2. Obter o tipo da coluna atual
+        BoardColumn column = columnService.getColumnById(updatedCard.getBoardColumnId())
+                .orElseThrow(() -> new ResourceNotFoundException("Coluna com ID " + updatedCard.getBoardColumnId() + " não encontrada."));
+
+        // 3. Converte a entidade persistida de volta para um DTO para a resposta da API.
         return new CardDetailDTO(
                 updatedCard.getId(),
                 updatedCard.getTitle(),
                 updatedCard.getDescription(),
+                updatedCard.getType(),
+                updatedCard.getTotalUnits(),
+                updatedCard.getCurrentUnits(),
+                updatedCard.getManualProgress(),
                 formatDateTime(updatedCard.getCreationDate()),
                 formatDateTime(updatedCard.getLastUpdateDate()),
-                formatDateTime(updatedCard.getCompletionDate())
+                formatDateTime(updatedCard.getCompletionDate()),
+                column.getKind() // Adicionar o tipo da coluna
         );
     }
 

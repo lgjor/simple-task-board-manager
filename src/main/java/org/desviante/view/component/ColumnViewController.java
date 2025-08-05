@@ -12,6 +12,7 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Pair;
+import org.desviante.model.enums.CardType;
 import org.desviante.service.TaskManagerFacade;
 import org.desviante.service.dto.BoardColumnDetailDTO;
 import org.desviante.service.dto.CardDetailDTO;
@@ -98,7 +99,7 @@ public class ColumnViewController {
 
     @FXML
     private void handleCreateCard() {
-        Dialog<Pair<String, String>> dialog = new Dialog<>();
+        Dialog<CardCreationData> dialog = new Dialog<>();
         dialog.setTitle("Criar Novo Card");
         dialog.setHeaderText("Digite os detalhes para o novo card.");
 
@@ -114,29 +115,48 @@ public class ColumnViewController {
         titleField.setPromptText("Título do card");
         TextArea descriptionArea = new TextArea();
         descriptionArea.setPromptText("Descrição (opcional)");
+        
+        ComboBox<CardType> typeComboBox = new ComboBox<>();
+        typeComboBox.getItems().addAll(CardType.values());
+        typeComboBox.setValue(CardType.CARD); // Valor padrão
+        typeComboBox.setCellFactory(param -> new ListCell<CardType>() {
+            @Override
+            protected void updateItem(CardType item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText("");
+                } else {
+                    setText(item.name() + " (" + item.getUnitLabel() + ")");
+                }
+            }
+        });
+        typeComboBox.setButtonCell(typeComboBox.getCellFactory().call(null));
 
         grid.add(new Label("Título:"), 0, 0);
         grid.add(titleField, 1, 0);
         grid.add(new Label("Descrição:"), 0, 1);
         grid.add(descriptionArea, 1, 1);
+        grid.add(new Label("Tipo:"), 0, 2);
+        grid.add(typeComboBox, 1, 2);
 
         dialog.getDialogPane().setContent(grid);
         Platform.runLater(titleField::requestFocus);
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == createButtonType) {
-                return new Pair<>(titleField.getText(), descriptionArea.getText());
+                return new CardCreationData(titleField.getText(), descriptionArea.getText(), typeComboBox.getValue());
             }
             return null;
         });
 
         dialog.showAndWait().ifPresent(result -> {
-            String title = result.getKey();
-            String description = result.getValue();
+            String title = result.title();
+            String description = result.description();
+            CardType type = result.type();
 
             if (title != null && !title.trim().isEmpty()) {
                 try {
-                    var request = new CreateCardRequestDTO(title, description, this.columnData.id());
+                    var request = new CreateCardRequestDTO(title, description, this.columnData.id(), type);
                     CardDetailDTO newCardDTO = facade.createNewCard(request);
 
                     FXMLLoader cardLoader = new FXMLLoader(getClass().getResource("/view/card-view.fxml"));
@@ -163,5 +183,24 @@ public class ColumnViewController {
                 }
             }
         });
+    }
+
+    /**
+     * Classe auxiliar para encapsular os dados de criação de card.
+     */
+    private static class CardCreationData {
+        private final String title;
+        private final String description;
+        private final CardType type;
+
+        public CardCreationData(String title, String description, CardType type) {
+            this.title = title;
+            this.description = description;
+            this.type = type;
+        }
+
+        public String title() { return title; }
+        public String description() { return description; }
+        public CardType type() { return type; }
     }
 }

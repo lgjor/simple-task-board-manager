@@ -5,9 +5,11 @@
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.Spinner?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.GridPane?>
 
 <?import javafx.scene.control.Button?>
 <VBox fx:id="cardPane" spacing="5" styleClass="card-pane" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.desviante.view.component.CardViewController">
@@ -15,6 +17,9 @@
         <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
     </padding>
     <children>
+        <!-- Label da categoria do card -->
+        <Label fx:id="cardTypeLabel" styleClass="card-type-label" />
+        
         <!-- StackPane para o Título -->
         <StackPane fx:id="titleContainer" alignment="TOP_LEFT">
             <children>
@@ -30,6 +35,115 @@
                 <TextArea fx:id="descriptionArea" managed="false" prefHeight="80.0" visible="false" wrapText="true" />
             </children>
         </StackPane>
+
+        <!-- Container para campos de progresso (visível apenas para tipos que suportam progresso) -->
+        <VBox fx:id="progressContainer" managed="false" visible="false" spacing="8">
+            <VBox.margin>
+                <Insets top="5.0" />
+            </VBox.margin>
+            <children>
+                <!-- Separador para seção de progresso -->
+                <Separator styleClass="progress-separator" />
+                
+                <!-- Container para campos de progresso organizados verticalmente -->
+                <VBox spacing="10">
+                    <children>
+                        <!-- Seção para BOOK -->
+                        <VBox fx:id="bookProgressSection" spacing="5" managed="false" visible="false" styleClass="progress-section">
+                            <children>
+                                <Label text="Progresso: (Páginas)" styleClass="progress-section-title" />
+                                <VBox spacing="3">
+                                    <children>
+                                        <HBox spacing="10" alignment="CENTER_LEFT">
+                                            <children>
+                                                <Label fx:id="currentPageLabel" text="Atual:" styleClass="progress-label" />
+                                                <Spinner fx:id="currentPageSpinner" editable="true" />
+                                            </children>
+                                        </HBox>
+                                        <HBox spacing="10" alignment="CENTER_LEFT">
+                                            <children>
+                                                <Label fx:id="totalPagesLabel" text="Total:" styleClass="progress-label" />
+                                                <Spinner fx:id="totalPagesSpinner" editable="true" />
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </VBox>
+                            </children>
+                        </VBox>
+                        
+                        <!-- Seção para VIDEO -->
+                        <VBox fx:id="videoProgressSection" spacing="5" managed="false" visible="false" styleClass="progress-section">
+                            <children>
+                                <Label text="Progresso: (Ex.: min's)" styleClass="progress-section-title" />
+                                <VBox spacing="3">
+                                    <children>
+                                        <HBox spacing="10" alignment="CENTER_LEFT">
+                                            <children>
+                                                <Label fx:id="currentMinutesLabel" text="Atual:" styleClass="progress-label" />
+                                                <Spinner fx:id="currentMinutesSpinner" editable="true" />
+                                            </children>
+                                        </HBox>
+                                        <HBox spacing="10" alignment="CENTER_LEFT">
+                                            <children>
+                                                <Label fx:id="totalMinutesLabel" text="Total:" styleClass="progress-label" />
+                                                <Spinner fx:id="totalMinutesSpinner" editable="true" />
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </VBox>
+                            </children>
+                        </VBox>
+                        
+                        <!-- Seção para COURSE -->
+                        <VBox fx:id="courseProgressSection" spacing="5" managed="false" visible="false" styleClass="progress-section">
+                            <children>
+                                <Label text="Progresso: (Ex.: Módulos/Aulas)" styleClass="progress-section-title" />
+                                <VBox spacing="3">
+                                    <children>
+                                        <HBox spacing="10" alignment="CENTER_LEFT">
+                                            <children>
+                                                <Label fx:id="currentModuleLabel" text="Atual:" styleClass="progress-label" />
+                                                <Spinner fx:id="currentModuleSpinner" editable="true" />
+                                            </children>
+                                        </HBox>
+                                        <HBox spacing="10" alignment="CENTER_LEFT">
+                                            <children>
+                                                <Label fx:id="totalModulesLabel" text="Total:" styleClass="progress-label" />
+                                                <Spinner fx:id="totalModulesSpinner" editable="true" />
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </VBox>
+                            </children>
+                        </VBox>
+                    </children>
+                </VBox>
+                
+                <!-- Barra de progresso -->
+                <HBox alignment="CENTER" spacing="5">
+                    <children>
+                        <Label fx:id="progressLabel" text="Progresso:" styleClass="progress-label" />
+                        <Label fx:id="progressValueLabel" text="0%" styleClass="progress-value" />
+                    </children>
+                </HBox>
+                
+                <!-- Status do card -->
+                <HBox alignment="CENTER" spacing="5">
+                    <children>
+                        <Label text="Status:" styleClass="status-label" />
+                        <Label fx:id="statusValueLabel" text="Não iniciado" styleClass="status-value" />
+                    </children>
+                </HBox>
+                
+                <!-- Campo de progresso manual para CARD -->
+                <HBox alignment="CENTER_LEFT" spacing="10" managed="false" visible="false">
+                    <children>
+                        <Label fx:id="manualProgressLabel" text="Progresso Manual:" styleClass="progress-label" />
+                        <Spinner fx:id="manualProgressSpinner" editable="true" />
+                    </children>
+                </HBox>
+            </children>
+        </VBox>
 
         <!-- Container para os controles de edição (botões Salvar e Excluir) -->
         <HBox fx:id="editControlsBox" alignment="CENTER_RIGHT" managed="false" visible="false" spacing="10">

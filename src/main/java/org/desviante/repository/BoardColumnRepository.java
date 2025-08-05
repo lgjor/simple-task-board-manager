@@ -121,6 +121,28 @@ public class BoardColumnRepository {
     }
 
     /**
+     * Busca uma coluna específica de um quadro pelo tipo.
+     * 
+     * <p>Útil para encontrar colunas de tipos específicos (INITIAL, PENDING, FINAL)
+     * em um quadro, especialmente para sincronização automática de cards.</p>
+     * 
+     * @param boardId identificador do quadro
+     * @param kind tipo da coluna (INITIAL, PENDING, FINAL)
+     * @return Optional contendo a coluna se encontrada, vazio caso contrário
+     */
+    public Optional<BoardColumn> findByBoardIdAndKind(Long boardId, BoardColumnKindEnum kind) {
+        String sql = "SELECT * FROM board_columns WHERE board_id = :boardId AND kind = :kind LIMIT 1";
+        var params = new MapSqlParameterSource()
+                .addValue("boardId", boardId)
+                .addValue("kind", kind.name());
+        try {
+            return Optional.ofNullable(jdbcTemplate.queryForObject(sql, params, columnRowMapper));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+    /**
      * Salva ou atualiza uma coluna no banco de dados.
      * 
      * <p>Se a coluna não possui ID, executa INSERT e retorna o ID gerado.

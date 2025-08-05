@@ -21,6 +21,137 @@
     -fx-text-fill: #555555; /* Cinza escuro, mas mais claro que o título */
 }
 
+/* Label da categoria do card: Linha fina com menos destaque */
+.card-type-label {
+    -fx-font-size: 10px;
+    -fx-font-weight: normal;
+    -fx-text-fill: #999999; /* Cinza claro para menos destaque */
+    -fx-padding: 0 0 2 0; /* Pequeno espaçamento abaixo */
+}
+
+/* --- Estilos para campos de progresso --- */
+
+/* Separador da seção de progresso */
+.progress-separator {
+    -fx-background-color: #E0E0E0;
+    -fx-padding: 0;
+}
+
+/* Labels dos campos de progresso */
+.progress-label {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #666666;
+}
+
+/* Valor do progresso */
+.progress-value {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #666666;
+}
+
+/* Status do card */
+.status-label {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #666666;
+}
+
+.status-value {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 2 8 2 8;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+}
+
+/* Status: Não iniciado */
+.status-value.status-not-started {
+    -fx-text-fill: #6C757D;
+    -fx-background-color: #F8F9FA;
+    -fx-border-color: #DEE2E6;
+}
+
+/* Status: Em andamento */
+.status-value.status-in-progress {
+    -fx-text-fill: #155724;
+    -fx-background-color: #D4EDDA;
+    -fx-border-color: #C3E6CB;
+}
+
+/* Status: Concluído */
+.status-value.status-completed {
+    -fx-text-fill: #FFFFFF;
+    -fx-background-color: #28A745;
+    -fx-border-color: #1E7E34;
+}
+
+/* Status: Desconhecido */
+.status-value.status-unknown {
+    -fx-text-fill: #6C757D;
+    -fx-background-color: #F8F9FA;
+    -fx-border-color: #DEE2E6;
+}
+
+/* Spinners de progresso */
+.progress-label + .spinner {
+    -fx-background-color: #F8F9FA;
+    -fx-border-color: #DEE2E6;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+}
+
+.progress-label + .spinner:focused {
+    -fx-border-color: #007BFF;
+    -fx-background-color: #FFFFFF;
+}
+
+/* Spinners em modo somente leitura */
+.progress-label + .spinner:disabled {
+    -fx-background-color: #F8F9FA;
+    -fx-border-color: #E9ECEF;
+    -fx-opacity: 0.8;
+}
+
+.progress-label + .spinner:disabled .increment-arrow-button,
+.progress-label + .spinner:disabled .decrement-arrow-button {
+    -fx-background-color: transparent;
+    -fx-opacity: 0.3;
+}
+
+.progress-label + .spinner:disabled .increment-arrow,
+.progress-label + .spinner:disabled .decrement-arrow {
+    -fx-opacity: 0.3;
+}
+
+/* Container de progresso */
+.progress-container {
+    -fx-background-color: #F8F9FA;
+    -fx-border-color: #E9ECEF;
+    -fx-border-radius: 5;
+    -fx-background-radius: 5;
+    -fx-padding: 10;
+}
+
+/* Títulos das seções de progresso */
+.progress-section-title {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #495057;
+    -fx-padding: 0 0 5 0;
+}
+
+/* Seções de progresso individuais */
+.progress-section {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E9ECEF;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+    -fx-padding: 8;
+    -fx-spacing: 5;
+}
 
 /* --- Estilos do Rodapé (já existentes) --- */
 

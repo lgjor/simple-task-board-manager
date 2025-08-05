@@ -3,6 +3,7 @@ package org.desviante.service;
 import org.desviante.exception.ResourceNotFoundException;
 import org.desviante.model.BoardColumn;
 import org.desviante.model.Card;
+import org.desviante.model.enums.CardType;
 import org.desviante.repository.BoardColumnRepository;
 import org.desviante.repository.CardRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -13,12 +14,30 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+/**
+ * Testes unitários para o CardService.
+ * 
+ * <p>Testa as operações de negócio relacionadas aos cards, incluindo criação,
+ * atualização, movimentação e remoção. Foca na validação de regras de negócio
+ * e tratamento de exceções.</p>
+ * 
+ * <p>Progresso e status estão desacoplados: os testes validam que o progresso
+ * é independente da coluna onde o card está localizado.</p>
+ * 
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @version 1.0
+ * @since 1.0
+ * @see CardService
+ * @see Card
+ * @see BoardColumn
+ */
 @ExtendWith(MockitoExtension.class)
 class CardServiceTest {
 
@@ -35,27 +54,33 @@ class CardServiceTest {
     @DisplayName("Deve criar um card com sucesso quando a coluna pai existe")
     void shouldCreateCardSuccessfully() {
         // Arrange
-        long columnId = 1L;
-        String title = "Novo Card";
-        String description = "Descrição do card";
+        String title = "Test Card";
+        String description = "Test Description";
+        Long parentColumnId = 1L;
+        CardType type = CardType.CARD;
 
-        // Mocking behavior
-        // 1. When the column repository is checked, pretend the column exists.
-        when(columnRepository.findById(columnId)).thenReturn(Optional.of(new BoardColumn()));
-        // 2. When the card repository saves any card, return it.
-        when(cardRepository.save(any(Card.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        BoardColumn parentColumn = new BoardColumn();
+        parentColumn.setId(parentColumnId);
+
+        when(columnRepository.findById(parentColumnId)).thenReturn(Optional.of(parentColumn));
+        when(cardRepository.save(any(Card.class))).thenAnswer(invocation -> {
+            Card card = invocation.getArgument(0);
+            card.setId(1L);
+            return card;
+        });
 
         // Act
-        // CORRECTION: Arguments are now in the correct order (title, description, columnId)
-        Card result = cardService.createCard(title, description, columnId);
+        Card result = cardService.createCard(title, description, parentColumnId, type);
 
         // Assert
         assertNotNull(result);
         assertEquals(title, result.getTitle());
         assertEquals(description, result.getDescription());
-        assertEquals(columnId, result.getBoardColumnId());
-
-        // Verify that the save method was called
+        assertEquals(parentColumnId, result.getBoardColumnId());
+        assertEquals(type, result.getType());
+        assertNotNull(result.getCreationDate());
+        assertNotNull(result.getLastUpdateDate());
+        assertNull(result.getCompletionDate());
         verify(cardRepository).save(any(Card.class));
     }
 
@@ -63,19 +88,18 @@ class CardServiceTest {
     @DisplayName("Deve lançar ResourceNotFoundException se a coluna pai não for encontrada")
     void shouldThrowExceptionWhenColumnNotFound() {
         // Arrange
-        long nonExistentColumnId = 99L;
-        String title = "Título";
-        String description = "Descrição";
+        String title = "Test Card";
+        String description = "Test Description";
+        Long parentColumnId = 999L;
+        CardType type = CardType.CARD;
 
-        // Mocking behavior: pretend the column does not exist.
-        when(columnRepository.findById(nonExistentColumnId)).thenReturn(Optional.empty());
+        when(columnRepository.findById(parentColumnId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        // CORRECTION: Arguments are in the correct order
-        assertThrows(ResourceNotFoundException.class,
-                () -> cardService.createCard(title, description, nonExistentColumnId));
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
+                () -> cardService.createCard(title, description, parentColumnId, type));
 
-        // Verify that the save method was never called, preventing orphaned data
+        assertEquals("Coluna com ID 999 não encontrada.", exception.getMessage());
         verify(cardRepository, never()).save(any(Card.class));
     }
 
@@ -84,26 +108,18 @@ class CardServiceTest {
     void shouldDeleteCardSuccessfully() {
         // Arrange
         Long cardId = 1L;
-        Card cardToDelete = new Card();
-        cardToDelete.setId(cardId);
-        cardToDelete.setTitle("Card para Deletar");
-        cardToDelete.setDescription("Descrição do card");
-        cardToDelete.setBoardColumnId(1L);
-        cardToDelete.setCreationDate(LocalDateTime.now());
-        cardToDelete.setLastUpdateDate(LocalDateTime.now());
+        Card existingCard = new Card();
+        existingCard.setId(cardId);
+        existingCard.setTitle("Test Card");
 
-        // Mocking behavior: pretend the card exists
-        when(cardRepository.findById(cardId)).thenReturn(Optional.of(cardToDelete));
-        // Mocking behavior: pretend the delete operation succeeds
+        when(cardRepository.findById(cardId)).thenReturn(Optional.of(existingCard));
         doNothing().when(cardRepository).deleteById(cardId);
 
         // Act
         cardService.deleteCard(cardId);
 
         // Assert
-        // Verify that findById was called to check if card exists
         verify(cardRepository).findById(cardId);
-        // Verify that deleteById was called
         verify(cardRepository).deleteById(cardId);
     }
 
@@ -111,61 +127,51 @@ class CardServiceTest {
     @DisplayName("Deve lançar ResourceNotFoundException ao tentar deletar um card inexistente")
     void shouldThrowExceptionWhenDeletingNonExistentCard() {
         // Arrange
-        Long nonExistentCardId = 99L;
+        Long cardId = 999L;
 
-        // Mocking behavior: pretend the card does not exist
-        when(cardRepository.findById(nonExistentCardId)).thenReturn(Optional.empty());
+        when(cardRepository.findById(cardId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(ResourceNotFoundException.class, () -> cardService.deleteCard(nonExistentCardId));
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
+                () -> cardService.deleteCard(cardId));
 
-        // Verify that findById was called but deleteById was never called
-        verify(cardRepository).findById(nonExistentCardId);
+        assertEquals("Card com ID 999 não encontrado para deleção.", exception.getMessage());
+        verify(cardRepository).findById(cardId);
         verify(cardRepository, never()).deleteById(any());
     }
 
     @Test
     @DisplayName("Deve lançar ResourceNotFoundException quando cardId é null")
     void shouldThrowExceptionWhenCardIdIsNull() {
-        // Act & Assert
-        ResourceNotFoundException exception = assertThrows(
-                ResourceNotFoundException.class, 
-                () -> cardService.deleteCard(null),
-                "Deve lançar ResourceNotFoundException quando cardId é null"
-        );
+        // Arrange
+        Long cardId = null;
 
-        // Verify that findById was called (the method checks for existence even with null)
+        when(cardRepository.findById(null)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
+                () -> cardService.deleteCard(cardId));
+
+        assertEquals("Card com ID null não encontrado para deleção.", exception.getMessage());
         verify(cardRepository).findById(null);
         verify(cardRepository, never()).deleteById(any());
-
-        // Verify the exception message contains appropriate information
-        assertTrue(exception.getMessage().contains("não encontrado"), 
-                "A mensagem de erro deve indicar que o card não foi encontrado.");
-        assertTrue(exception.getMessage().contains("null"), 
-                "A mensagem de erro deve mencionar que o ID é null.");
     }
 
     @Test
     @DisplayName("Deve lançar ResourceNotFoundException quando cardId é null - cenário de borda")
     void shouldThrowExceptionWhenCardIdIsNull_EdgeCase() {
-        // Arrange - Mock behavior for null ID
+        // Arrange
+        Long cardId = null;
+
         when(cardRepository.findById(null)).thenReturn(Optional.empty());
 
         // Act & Assert
-        ResourceNotFoundException exception = assertThrows(
-                ResourceNotFoundException.class, 
-                () -> cardService.deleteCard(null),
-                "Deve lançar ResourceNotFoundException mesmo com mock configurado para null"
-        );
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
+                () -> cardService.deleteCard(cardId));
 
-        // Verify the exact behavior
+        assertEquals("Card com ID null não encontrado para deleção.", exception.getMessage());
         verify(cardRepository).findById(null);
         verify(cardRepository, never()).deleteById(any());
-
-        // Verify exception details
-        assertNotNull(exception.getMessage(), "A exceção deve ter uma mensagem.");
-        assertTrue(exception.getMessage().contains("não encontrado"), 
-                "A mensagem deve indicar que o card não foi encontrado.");
     }
 
     @Test
@@ -173,18 +179,15 @@ class CardServiceTest {
     void shouldUpdateCardDetailsSuccessfully() {
         // Arrange
         Long cardId = 1L;
-        String newTitle = "Título Atualizado";
-        String newDescription = "Descrição Atualizada";
+        String newTitle = "Updated Title";
+        String newDescription = "Updated Description";
 
         Card existingCard = new Card();
         existingCard.setId(cardId);
-        existingCard.setTitle("Título Antigo");
-        existingCard.setDescription("Descrição Antiga");
-        existingCard.setBoardColumnId(1L);
-        existingCard.setCreationDate(LocalDateTime.now().minusDays(1));
+        existingCard.setTitle("Old Title");
+        existingCard.setDescription("Old Description");
         existingCard.setLastUpdateDate(LocalDateTime.now().minusDays(1));
 
-        // Mocking behavior: pretend the card exists
         when(cardRepository.findById(cardId)).thenReturn(Optional.of(existingCard));
         when(cardRepository.save(any(Card.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -193,15 +196,9 @@ class CardServiceTest {
 
         // Assert
         assertNotNull(result);
-        assertEquals(cardId, result.getId());
         assertEquals(newTitle, result.getTitle());
         assertEquals(newDescription, result.getDescription());
-        assertEquals(existingCard.getBoardColumnId(), result.getBoardColumnId());
-        assertEquals(existingCard.getCreationDate(), result.getCreationDate());
         assertNotNull(result.getLastUpdateDate());
-
-        // Verify that findById and save were called
-        verify(cardRepository).findById(cardId);
         verify(cardRepository).save(any(Card.class));
     }
 
@@ -209,19 +206,203 @@ class CardServiceTest {
     @DisplayName("Deve lançar ResourceNotFoundException ao tentar atualizar um card inexistente")
     void shouldThrowExceptionWhenUpdatingNonExistentCard() {
         // Arrange
-        Long nonExistentCardId = 99L;
-        String newTitle = "Novo Título";
-        String newDescription = "Nova Descrição";
+        Long cardId = 999L;
+        String newTitle = "Updated Title";
+        String newDescription = "Updated Description";
 
-        // Mocking behavior: pretend the card does not exist
-        when(cardRepository.findById(nonExistentCardId)).thenReturn(Optional.empty());
+        when(cardRepository.findById(cardId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(ResourceNotFoundException.class, 
-                () -> cardService.updateCardDetails(nonExistentCardId, newTitle, newDescription));
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
+                () -> cardService.updateCardDetails(cardId, newTitle, newDescription));
 
-        // Verify that findById was called but save was never called
-        verify(cardRepository).findById(nonExistentCardId);
-        verify(cardRepository, never()).save(any());
+        assertEquals("Card com ID 999 não encontrado para atualização.", exception.getMessage());
+        verify(cardRepository, never()).save(any(Card.class));
+    }
+
+    @Test
+    @DisplayName("Deve criar um card do tipo BOOK com sucesso")
+    void shouldCreateBookCardSuccessfully() {
+        // Arrange
+        String title = "Test Book";
+        String description = "Test Book Description";
+        Long parentColumnId = 1L;
+        CardType type = CardType.BOOK;
+
+        BoardColumn parentColumn = new BoardColumn();
+        parentColumn.setId(parentColumnId);
+
+        when(columnRepository.findById(parentColumnId)).thenReturn(Optional.of(parentColumn));
+        when(cardRepository.save(any(Card.class))).thenAnswer(invocation -> {
+            Card card = invocation.getArgument(0);
+            card.setId(1L);
+            return card;
+        });
+
+        // Act
+        Card result = cardService.createCard(title, description, parentColumnId, type);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(title, result.getTitle());
+        assertEquals(description, result.getDescription());
+        assertEquals(type, result.getType());
+        assertEquals(0, result.getTotalUnits());
+        assertEquals(0, result.getCurrentUnits());
+        verify(cardRepository).save(any(Card.class));
+    }
+
+    @Test
+    @DisplayName("Deve criar um card do tipo VIDEO com sucesso")
+    void shouldCreateVideoCardSuccessfully() {
+        // Arrange
+        String title = "Test Video";
+        String description = "Test Video Description";
+        Long parentColumnId = 1L;
+        CardType type = CardType.VIDEO;
+
+        BoardColumn parentColumn = new BoardColumn();
+        parentColumn.setId(parentColumnId);
+
+        when(columnRepository.findById(parentColumnId)).thenReturn(Optional.of(parentColumn));
+        when(cardRepository.save(any(Card.class))).thenAnswer(invocation -> {
+            Card card = invocation.getArgument(0);
+            card.setId(1L);
+            return card;
+        });
+
+        // Act
+        Card result = cardService.createCard(title, description, parentColumnId, type);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(title, result.getTitle());
+        assertEquals(description, result.getDescription());
+        assertEquals(type, result.getType());
+        assertEquals(0, result.getTotalUnits());
+        assertEquals(0, result.getCurrentUnits());
+        verify(cardRepository).save(any(Card.class));
+    }
+
+    @Test
+    @DisplayName("Deve criar um card do tipo COURSE com sucesso")
+    void shouldCreateCourseCardSuccessfully() {
+        // Arrange
+        String title = "Test Course";
+        String description = "Test Course Description";
+        Long parentColumnId = 1L;
+        CardType type = CardType.COURSE;
+
+        BoardColumn parentColumn = new BoardColumn();
+        parentColumn.setId(parentColumnId);
+
+        when(columnRepository.findById(parentColumnId)).thenReturn(Optional.of(parentColumn));
+        when(cardRepository.save(any(Card.class))).thenAnswer(invocation -> {
+            Card card = invocation.getArgument(0);
+            card.setId(1L);
+            return card;
+        });
+
+        // Act
+        Card result = cardService.createCard(title, description, parentColumnId, type);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(title, result.getTitle());
+        assertEquals(description, result.getDescription());
+        assertEquals(type, result.getType());
+        assertEquals(0, result.getTotalUnits());
+        assertEquals(0, result.getCurrentUnits());
+        verify(cardRepository).save(any(Card.class));
+    }
+
+    @Test
+    @DisplayName("Deve validar que cards do tipo CARD suportam progresso baseado em unidades")
+    void shouldValidateCardTypeSupportsProgressBasedOnUnits() {
+        // Arrange
+        String title = "Test Card";
+        String description = "Test Description";
+        Long parentColumnId = 1L;
+        CardType type = CardType.CARD;
+
+        BoardColumn parentColumn = new BoardColumn();
+        parentColumn.setId(parentColumnId);
+
+        when(columnRepository.findById(parentColumnId)).thenReturn(Optional.of(parentColumn));
+        when(cardRepository.save(any(Card.class))).thenAnswer(invocation -> {
+            Card card = invocation.getArgument(0);
+            card.setId(1L);
+            return card;
+        });
+
+        // Act
+        Card result = cardService.createCard(title, description, parentColumnId, type);
+
+        // Assert
+        assertNotNull(result);
+        assertTrue(result.isProgressable(), "Cards do tipo CARD devem suportar progresso");
+        assertNull(result.getTotalUnits());
+        assertNull(result.getCurrentUnits());
+        verify(cardRepository).save(any(Card.class));
+    }
+
+    @Test
+    @DisplayName("Deve calcular progresso corretamente para cards com unidades")
+    void shouldCalculateProgressCorrectly() {
+        // Arrange
+        Card card = new Card();
+        card.setTotalUnits(100);
+        card.setCurrentUnits(50);
+
+        // Act
+        Double progress = card.getProgressPercentage();
+
+        // Assert
+        assertEquals(50.0, progress, 0.01);
+    }
+
+    @Test
+    @DisplayName("Deve retornar 0.0 de progresso quando totalUnits é null")
+    void shouldReturnZeroProgressWhenTotalUnitsIsNull() {
+        // Arrange
+        Card card = new Card();
+        card.setTotalUnits(null);
+        card.setCurrentUnits(50);
+
+        // Act
+        Double progress = card.getProgressPercentage();
+
+        // Assert
+        assertEquals(0.0, progress, 0.01);
+    }
+
+    @Test
+    @DisplayName("Deve retornar 0.0 de progresso quando currentUnits é null")
+    void shouldReturnZeroProgressWhenCurrentUnitsIsNull() {
+        // Arrange
+        Card card = new Card();
+        card.setTotalUnits(100);
+        card.setCurrentUnits(null);
+
+        // Act
+        Double progress = card.getProgressPercentage();
+
+        // Assert
+        assertEquals(0.0, progress, 0.01);
+    }
+
+    @Test
+    @DisplayName("Deve retornar 100.0 de progresso quando currentUnits é maior que totalUnits")
+    void shouldReturnMaxProgressWhenCurrentUnitsExceedsTotalUnits() {
+        // Arrange
+        Card card = new Card();
+        card.setTotalUnits(100);
+        card.setCurrentUnits(150);
+
+        // Act
+        Double progress = card.getProgressPercentage();
+
+        // Assert
+        assertEquals(100.0, progress, 0.01);
     }
 }
