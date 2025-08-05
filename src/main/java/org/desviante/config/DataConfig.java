@@ -15,6 +15,30 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import javax.sql.DataSource;
 import java.io.File;
 
+/**
+ * Configuração de dados e persistência da aplicação.
+ *
+ * <p>Esta classe configura a infraestrutura de dados da aplicação, incluindo
+ * a fonte de dados H2, gerenciamento de transações e inicialização do banco.
+ * Utiliza HikariCP para pool de conexões e H2 como banco de dados embutido.</p>
+ *
+ * <p>A configuração inclui:</p>
+ * <ul>
+ *   <li>DataSource H2 com pool de conexões HikariCP</li>
+ *   <li>Gerenciador de transações para operações JDBC</li>
+ *   <li>Inicializador automático do banco de dados</li>
+ *   <li>Escaneamento de repositórios para injeção de dependência</li>
+ * </ul>
+ *
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @version 1.0
+ * @since 1.0
+ * @see org.springframework.context.annotation.Configuration
+ * @see org.springframework.context.annotation.ComponentScan
+ * @see org.springframework.transaction.annotation.EnableTransactionManagement
+ * @see com.zaxxer.hikari.HikariDataSource
+ * @see org.springframework.jdbc.datasource.DataSourceTransactionManager
+ */
 @Configuration
 @ComponentScan(basePackages = "org.desviante.repository") // Scan ONLY for repositories
 @EnableTransactionManagement
@@ -22,6 +46,17 @@ public class DataConfig {
 
     private static final String DB_FILE_PATH = System.getProperty("user.home") + "/myboards/board_h2_db";
 
+    /**
+     * Configura e retorna a fonte de dados H2 com pool de conexões HikariCP.
+     *
+     * <p>Configura um banco de dados H2 persistente no diretório do usuário,
+     * com otimizações de performance para prepared statements e configurações
+     * de segurança básicas.</p>
+     *
+     * @return DataSource configurado com HikariCP
+     * @see com.zaxxer.hikari.HikariDataSource
+     * @see javax.sql.DataSource
+     */
     @Bean(destroyMethod = "close")
     public DataSource dataSource() {
         HikariConfig config = new HikariConfig();
@@ -34,11 +69,34 @@ public class DataConfig {
         return new HikariDataSource(config);
     }
 
+    /**
+     * Configura o gerenciador de transações para operações JDBC.
+     *
+     * <p>Utiliza DataSourceTransactionManager para gerenciar transações
+     * em operações de banco de dados, garantindo consistência e isolamento.</p>
+     *
+     * @param dataSource fonte de dados configurada
+     * @return PlatformTransactionManager para controle de transações
+     * @see org.springframework.jdbc.datasource.DataSourceTransactionManager
+     * @see org.springframework.transaction.PlatformTransactionManager
+     */
     @Bean
     public PlatformTransactionManager transactionManager(DataSource dataSource) {
         return new DataSourceTransactionManager(dataSource);
     }
 
+    /**
+     * Configura o inicializador automático do banco de dados.
+     *
+     * <p>Executa o script schema.sql apenas na primeira execução da aplicação,
+     * verificando se o arquivo físico do banco já existe. Isso evita a execução
+     * desnecessária de DROP TABLE em execuções subsequentes.</p>
+     *
+     * @param dataSource fonte de dados configurada
+     * @return DataSourceInitializer configurado para inicialização condicional
+     * @see org.springframework.jdbc.datasource.init.DataSourceInitializer
+     * @see org.springframework.jdbc.datasource.init.ResourceDatabasePopulator
+     */
     @Bean
     public DataSourceInitializer dataSourceInitializer(DataSource dataSource) {
         ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
