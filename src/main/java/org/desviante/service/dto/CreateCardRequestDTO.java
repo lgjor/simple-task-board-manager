@@ -1,11 +1,31 @@
 package org.desviante.service.dto;
 
 /**
- * DTO para encapsular os dados necessários para criar um novo Card.
- * A UI preencherá este objeto e o enviará para a Fachada.
+ * DTO para encapsular dados de requisição para criação de um novo Card.
+ * 
+ * <p>Representa os dados necessários para criar um novo card no sistema,
+ * encapsulando as informações que a interface do usuário envia para o
+ * backend. Este DTO é utilizado como estrutura de entrada para operações
+ * de criação de cards, fornecendo todos os dados essenciais para a
+ * persistência no banco de dados.</p>
+ * 
+ * <p>Contém o título e descrição do card que serão exibidos na interface,
+ * além do identificador da coluna pai onde o card será criado. A coluna
+ * pai determina a localização inicial do card no Kanban board e define
+ * o contexto de trabalho onde o card será gerenciado.</p>
+ * 
+ * <p>Utilizado principalmente pela TaskManagerFacade para receber dados
+ * da interface do usuário e delegar a criação do card para o CardService,
+ * mantendo a separação entre a camada de apresentação e a lógica de negócio.</p>
+ * 
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @version 1.0
+ * @since 1.0
+ * @see TaskManagerFacade
+ * @see CardService
  */
 public record CreateCardRequestDTO(
-        String title,
-        String description,
-        Long parentColumnId
+        String title,               // Título do card a ser criado
+        String description,         // Descrição detalhada do card
+        Long parentColumnId         // ID da coluna onde o card será criado
 ) {}
