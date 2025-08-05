@@ -2,13 +2,11 @@ package org.desviante.view.component;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.TransferMode;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.desviante.model.enums.CardType;
@@ -16,13 +14,6 @@ import org.desviante.service.TaskManagerFacade;
 import org.desviante.service.dto.CardDetailDTO;
 import org.desviante.service.dto.CreateTaskRequestDTO;
 import org.desviante.service.dto.UpdateCardDetailsDTO;
-
-// Add these imports at the top of CardViewController.java
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 
 import java.util.function.BiConsumer;
 import org.desviante.model.enums.BoardColumnKindEnum;
@@ -77,7 +68,6 @@ public class CardViewController {
     private TaskManagerFacade facade;
     private String boardName;
     private CardDetailDTO cardData;
-    private Long sourceColumnId;
     private BiConsumer<Long, UpdateCardDetailsDTO> onSaveCallback;
 
     @FXML
@@ -155,13 +145,11 @@ public class CardViewController {
             TaskManagerFacade facade,
             String boardName,
             CardDetailDTO card,
-            Long sourceColumnId,
             BiConsumer<Long, UpdateCardDetailsDTO> onSaveCallback
     ) {
         this.facade = facade;
         this.boardName = boardName;
         this.cardData = card;
-        this.sourceColumnId = sourceColumnId;
         this.onSaveCallback = onSaveCallback;
         updateDisplayData(card);
     }
@@ -281,21 +269,7 @@ public class CardViewController {
         progressSection.setManaged(true);
     }
 
-    private void showBookFields() {
-        configureProgressFieldsForType(CardType.BOOK);
-    }
 
-    private void showVideoFields() {
-        configureProgressFieldsForType(CardType.VIDEO);
-    }
-
-    private void showCourseFields() {
-        configureProgressFieldsForType(CardType.COURSE);
-    }
-
-    private void showCardFields() {
-        configureProgressFieldsForType(CardType.CARD);
-    }
     
     private void hideAllProgressFields() {
         progressSection.setVisible(false);
@@ -312,7 +286,6 @@ public class CardViewController {
         }
         
         double progress = 0.0;
-        CardType cardType = cardData.type();
         
         // Usar spinners genéricos para todos os tipos
         int total = totalSpinner.getValue();
@@ -370,24 +343,6 @@ public class CardViewController {
     }
     
     /**
-     * Atualiza o status do card baseado no progresso (DEPRECATED - agora usa coluna).
-     * 
-     * @param progress progresso em porcentagem (0-100)
-     */
-    private void updateCardStatus(double progress) {
-        String status;
-        if (progress == 0) {
-            status = "Não iniciado";
-        } else if (progress >= 100) {
-            status = "Concluído";
-        } else {
-            status = "Em andamento";
-        }
-        
-        statusValueLabel.setText(status);
-    }
-
-    /**
      * Lógica atualizada para gerenciar a visibilidade de cada linha de data.
      */
     private void updateFooter(CardDetailDTO card) {
@@ -416,9 +371,7 @@ public class CardViewController {
         }
     }
 
-    public void updateSourceColumn(Long newSourceColumnId) {
-        this.sourceColumnId = newSourceColumnId;
-    }
+
 
     private void setupDragAndDrop() {
         cardPane.setOnDragDetected(event -> {

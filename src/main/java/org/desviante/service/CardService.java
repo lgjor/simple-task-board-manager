@@ -261,17 +261,4 @@ public class CardService {
         cardRepository.deleteById(id);
     }
 
-    /**
-     * Obtém o ID do board a partir do card.
-     * 
-     * <p>Método auxiliar para encontrar o board de um card através de sua coluna.</p>
-     * 
-     * @param card card para obter o board
-     * @return ID do board ou null se não encontrado
-     */
-    private Long getBoardIdFromCard(Card card) {
-        return columnRepository.findById(card.getBoardColumnId())
-                .map(BoardColumn::getBoardId)
-                .orElse(null);
-    }
 }

@@ -405,7 +405,6 @@ public class BoardViewController {
                             this.facade,
                             boardDetails.name(),
                             cardData,
-                            columnData.id(),
                             this::handleCardUpdate
                     );
 
@@ -463,7 +462,6 @@ public class BoardViewController {
                 CardViewController cardController = (CardViewController) cardNode.getUserData();
                 if (cardController != null) {
                     cardController.updateDisplayData(updatedCardDTO);
-                    cardController.updateSourceColumn(targetColumnId);
                 }
             }
             updateSelectedBoardSummary();

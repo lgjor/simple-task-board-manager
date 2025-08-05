@@ -7,11 +7,9 @@ import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
-import javafx.scene.input.DragEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
-import javafx.util.Pair;
 import org.desviante.model.enums.CardType;
 import org.desviante.service.TaskManagerFacade;
 import org.desviante.service.dto.BoardColumnDetailDTO;
@@ -19,7 +17,6 @@ import org.desviante.service.dto.CardDetailDTO;
 import org.desviante.service.dto.CreateCardRequestDTO;
 import org.desviante.service.dto.UpdateCardDetailsDTO;
 
-import java.io.IOException;
 import java.util.function.BiConsumer;
 // CORREÇÃO: A linha 'import java.util.function.Runnable;' foi removida.
 // A interface Runnable está em java.lang e é importada automaticamente.
@@ -165,10 +162,9 @@ public class ColumnViewController {
                     cardNode.setUserData(cardController);
 
                     cardController.setData(
-                            this.facade,      // <--- NOVO PARÂMETRO
-                            this.boardName,   // <--- NOVO PARÂMETRO
+                            this.facade,
+                            this.boardName,
                             newCardDTO,
-                            this.columnData.id(),
                             this.onCardUpdate
                     );
 
