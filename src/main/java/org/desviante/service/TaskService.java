@@ -1,7 +1,6 @@
 package org.desviante.service;
 
-import lombok.RequiredArgsConstructor;
-import org.desviante.exception.ResourceNotFoundException; // Importe a nova exceção
+import org.desviante.exception.ResourceNotFoundException;
 import org.desviante.model.Task;
 import org.desviante.repository.CardRepository;
 import org.desviante.repository.TaskRepository;
