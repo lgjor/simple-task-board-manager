@@ -17,6 +17,7 @@ import org.desviante.service.dto.UpdateCardDetailsDTO;
 
 import java.util.function.BiConsumer;
 import org.desviante.model.enums.BoardColumnKindEnum;
+import javafx.scene.image.WritableImage;
 
 public class CardViewController {
 
@@ -264,9 +265,10 @@ public class CardViewController {
         totalLabel.setText("Total:");
         currentLabel.setText("Atual:");
         
-        // Mostrar seção de progresso genérica
-        progressSection.setVisible(true);
-        progressSection.setManaged(true);
+        // NÃO forçar a visibilidade da seção de progresso aqui
+        // A visibilidade será controlada pelos métodos de modo de edição
+        // progressSection.setVisible(true);
+        // progressSection.setManaged(true);
     }
 
 
@@ -379,6 +381,27 @@ public class CardViewController {
             ClipboardContent content = new ClipboardContent();
             content.putString(cardData.id().toString());
             db.setContent(content);
+            
+            // Adicionar preview visual do card sendo arrastado
+            if (cardData != null) {
+                // Criar uma snapshot do card para preview
+                WritableImage snapshot = cardPane.snapshot(null, null);
+                db.setDragView(snapshot);
+                
+                // Posicionar o preview no cursor
+                db.setDragViewOffsetX(snapshot.getWidth() / 2);
+                db.setDragViewOffsetY(snapshot.getHeight() / 2);
+            }
+            
+            // Aplicar estilo visual durante o drag
+            cardPane.setStyle(cardPane.getStyle() + "; -fx-opacity: 0.6; -fx-effect: dropshadow(gaussian, rgba(0,123,255,0.5), 10, 0, 0, 2);");
+            
+            event.consume();
+        });
+        
+        // Restaurar estilo quando o drag termina
+        cardPane.setOnDragDone(event -> {
+            cardPane.setStyle(cardPane.getStyle().replace("; -fx-opacity: 0.6; -fx-effect: dropshadow(gaussian, rgba(0,123,255,0.5), 10, 0, 0, 2);", ""));
             event.consume();
         });
     }
@@ -426,6 +449,21 @@ public class CardViewController {
         if (progressContainer.isVisible()) {
             progressContainer.setVisible(true);
             progressContainer.setManaged(true);
+            
+            // Garantir que a seção de progresso seja visível em modo de edição
+            progressSection.setVisible(true);
+            progressSection.setManaged(true);
+            
+            // Mostrar os controles "total" e "atual" apenas em modo de edição
+            totalLabel.setVisible(true);
+            totalSpinner.setVisible(true);
+            currentLabel.setVisible(true);
+            currentSpinner.setVisible(true);
+            
+            // Mostrar labels "Progresso:" e "Status:" em modo de edição
+            progressLabel.setVisible(true);
+            statusValueLabel.getParent().setVisible(true);
+            
             setSpinnersEditable(true); // Permitir edição dos spinners
         }
         
@@ -444,10 +482,21 @@ public class CardViewController {
         editControlsBox.setVisible(false);
         editControlsBox.setManaged(false);
         
-        // Manter campos de progresso visíveis mas somente leitura
+        // Manter campos de progresso visíveis mas ocultar os controles "total" e "atual"
         if (progressContainer.isVisible()) {
             progressContainer.setVisible(true);
             progressContainer.setManaged(true);
+            
+            // Ocultar os controles "total" e "atual" em modo de visualização
+            totalLabel.setVisible(false);
+            totalSpinner.setVisible(false);
+            currentLabel.setVisible(false);
+            currentSpinner.setVisible(false);
+            
+            // Ocultar labels "Progresso:" e "Status:" em modo de visualização
+            progressLabel.setVisible(false);
+            statusValueLabel.getParent().setVisible(false);
+            
             setSpinnersEditable(false); // Somente leitura
         }
     }

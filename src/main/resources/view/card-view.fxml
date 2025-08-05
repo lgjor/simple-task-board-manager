@@ -53,13 +53,13 @@
                             <children>
                                 <HBox spacing="10" alignment="CENTER_LEFT">
                                     <children>
-                                        <Label fx:id="totalLabel" text="Total:" styleClass="progress-label" />
+                                        <Label fx:id="totalLabel" text="Total:" styleClass="progress-label" minWidth="50.0" prefWidth="50.0" />
                                         <Spinner fx:id="totalSpinner" editable="true" />
                                     </children>
                                 </HBox>
                                 <HBox spacing="10" alignment="CENTER_LEFT">
                                     <children>
-                                        <Label fx:id="currentLabel" text="Atual:" styleClass="progress-label" />
+                                        <Label fx:id="currentLabel" text="Atual:" styleClass="progress-label" minWidth="50.0" prefWidth="50.0" />
                                         <Spinner fx:id="currentSpinner" editable="true" />
                                     </children>
                                 </HBox>
@@ -71,7 +71,7 @@
                 <!-- Barra de progresso -->
                 <HBox alignment="CENTER" spacing="5">
                     <children>
-                        <Label fx:id="progressLabel" text="Progresso:" styleClass="progress-label" />
+                        <Label fx:id="progressLabel" text="Progresso:" styleClass="progress-label" minWidth="70.0" prefWidth="70.0" />
                         <Label fx:id="progressValueLabel" text="0%" styleClass="progress-value" />
                     </children>
                 </HBox>

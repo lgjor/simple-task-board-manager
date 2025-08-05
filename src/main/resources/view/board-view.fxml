@@ -11,6 +11,7 @@
 <?import javafx.scene.control.ToolBar?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.VBox?>
 
 <BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.desviante.view.BoardViewController">
@@ -58,7 +59,7 @@
                         <Insets left="10" />
                     </VBox.margin>
                 </Label>
-                <TableView fx:id="boardsTableView" prefHeight="200.0">
+                <TableView fx:id="boardsTableView" prefHeight="200.0" minHeight="120.0" VBox.vgrow="NEVER">
                     <columns>
                         <!-- Coluna do ícone do grupo -->
                         <TableColumn fx:id="boardGroupIconColumn" prefWidth="50.0" text="Ícone" />
@@ -73,7 +74,13 @@
                         <TableColumn fx:id="statusFinalColumn" prefWidth="120.0" text="Concluído (%)" />
                     </columns>
                 </TableView>
-                <ScrollPane fitToHeight="true" fitToWidth="true" VBox.vgrow="ALWAYS">
+                <!-- Separador redimensionável -->
+                <Pane fx:id="resizableSeparator" styleClass="resizable-separator" VBox.vgrow="NEVER">
+                    <children>
+                        <Label text="⋮⋮" styleClass="resize-indicator" />
+                    </children>
+                </Pane>
+                <ScrollPane fitToHeight="true" fitToWidth="true" VBox.vgrow="ALWAYS" prefHeight="300.0" minHeight="200.0">
                     <content>
                         <HBox fx:id="kanbanContainer" spacing="10">
                             <padding>

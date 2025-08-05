@@ -6,6 +6,33 @@
     -fx-background-radius: 5;
     -fx-border-radius: 5;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 2);
+    -fx-transition: all 0.2s ease-in-out;
+}
+
+/* Estilo para card sendo arrastado */
+.card-pane:dragging {
+    -fx-opacity: 0.6;
+    -fx-effect: dropshadow(gaussian, rgba(0,123,255,0.5), 10, 0, 0, 2);
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+}
+
+/* Estilo para coluna que pode receber o card */
+.column-container:drag-over {
+    -fx-background-color: rgba(0,123,255,0.1);
+    -fx-border-color: #007BFF;
+    -fx-border-width: 2;
+    -fx-border-style: dashed;
+    -fx-border-radius: 5;
+}
+
+/* Estilo para coluna quando o card entra na área */
+.column-container:drag-entered {
+    -fx-background-color: rgba(0,123,255,0.2);
+    -fx-border-color: #0056B3;
+    -fx-border-width: 3;
+    -fx-border-style: solid;
+    -fx-border-radius: 5;
 }
 
 /* Título do Card: Destacado (negrito), maior e com uma cor mais forte */
@@ -42,6 +69,9 @@
     -fx-font-size: 11px;
     -fx-font-weight: bold;
     -fx-text-fill: #666666;
+    -fx-min-width: 65px;
+    -fx-pref-width: 65px;
+    -fx-alignment: center-left;
 }
 
 /* Valor do progresso */
@@ -96,33 +126,33 @@
 }
 
 /* Spinners de progresso */
-.progress-label + .spinner {
+.spinner {
     -fx-background-color: #F8F9FA;
     -fx-border-color: #DEE2E6;
     -fx-border-radius: 3;
     -fx-background-radius: 3;
 }
 
-.progress-label + .spinner:focused {
+.spinner:focused {
     -fx-border-color: #007BFF;
     -fx-background-color: #FFFFFF;
 }
 
 /* Spinners em modo somente leitura */
-.progress-label + .spinner:disabled {
+.spinner:disabled {
     -fx-background-color: #F8F9FA;
     -fx-border-color: #E9ECEF;
     -fx-opacity: 0.8;
 }
 
-.progress-label + .spinner:disabled .increment-arrow-button,
-.progress-label + .spinner:disabled .decrement-arrow-button {
+.spinner:disabled .increment-arrow-button,
+.spinner:disabled .decrement-arrow-button {
     -fx-background-color: transparent;
     -fx-opacity: 0.3;
 }
 
-.progress-label + .spinner:disabled .increment-arrow,
-.progress-label + .spinner:disabled .decrement-arrow {
+.spinner:disabled .increment-arrow,
+.spinner:disabled .decrement-arrow {
     -fx-opacity: 0.3;
 }
 
@@ -406,4 +436,45 @@
     -fx-font-size: 14px;
     -fx-padding: 8 12;
     -fx-background-color: transparent;
+}
+
+/* Separador redimensionável */
+.resizable-separator {
+    -fx-background-color: #E0E0E0;
+    -fx-pref-height: 16px;
+    -fx-min-height: 12px;
+    -fx-max-height: 24px;
+    -fx-cursor: v-resize;
+    -fx-border-color: #CCCCCC;
+    -fx-border-width: 1px;
+    -fx-border-style: solid;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 2, 0, 0, 1);
+    -fx-opacity: 1.0;
+    -fx-mouse-transparent: false;
+    -fx-transition: all 0.2s ease-in-out;
+}
+
+.resizable-separator:hover {
+    -fx-background-color: #007BFF;
+    -fx-border-color: #0056B3;
+    -fx-effect: dropshadow(gaussian, rgba(0,123,255,0.3), 4, 0, 0, 2);
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+}
+
+.resizable-separator:pressed {
+    -fx-background-color: #0056B3;
+    -fx-border-color: #004085;
+}
+
+/* Indicador de redimensionamento */
+.resize-indicator {
+    -fx-text-fill: #666666;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-alignment: center;
+}
+
+.resizable-separator:hover .resize-indicator {
+    -fx-text-fill: white;
 }

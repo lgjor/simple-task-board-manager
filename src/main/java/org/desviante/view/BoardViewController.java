@@ -8,6 +8,7 @@ import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Pane;
 
 import javafx.geometry.Insets;
 import javafx.application.Platform;
@@ -72,6 +73,10 @@ public class BoardViewController {
     // --- Container para o Kanban ---
     @FXML
     private HBox kanbanContainer;
+    
+    // --- Separador redimensionável ---
+    @FXML
+    private Pane resizableSeparator;
 
     // --- Botões ---
     @FXML
@@ -114,6 +119,8 @@ public class BoardViewController {
         setupBoardsTable();
         setupGroupFilter();
         setupStatusFilter();
+        setupResizableSeparator();
+        setupLayoutConstraints();
 
         editBoardButton.disableProperty().bind(
                 boardsTableView.getSelectionModel().selectedItemProperty().isNull()
@@ -123,6 +130,68 @@ public class BoardViewController {
         );
 
         loadBoards();
+    }
+
+        private void setupResizableSeparator() {
+        // Configurar tooltip para o separador redimensionável
+        Tooltip tooltip = new Tooltip("Clique e arraste para redimensionar a altura da tabela de boards");
+        tooltip.setShowDelay(javafx.util.Duration.millis(200));
+        tooltip.setShowDuration(javafx.util.Duration.seconds(3));
+        Tooltip.install(resizableSeparator, tooltip);
+        
+        // Garantir que o separador sempre seja clicável
+        resizableSeparator.setMouseTransparent(false);
+        resizableSeparator.setPickOnBounds(true);
+        
+        // Configurar o separador redimensionável
+        resizableSeparator.setOnMousePressed(event -> {
+            resizableSeparator.setUserData(event.getY());
+            event.consume(); // Consumir o evento para evitar propagação
+        });
+
+        resizableSeparator.setOnMouseDragged(event -> {
+            Double startY = (Double) resizableSeparator.getUserData();
+            if (startY != null) {
+                double deltaY = event.getY() - startY;
+                double currentHeight = boardsTableView.getPrefHeight();
+                // Garantir altura mínima de 120px e máxima de 60% da altura da janela
+                double maxHeight = Math.max(400, boardsTableView.getScene().getHeight() * 0.6);
+                double newHeight = Math.max(120, Math.min(maxHeight, currentHeight + deltaY));
+                boardsTableView.setPrefHeight(newHeight);
+                resizableSeparator.setUserData(event.getY());
+                event.consume(); // Consumir o evento para evitar propagação
+            }
+        });
+
+        resizableSeparator.setOnMouseReleased(event -> {
+            resizableSeparator.setUserData(null);
+            event.consume(); // Consumir o evento para evitar propagação
+        });
+    }
+
+    private void setupLayoutConstraints() {
+        // Garantir que a tabela de boards sempre tenha uma altura mínima visível
+        boardsTableView.setMinHeight(120);
+        
+        // Listener para garantir que a altura mínima seja respeitada quando a janela for redimensionada
+        boardsTableView.sceneProperty().addListener((observable, oldScene, newScene) -> {
+            if (newScene != null) {
+                newScene.heightProperty().addListener((obs, oldHeight, newHeight) -> {
+                    if (boardsTableView.getPrefHeight() < 120) {
+                        boardsTableView.setPrefHeight(120);
+                    }
+                });
+            }
+        });
+        
+        // Garantir que pelo menos uma linha da tabela seja sempre visível
+        boardsTableView.setFixedCellSize(30); // Altura fixa para cada linha
+        boardsTableView.setPlaceholder(new Label("Nenhum board encontrado"));
+        
+        // Garantir que o separador sempre seja visível e clicável
+        resizableSeparator.setMinHeight(12);
+        resizableSeparator.setPrefHeight(16);
+        resizableSeparator.setMaxHeight(24);
     }
 
     private void setupBoardsTable() {

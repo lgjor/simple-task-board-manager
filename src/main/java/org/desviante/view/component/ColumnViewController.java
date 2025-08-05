@@ -74,7 +74,27 @@ public class ColumnViewController {
         rootVBox.setOnDragOver(event -> {
             if (event.getGestureSource() != rootVBox && event.getDragboard().hasString()) {
                 event.acceptTransferModes(TransferMode.MOVE);
+                
+                // Adicionar efeito visual quando o card pode ser solto
+                rootVBox.setStyle(rootVBox.getStyle() + "; -fx-background-color: rgba(0,123,255,0.1); -fx-border-color: #007BFF; -fx-border-width: 2; -fx-border-style: dashed;");
             }
+            event.consume();
+        });
+
+        rootVBox.setOnDragEntered(event -> {
+            if (event.getGestureSource() != rootVBox && event.getDragboard().hasString()) {
+                // Efeito visual mais intenso quando o card entra na área da coluna
+                rootVBox.setStyle(rootVBox.getStyle() + "; -fx-background-color: rgba(0,123,255,0.2); -fx-border-color: #0056B3; -fx-border-width: 3; -fx-border-style: solid;");
+            }
+            event.consume();
+        });
+
+        rootVBox.setOnDragExited(event -> {
+            // Remover efeitos visuais quando o card sai da área da coluna
+            String currentStyle = rootVBox.getStyle();
+            currentStyle = currentStyle.replace("; -fx-background-color: rgba(0,123,255,0.1); -fx-border-color: #007BFF; -fx-border-width: 2; -fx-border-style: dashed;", "");
+            currentStyle = currentStyle.replace("; -fx-background-color: rgba(0,123,255,0.2); -fx-border-color: #0056B3; -fx-border-width: 3; -fx-border-style: solid;", "");
+            rootVBox.setStyle(currentStyle);
             event.consume();
         });
 
@@ -89,6 +109,13 @@ public class ColumnViewController {
                 }
                 success = true;
             }
+            
+            // Remover efeitos visuais após o drop
+            String currentStyle = rootVBox.getStyle();
+            currentStyle = currentStyle.replace("; -fx-background-color: rgba(0,123,255,0.1); -fx-border-color: #007BFF; -fx-border-width: 2; -fx-border-style: dashed;", "");
+            currentStyle = currentStyle.replace("; -fx-background-color: rgba(0,123,255,0.2); -fx-border-color: #0056B3; -fx-border-width: 3; -fx-border-style: solid;", "");
+            rootVBox.setStyle(currentStyle);
+            
             event.setDropCompleted(success);
             event.consume();
         });

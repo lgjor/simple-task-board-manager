@@ -39,6 +39,10 @@ public class MainApp extends Application {
         Parent root = fxmlLoader.load();
         primaryStage.setTitle("Simple Task Board Manager");
         primaryStage.setScene(new Scene(root, 1200, 800));
+        
+        // Iniciar a aplicação maximizada
+        primaryStage.setMaximized(true);
+        
         primaryStage.show();
     }
 
