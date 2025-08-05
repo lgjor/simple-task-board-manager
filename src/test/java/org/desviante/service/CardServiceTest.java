@@ -247,7 +247,7 @@ class CardServiceTest {
         assertEquals(title, result.getTitle());
         assertEquals(description, result.getDescription());
         assertEquals(type, result.getType());
-        assertEquals(0, result.getTotalUnits());
+        assertEquals(1, result.getTotalUnits());
         assertEquals(0, result.getCurrentUnits());
         verify(cardRepository).save(any(Card.class));
     }
@@ -279,7 +279,7 @@ class CardServiceTest {
         assertEquals(title, result.getTitle());
         assertEquals(description, result.getDescription());
         assertEquals(type, result.getType());
-        assertEquals(0, result.getTotalUnits());
+        assertEquals(1, result.getTotalUnits());
         assertEquals(0, result.getCurrentUnits());
         verify(cardRepository).save(any(Card.class));
     }
@@ -311,7 +311,7 @@ class CardServiceTest {
         assertEquals(title, result.getTitle());
         assertEquals(description, result.getDescription());
         assertEquals(type, result.getType());
-        assertEquals(0, result.getTotalUnits());
+        assertEquals(1, result.getTotalUnits());
         assertEquals(0, result.getCurrentUnits());
         verify(cardRepository).save(any(Card.class));
     }

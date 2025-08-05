@@ -96,13 +96,13 @@ public class Card {
      * Calcula o percentual de progresso do card de forma unificada.
      * 
      * <p>Para todos os tipos de card, calcula baseado em currentUnits/totalUnits.
-     * Se não houver unidades definidas, retorna 0%.</p>
+     * Se não houver unidades definidas ou total for inválido, retorna 0%.</p>
      * 
      * @return percentual de progresso (0.0 a 100.0)
      */
     public Double getProgressPercentage() {
         // Para todos os tipos, progresso baseado nas unidades
-        if (totalUnits == null || totalUnits == 0 || currentUnits == null) {
+        if (totalUnits == null || totalUnits <= 0 || currentUnits == null || currentUnits < 0) {
             return 0.0;
         }
         return Math.min(100.0, (double) currentUnits / totalUnits * 100);

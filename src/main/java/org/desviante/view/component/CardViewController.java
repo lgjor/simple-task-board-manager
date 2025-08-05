@@ -57,37 +57,19 @@ public class CardViewController {
     // --- CAMPOS DE PROGRESSO ---
     @FXML private VBox progressContainer;
     
-    // Seções de progresso por tipo
-    @FXML private VBox bookProgressSection;
-    @FXML private VBox videoProgressSection;
-    @FXML private VBox courseProgressSection;
+    // Seção de progresso genérica (substitui as seções específicas)
+    @FXML private VBox progressSection;
     
-    // Campos para BOOK
-    @FXML private Label totalPagesLabel;
-    @FXML private Spinner<Integer> totalPagesSpinner;
-    @FXML private Label currentPageLabel;
-    @FXML private Spinner<Integer> currentPageSpinner;
-    
-    // Campos para VIDEO
-    @FXML private Label totalMinutesLabel;
-    @FXML private Spinner<Integer> totalMinutesSpinner;
-    @FXML private Label currentMinutesLabel;
-    @FXML private Spinner<Integer> currentMinutesSpinner;
-    
-    // Campos para COURSE
-    @FXML private Label totalModulesLabel;
-    @FXML private Spinner<Integer> totalModulesSpinner;
-    @FXML private Label currentModuleLabel;
-    @FXML private Spinner<Integer> currentModuleSpinner;
+    // Campos genéricos de progresso (substitui os campos específicos)
+    @FXML private Label totalLabel;
+    @FXML private Spinner<Integer> totalSpinner;
+    @FXML private Label currentLabel;
+    @FXML private Spinner<Integer> currentSpinner;
     
     // Campo de progresso geral
     @FXML private Label progressLabel;
     @FXML private Label progressValueLabel;
     
-    // Campo de progresso manual para CARD
-    @FXML private Label manualProgressLabel;
-    @FXML private Spinner<Integer> manualProgressSpinner;
-
     // Campo de status do card
     @FXML private Label statusValueLabel;
 
@@ -109,71 +91,37 @@ public class CardViewController {
      * Configura os spinners de progresso com valores padrão e listeners
      */
     private void setupProgressSpinners() {
-        // Configurar spinners para BOOK
-        totalPagesSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 9999, 1));
-        currentPageSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 9999, 0));
-        
-        // Configurar spinners para VIDEO
-        totalMinutesSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 9999, 1));
-        currentMinutesSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 9999, 0));
-        
-        // Configurar spinners para COURSE
-        totalModulesSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 9999, 1));
-        currentModuleSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 9999, 0));
-        
-        // Configurar spinner para CARD (progresso manual)
-        manualProgressSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 100, 0));
+        // Configurar spinners com valores mínimos apropriados
+        totalSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 9999, 1));
+        currentSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 9999, 0));
         
         // Adicionar listeners para validação em tempo real
         setupSpinnerValidation();
         
         // Adicionar listeners para atualizar o progresso em tempo real
-        totalPagesSpinner.valueProperty().addListener((obs, oldVal, newVal) -> updateProgressDisplay());
-        currentPageSpinner.valueProperty().addListener((obs, oldVal, newVal) -> updateProgressDisplay());
-        totalMinutesSpinner.valueProperty().addListener((obs, oldVal, newVal) -> updateProgressDisplay());
-        currentMinutesSpinner.valueProperty().addListener((obs, oldVal, newVal) -> updateProgressDisplay());
-        totalModulesSpinner.valueProperty().addListener((obs, oldVal, newVal) -> updateProgressDisplay());
-        currentModuleSpinner.valueProperty().addListener((obs, oldVal, newVal) -> updateProgressDisplay());
-        manualProgressSpinner.valueProperty().addListener((obs, oldVal, newVal) -> updateProgressDisplay());
+        totalSpinner.valueProperty().addListener((obs, oldVal, newVal) -> updateProgressDisplay());
+        currentSpinner.valueProperty().addListener((obs, oldVal, newVal) -> updateProgressDisplay());
     }
     
     /**
      * Configura validações em tempo real para os spinners de progresso.
      */
     private void setupSpinnerValidation() {
-        // Validação para BOOK: currentPage não pode ser maior que totalPages
-        currentPageSpinner.valueProperty().addListener((obs, oldVal, newVal) -> {
-            Integer totalPages = totalPagesSpinner.getValue();
-            if (totalPages != null && newVal != null && newVal > totalPages) {
-                currentPageSpinner.getValueFactory().setValue(totalPages);
-                showValidationWarning("Página atual ajustada para o total de páginas.");
+        // Validação: current não pode ser maior que total
+        currentSpinner.valueProperty().addListener((obs, oldVal, newVal) -> {
+            Integer total = totalSpinner.getValue();
+            if (total != null && newVal != null && newVal > total) {
+                currentSpinner.getValueFactory().setValue(total);
+                showValidationWarning("Valor atual ajustado para o total.");
             }
         });
         
-        // Validação para VIDEO: currentMinutes não pode ser maior que totalMinutes
-        currentMinutesSpinner.valueProperty().addListener((obs, oldVal, newVal) -> {
-            Integer totalMinutes = totalMinutesSpinner.getValue();
-            if (totalMinutes != null && newVal != null && newVal > totalMinutes) {
-                currentMinutesSpinner.getValueFactory().setValue(totalMinutes);
-                showValidationWarning("Tempo atual ajustado para o tempo total.");
-            }
-        });
-        
-        // Validação para COURSE: currentModule não pode ser maior que totalModules
-        currentModuleSpinner.valueProperty().addListener((obs, oldVal, newVal) -> {
-            Integer totalModules = totalModulesSpinner.getValue();
-            if (totalModules != null && newVal != null && newVal > totalModules) {
-                currentModuleSpinner.getValueFactory().setValue(totalModules);
-                showValidationWarning("Módulo atual ajustado para o total de módulos.");
-            }
-        });
-        
-        // Validação para CARD: progresso manual deve estar entre 0-100
-        manualProgressSpinner.valueProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null && (newVal < 0 || newVal > 100)) {
-                int clampedValue = Math.max(0, Math.min(100, newVal));
-                manualProgressSpinner.getValueFactory().setValue(clampedValue);
-                showValidationWarning("Progresso ajustado para " + clampedValue + "%.");
+        // Validação: se total for 0 ou null, current deve ser 0
+        totalSpinner.valueProperty().addListener((obs, oldVal, newVal) -> {
+            Integer current = currentSpinner.getValue();
+            if ((newVal == null || newVal <= 0) && current != null && current > 0) {
+                currentSpinner.getValueFactory().setValue(0);
+                showValidationWarning("Valor atual ajustado para 0 pois o total é inválido.");
             }
         });
     }
@@ -270,6 +218,9 @@ public class CardViewController {
         
         // Atualizar display de progresso
         updateProgressDisplay();
+        
+        // Atualizar status do card baseado na coluna
+        updateCardStatus(card.columnKind());
     }
 
     /**
@@ -280,17 +231,18 @@ public class CardViewController {
         Integer totalUnits = card.totalUnits();
         Integer currentUnits = card.currentUnits();
         
-        // Converter para valores padrão se null
-        int total = totalUnits != null ? totalUnits : 0;
-        int current = currentUnits != null ? currentUnits : 0;
+        // Garantir que total seja sempre válido (mínimo 1)
+        int total = (totalUnits != null && totalUnits > 0) ? totalUnits : 1;
+        int current = (currentUnits != null && currentUnits >= 0) ? currentUnits : 0;
+        
+        // Garantir que current não seja maior que total
+        if (current > total) {
+            current = total;
+        }
         
         // Atualizar todos os spinners com os valores apropriados
-        totalPagesSpinner.getValueFactory().setValue(total);
-        currentPageSpinner.getValueFactory().setValue(current);
-        totalMinutesSpinner.getValueFactory().setValue(total);
-        currentMinutesSpinner.getValueFactory().setValue(current);
-        totalModulesSpinner.getValueFactory().setValue(total);
-        currentModuleSpinner.getValueFactory().setValue(current);
+        totalSpinner.getValueFactory().setValue(total);
+        currentSpinner.getValueFactory().setValue(current);
         
         // Desabilitar spinners em modo de exibição (somente leitura)
         setSpinnersEditable(false);
@@ -300,12 +252,8 @@ public class CardViewController {
      * Define se os spinners estão habilitados ou somente leitura
      */
     private void setSpinnersEditable(boolean editable) {
-        totalPagesSpinner.setDisable(!editable);
-        currentPageSpinner.setDisable(!editable);
-        totalMinutesSpinner.setDisable(!editable);
-        currentMinutesSpinner.setDisable(!editable);
-        totalModulesSpinner.setDisable(!editable);
-        currentModuleSpinner.setDisable(!editable);
+        totalSpinner.setDisable(!editable);
+        currentSpinner.setDisable(!editable);
     }
 
     /**
@@ -317,153 +265,70 @@ public class CardViewController {
         progressContainer.setManaged(showProgress);
         
         if (showProgress) {
-            switch (cardType) {
-                case BOOK:
-                    showBookFields();
-                    break;
-                case VIDEO:
-                    showVideoFields();
-                    break;
-                case COURSE:
-                    showCourseFields();
-                    break;
-                case CARD:
-                    showCardFields(); // CARD tem campo de progresso manual
-                    break;
-                default:
-                    hideAllProgressFields();
-                    break;
-            }
+            configureProgressFieldsForType(cardType);
         } else {
             hideAllProgressFields();
         }
     }
 
+    private void configureProgressFieldsForType(CardType cardType) {
+        // Usar labels padrão para todos os tipos
+        totalLabel.setText("Total:");
+        currentLabel.setText("Atual:");
+        
+        // Mostrar seção de progresso genérica
+        progressSection.setVisible(true);
+        progressSection.setManaged(true);
+    }
+
     private void showBookFields() {
-        // Restaurar labels originais
-        restoreOriginalLabels();
-        
-        // Mostrar seção de BOOK
-        bookProgressSection.setVisible(true);
-        bookProgressSection.setManaged(true);
-        
-        // Esconder seções de outros tipos
-        videoProgressSection.setVisible(false);
-        videoProgressSection.setManaged(false);
-        courseProgressSection.setVisible(false);
-        courseProgressSection.setManaged(false);
+        configureProgressFieldsForType(CardType.BOOK);
     }
 
     private void showVideoFields() {
-        // Restaurar labels originais
-        restoreOriginalLabels();
-        
-        // Mostrar seção de VIDEO
-        videoProgressSection.setVisible(true);
-        videoProgressSection.setManaged(true);
-        
-        // Esconder seções de outros tipos
-        bookProgressSection.setVisible(false);
-        bookProgressSection.setManaged(false);
-        courseProgressSection.setVisible(false);
-        courseProgressSection.setManaged(false);
+        configureProgressFieldsForType(CardType.VIDEO);
     }
 
     private void showCourseFields() {
-        // Restaurar labels originais
-        restoreOriginalLabels();
-        
-        // Mostrar seção de COURSE
-        courseProgressSection.setVisible(true);
-        courseProgressSection.setManaged(true);
-        
-        // Esconder seções de outros tipos
-        bookProgressSection.setVisible(false);
-        bookProgressSection.setManaged(false);
-        videoProgressSection.setVisible(false);
-        videoProgressSection.setManaged(false);
+        configureProgressFieldsForType(CardType.COURSE);
     }
 
     private void showCardFields() {
-        // Para cards do tipo CARD, usar campos genéricos de unidades
-        // Configurar labels para CARD
-        totalPagesLabel.setText("Total:");
-        currentPageLabel.setText("Atual:");
-        
-        // Mostrar seção de progresso para CARD
-        bookProgressSection.setVisible(true);
-        bookProgressSection.setManaged(true);
-        
-        // Esconder seções de outros tipos
-        videoProgressSection.setVisible(false);
-        videoProgressSection.setManaged(false);
-        courseProgressSection.setVisible(false);
-        courseProgressSection.setManaged(false);
+        configureProgressFieldsForType(CardType.CARD);
     }
     
-    private void restoreOriginalLabels() {
-        // Restaurar labels originais
-        totalPagesLabel.setText("Total de páginas:");
-        currentPageLabel.setText("Página atual:");
-        totalMinutesLabel.setText("Tempo total (min):");
-        currentMinutesLabel.setText("Tempo atual (min):");
-        totalModulesLabel.setText("Total de módulos:");
-        currentModuleLabel.setText("Módulo atual:");
-    }
-
     private void hideAllProgressFields() {
-        bookProgressSection.setVisible(false);
-        bookProgressSection.setManaged(false);
-        videoProgressSection.setVisible(false);
-        videoProgressSection.setManaged(false);
-        courseProgressSection.setVisible(false);
-        courseProgressSection.setManaged(false);
+        progressSection.setVisible(false);
+        progressSection.setManaged(false);
     }
 
     /**
      * Atualiza o display de progresso baseado nos valores dos spinners
      */
     private void updateProgressDisplay() {
-        // Usar o tipo do card atual
-        CardType cardType = cardData != null ? cardData.type() : CardType.CARD;
-        
-        double progress = 0.0;
-        
-        if (cardType == CardType.BOOK) {
-            int total = totalPagesSpinner.getValue();
-            int current = currentPageSpinner.getValue();
-            if (total > 0) {
-                progress = (double) current / total * 100;
-            }
-        } else if (cardType == CardType.VIDEO) {
-            int total = totalMinutesSpinner.getValue();
-            int current = currentMinutesSpinner.getValue();
-            if (total > 0) {
-                progress = (double) current / total * 100;
-            }
-        } else if (cardType == CardType.COURSE) {
-            int total = totalModulesSpinner.getValue();
-            int current = currentModuleSpinner.getValue();
-            if (total > 0) {
-                progress = (double) current / total * 100;
-            }
-        } else if (cardType == CardType.CARD) {
-            // Para cards do tipo CARD, usar os mesmos spinners que BOOK
-            int total = totalPagesSpinner.getValue();
-            int current = currentPageSpinner.getValue();
-            if (total > 0) {
-                progress = (double) current / total * 100;
-            }
+        if (cardData == null || cardData.type() == null) {
+            progressValueLabel.setText("0%");
+            return;
         }
         
-        // Limitar o progresso a 100%
-        progress = Math.min(100.0, Math.max(0.0, progress));
+        double progress = 0.0;
+        CardType cardType = cardData.type();
         
-        // Atualizar o label de progresso
+        // Usar spinners genéricos para todos os tipos
+        int total = totalSpinner.getValue();
+        int current = currentSpinner.getValue();
+        
+        if (total > 0) {
+            progress = (double) current / total * 100;
+        }
+        
+        // Limitar progresso a 100%
+        progress = Math.min(100.0, progress);
+        
+        // Atualizar label de progresso
         progressValueLabel.setText(String.format("%.1f%%", progress));
         
-        // Atualizar o status do card baseado na coluna atual
-        updateCardStatus(cardData.columnKind());
+        // NÃO atualizar status aqui - isso é feito separadamente baseado na coluna
     }
     
     /**
@@ -644,97 +509,23 @@ public class CardViewController {
             return;
         }
         
-        // Coletar valores de progresso se o card suporta progresso
-        Integer totalUnits = null;
-        Integer currentUnits = null;
-        Integer manualProgress = null;
+        // Coletar valores de progresso usando spinners genéricos
+        Integer totalUnits = totalSpinner.getValue();
+        Integer currentUnits = currentSpinner.getValue();
+        Integer manualProgress = null; // Não usado mais, mantido para compatibilidade
         
-        if (cardData != null) {
-            switch (cardData.type()) {
-                case BOOK:
-                    totalUnits = totalPagesSpinner.getValue();
-                    currentUnits = currentPageSpinner.getValue();
-                    
-                    // Validações para BOOK
-                    if (totalUnits != null && currentUnits != null) {
-                        if (totalUnits <= 0) {
-                            showAlert("Erro", "O total de páginas deve ser maior que zero.", Alert.AlertType.ERROR);
-                            return;
-                        }
-                        if (currentUnits < 0) {
-                            showAlert("Erro", "A página atual não pode ser negativa.", Alert.AlertType.ERROR);
-                            return;
-                        }
-                        if (currentUnits > totalUnits) {
-                            showAlert("Erro", "A página atual não pode ser maior que o total de páginas.", Alert.AlertType.ERROR);
-                            return;
-                        }
-                    }
-                    break;
-                    
-                case VIDEO:
-                    totalUnits = totalMinutesSpinner.getValue();
-                    currentUnits = currentMinutesSpinner.getValue();
-                    
-                    // Validações para VIDEO
-                    if (totalUnits != null && currentUnits != null) {
-                        if (totalUnits <= 0) {
-                            showAlert("Erro", "O tempo total deve ser maior que zero.", Alert.AlertType.ERROR);
-                            return;
-                        }
-                        if (currentUnits < 0) {
-                            showAlert("Erro", "O tempo atual não pode ser negativo.", Alert.AlertType.ERROR);
-                            return;
-                        }
-                        if (currentUnits > totalUnits) {
-                            showAlert("Erro", "O tempo atual não pode ser maior que o tempo total.", Alert.AlertType.ERROR);
-                            return;
-                        }
-                    }
-                    break;
-                    
-                case COURSE:
-                    totalUnits = totalModulesSpinner.getValue();
-                    currentUnits = currentModuleSpinner.getValue();
-                    
-                    // Validações para COURSE
-                    if (totalUnits != null && currentUnits != null) {
-                        if (totalUnits <= 0) {
-                            showAlert("Erro", "O total de módulos deve ser maior que zero.", Alert.AlertType.ERROR);
-                            return;
-                        }
-                        if (currentUnits < 0) {
-                            showAlert("Erro", "O módulo atual não pode ser negativo.", Alert.AlertType.ERROR);
-                            return;
-                        }
-                        if (currentUnits > totalUnits) {
-                            showAlert("Erro", "O módulo atual não pode ser maior que o total de módulos.", Alert.AlertType.ERROR);
-                            return;
-                        }
-                    }
-                    break;
-                    
-                case CARD:
-                    totalUnits = totalPagesSpinner.getValue();
-                    currentUnits = currentPageSpinner.getValue();
-                    
-                    // Validações para CARD
-                    if (totalUnits != null && currentUnits != null) {
-                        if (totalUnits <= 0) {
-                            showAlert("Erro", "O total deve ser maior que zero.", Alert.AlertType.ERROR);
-                            return;
-                        }
-                        if (currentUnits < 0) {
-                            showAlert("Erro", "O valor atual não pode ser negativo.", Alert.AlertType.ERROR);
-                            return;
-                        }
-                        if (currentUnits > totalUnits) {
-                            showAlert("Erro", "O valor atual não pode ser maior que o total.", Alert.AlertType.ERROR);
-                            return;
-                        }
-                    }
-                    break;
-            }
+        // Validações genéricas para todos os tipos
+        if (totalUnits == null || totalUnits <= 0) {
+            showAlert("Erro", "O total deve ser maior que zero.", Alert.AlertType.ERROR);
+            return;
+        }
+        if (currentUnits == null || currentUnits < 0) {
+            showAlert("Erro", "O valor atual não pode ser negativo.", Alert.AlertType.ERROR);
+            return;
+        }
+        if (currentUnits > totalUnits) {
+            showAlert("Erro", "O valor atual não pode ser maior que o total.", Alert.AlertType.ERROR);
+            return;
         }
         
         // Criar DTO de atualização com progresso

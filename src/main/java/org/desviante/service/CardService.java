@@ -80,8 +80,8 @@ public class CardService {
 
         // Configurar campos de progresso baseado no tipo do card
         if (type != CardType.CARD) {
-            // Cards que suportam progresso devem ter totalUnits inicializado
-            newCard.setTotalUnits(0);
+            // Cards que suportam progresso devem ter totalUnits inicializado com valor válido
+            newCard.setTotalUnits(1);
             newCard.setCurrentUnits(0);
         } else {
             // Cards do tipo CARD não usam progresso
@@ -186,9 +186,21 @@ public class CardService {
         
         // 3. Atualizar campos de progresso se fornecidos
         if (totalUnits != null) {
+            // Garantir que total seja sempre válido (mínimo 1)
+            if (totalUnits <= 0) {
+                throw new IllegalArgumentException("O total deve ser maior que zero.");
+            }
             card.setTotalUnits(totalUnits);
         }
         if (currentUnits != null) {
+            // Garantir que current seja sempre válido (mínimo 0)
+            if (currentUnits < 0) {
+                throw new IllegalArgumentException("O valor atual não pode ser negativo.");
+            }
+            // Garantir que current não seja maior que total
+            if (totalUnits != null && currentUnits > totalUnits) {
+                throw new IllegalArgumentException("O valor atual não pode ser maior que o total.");
+            }
             card.setCurrentUnits(currentUnits);
         }
         if (manualProgress != null) {
