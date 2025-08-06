@@ -514,7 +514,6 @@ public class CardViewController {
         // Coletar valores de progresso usando spinners genéricos
         Integer totalUnits = totalSpinner.getValue();
         Integer currentUnits = currentSpinner.getValue();
-        Integer manualProgress = null; // Não usado mais, mantido para compatibilidade
         
         // Validações genéricas para todos os tipos
         if (totalUnits == null || totalUnits <= 0) {
@@ -531,7 +530,7 @@ public class CardViewController {
         }
         
         // Criar DTO de atualização com progresso
-        UpdateCardDetailsDTO updateData = new UpdateCardDetailsDTO(newTitle, newDescription, totalUnits, currentUnits, manualProgress);
+        UpdateCardDetailsDTO updateData = new UpdateCardDetailsDTO(newTitle, newDescription, totalUnits, currentUnits);
         
         // Verificar se houve mudança significativa no progresso para mostrar feedback
         String progressChangeMessage = getProgressChangeMessage(cardData, updateData);

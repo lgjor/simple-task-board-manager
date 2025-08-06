@@ -1,5 +1,8 @@
 import java.io.File
 
+// Constante centralizada para a versão da aplicação
+val appVersion = "1.0.4"
+
 val platform = when {
     org.gradle.internal.os.OperatingSystem.current().isWindows -> "win"
     org.gradle.internal.os.OperatingSystem.current().isLinux -> "linux"
@@ -25,7 +28,7 @@ plugins {
 }
 
 group = "org.desviante"
-version = "1.0.4"
+version = appVersion
 
 repositories {
     mavenCentral()
@@ -182,7 +185,7 @@ tasks.register<Exec>("jpackage") {
         "--win-menu",
         "--win-shortcut",
         "--vendor", "AuDesviante",
-        "--app-version", "1.0.4",
+        "--app-version", appVersion,
         "--icon", iconFile.absolutePath
     )
     
@@ -215,7 +218,7 @@ tasks.register<Exec>("jpackageLinux") {
         "--dest", "${layout.buildDirectory.get()}/dist",
         "--java-options", "-Xmx2048m",
         "--vendor", "AuDesviante",
-        "--app-version", "1.0.4",
+        "--app-version", appVersion,
         "--icon", iconFile.absolutePath
     )
     
@@ -248,7 +251,7 @@ tasks.register<Exec>("jpackageLinuxDeb") {
         "--dest", "${layout.buildDirectory.get()}/dist",
         "--java-options", "-Xmx2048m",
         "--vendor", "AuDesviante",
-        "--app-version", "1.0.3",
+        "--app-version", appVersion,
         "--icon", iconFile.absolutePath,
         "--linux-app-category", "Office",
         "--linux-menu-group", "Office",
@@ -287,7 +290,7 @@ tasks.register<Exec>("jpackageLinuxRpm") {
         "--dest", "${layout.buildDirectory.get()}/dist",
         "--java-options", "-Xmx2048m",
         "--vendor", "AuDesviante",
-        "--app-version", "1.0.3",
+        "--app-version", appVersion,
         "--icon", iconFile.absolutePath,
         "--linux-app-category", "Office",
         "--linux-menu-group", "Office",

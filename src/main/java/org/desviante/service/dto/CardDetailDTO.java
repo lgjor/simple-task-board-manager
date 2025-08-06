@@ -39,7 +39,6 @@ public record CardDetailDTO(
         CardType type,              // Tipo do card (CARD, BOOK, VIDEO, COURSE)
         Integer totalUnits,         // Total de unidades para progresso (páginas, minutos, módulos)
         Integer currentUnits,       // Unidades atuais para progresso
-        Integer manualProgress,     // Progresso manual para cards do tipo CARD (0-100)
         String creationDate,        // Data de criação formatada como string
         String lastUpdateDate,      // Data da última atualização formatada como string
         String completionDate,      // Data de conclusão formatada como string (pode ser null)

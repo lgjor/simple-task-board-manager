@@ -189,7 +189,7 @@ public class TaskManagerFacade {
                                     card.getType(),
                                     card.getTotalUnits(),
                                     card.getCurrentUnits(),
-                                    card.getManualProgress(),
+
                                     formatDateTime(card.getCreationDate()),
                                     formatDateTime(card.getLastUpdateDate()),
                                     formatDateTime(card.getCompletionDate()),
@@ -223,7 +223,6 @@ public class TaskManagerFacade {
                 newCard.getType(),
                 newCard.getTotalUnits(),
                 newCard.getCurrentUnits(),
-                newCard.getManualProgress(),
                 formatDateTime(newCard.getCreationDate()),
                 formatDateTime(newCard.getLastUpdateDate()),
                 formatDateTime(newCard.getCompletionDate()),
@@ -247,7 +246,6 @@ public class TaskManagerFacade {
                 updatedCard.getType(),
                 updatedCard.getTotalUnits(),
                 updatedCard.getCurrentUnits(),
-                updatedCard.getManualProgress(),
                 formatDateTime(updatedCard.getCreationDate()),
                 formatDateTime(updatedCard.getLastUpdateDate()),
                 formatDateTime(updatedCard.getCompletionDate()),
@@ -290,8 +288,7 @@ public class TaskManagerFacade {
                 request.title(), 
                 request.description(),
                 request.totalUnits(),
-                request.currentUnits(),
-                request.manualProgress()
+                request.currentUnits()
         );
 
         // 2. Obter o tipo da coluna atual
@@ -306,7 +303,6 @@ public class TaskManagerFacade {
                 updatedCard.getType(),
                 updatedCard.getTotalUnits(),
                 updatedCard.getCurrentUnits(),
-                updatedCard.getManualProgress(),
                 formatDateTime(updatedCard.getCreationDate()),
                 formatDateTime(updatedCard.getLastUpdateDate()),
                 formatDateTime(updatedCard.getCompletionDate()),

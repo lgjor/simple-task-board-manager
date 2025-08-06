@@ -51,7 +51,7 @@ public class CardRepository {
         this.jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
         this.jdbcInsert = new SimpleJdbcInsert(dataSource)
                 .withTableName("cards")
-                .usingColumns("title", "description", "type", "total_units", "current_units", "manual_progress", "creation_date", "last_update_date", "completion_date", "board_column_id")
+                .usingColumns("title", "description", "type", "total_units", "current_units", "creation_date", "last_update_date", "completion_date", "board_column_id")
                 .usingGeneratedKeyColumns("id");
     }
 
@@ -77,7 +77,6 @@ public class CardRepository {
         // Mapear campos de progresso
         card.setTotalUnits(rs.getObject("total_units", Integer.class));
         card.setCurrentUnits(rs.getObject("current_units", Integer.class));
-        card.setManualProgress(rs.getObject("manual_progress", Integer.class));
         
         card.setCreationDate(rs.getTimestamp("creation_date").toLocalDateTime());
         card.setLastUpdateDate(rs.getTimestamp("last_update_date").toLocalDateTime());
@@ -145,7 +144,6 @@ public class CardRepository {
                 .addValue("type", card.getType() != null ? card.getType().name() : "CARD")
                 .addValue("total_units", card.getTotalUnits())
                 .addValue("current_units", card.getCurrentUnits())
-                .addValue("manual_progress", card.getManualProgress())
                 .addValue("creation_date", card.getCreationDate())
                 .addValue("last_update_date", card.getLastUpdateDate())
                 .addValue("completion_date", card.getCompletionDate())
@@ -163,7 +161,6 @@ public class CardRepository {
                         type = :type,
                         total_units = :total_units,
                         current_units = :current_units,
-                        manual_progress = :manual_progress,
                         last_update_date = :last_update_date,
                         completion_date = :completion_date,
                         board_column_id = :board_column_id

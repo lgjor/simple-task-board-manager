@@ -86,13 +86,6 @@ public class Card {
     private Integer currentUnits;
 
     /**
-     * Progresso manual para cards do tipo CARD.
-     * <p>Representa o percentual de progresso manual definido pelo usuário
-     * para cards do tipo CARD. Valores de 0 a 100. Null para outros tipos.</p>
-     */
-    private Integer manualProgress;
-
-    /**
      * Calcula o percentual de progresso do card de forma unificada.
      * 
      * <p>Para todos os tipos de card, calcula baseado em currentUnits/totalUnits.

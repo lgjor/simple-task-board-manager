@@ -32,7 +32,6 @@ public record UpdateCardDetailsDTO(
         String title,               // Novo título do card
         String description,         // Nova descrição do card
         Integer totalUnits,         // Total de unidades para progresso (pode ser null)
-        Integer currentUnits,       // Unidades atuais para progresso (pode ser null)
-        Integer manualProgress      // Progresso manual para cards do tipo CARD (pode ser null)
+        Integer currentUnits        // Unidades atuais para progresso (pode ser null)
 ) {
 }

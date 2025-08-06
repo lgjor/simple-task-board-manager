@@ -151,7 +151,7 @@ public class CardService {
      */
     @Transactional
     public Card updateCardDetails(Long cardId, String newTitle, String newDescription) {
-        return updateCardDetails(cardId, newTitle, newDescription, null, null, null);
+        return updateCardDetails(cardId, newTitle, newDescription, null, null);
     }
 
     /**
@@ -175,7 +175,7 @@ public class CardService {
      * @throws ResourceNotFoundException se o card não for encontrado
      */
     @Transactional
-    public Card updateCardDetails(Long cardId, String newTitle, String newDescription, Integer totalUnits, Integer currentUnits, Integer manualProgress) {
+    public Card updateCardDetails(Long cardId, String newTitle, String newDescription, Integer totalUnits, Integer currentUnits) {
         // 1. Encontra o card ou lança uma exceção se não existir.
         Card card = cardRepository.findById(cardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Card com ID " + cardId + " não encontrado para atualização."));
@@ -202,9 +202,6 @@ public class CardService {
                 throw new IllegalArgumentException("O valor atual não pode ser maior que o total.");
             }
             card.setCurrentUnits(currentUnits);
-        }
-        if (manualProgress != null) {
-            card.setManualProgress(manualProgress);
         }
 
         // 4. REGRA DE NEGÓCIO: Sempre atualiza a data da última modificação.

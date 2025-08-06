@@ -63,7 +63,6 @@ CREATE TABLE cards (
     type              VARCHAR(50) DEFAULT 'CARD',
     total_units       INT,
     current_units     INT,
-    manual_progress   INT,
     creation_date     TIMESTAMP NOT NULL,
     last_update_date  TIMESTAMP NOT NULL,
     completion_date   TIMESTAMP,

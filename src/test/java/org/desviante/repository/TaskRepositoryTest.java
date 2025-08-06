@@ -45,7 +45,7 @@ public class TaskRepositoryTest {
         testBoard = boardRepository.save(new Board(null, "Board de Teste para Tasks", LocalDateTime.now(), null, null));
         testColumn = columnRepository.save(new BoardColumn(null, "Coluna de Teste para Tasks", 0, BoardColumnKindEnum.INITIAL, testBoard.getId()));
         LocalDateTime now = LocalDateTime.now();
-        testCard = cardRepository.save(new Card(null, "Card de Teste para Tasks", "Descrição", CardType.CARD, null, null, null, now, now, null, testColumn.getId()));
+        testCard = cardRepository.save(new Card(null, "Card de Teste para Tasks", "Descrição", CardType.CARD, null, null, now, now, null, testColumn.getId()));
     }
 
     @AfterEach

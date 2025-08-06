@@ -363,7 +363,7 @@ class TaskManagerFacadeIntegrationTest {
         Card originalCard = cardService.createCard("Título Antigo", "Descrição Antiga", column.getId(), CardType.CARD);
 
         // 2. Criar o DTO de requisição com os novos dados.
-        var request = new UpdateCardDetailsDTO("Título Novo e Melhorado", "Descrição nova e mais detalhada.", null, null, null);
+        var request = new UpdateCardDetailsDTO("Título Novo e Melhorado", "Descrição nova e mais detalhada.", null, null);
 
         // --- Act ---
         // 3. Chamar o método da fachada que estamos testando.
@@ -401,7 +401,7 @@ class TaskManagerFacadeIntegrationTest {
                 "O card não deveria existir antes da tentativa de atualização.");
 
         // 2. Criar o DTO de requisição com dados válidos.
-        var request = new UpdateCardDetailsDTO("Título Tentativo", "Descrição tentativa", null, null, null);
+        var request = new UpdateCardDetailsDTO("Título Tentativo", "Descrição tentativa", null, null);
 
         // --- Act & Assert ---
         // 3. Chamar o método da fachada e verificar se a exceção correta é lançada.

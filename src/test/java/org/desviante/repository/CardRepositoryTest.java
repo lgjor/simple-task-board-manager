@@ -84,7 +84,7 @@ public class CardRepositoryTest {
     void save_shouldInsertNewCard() {
         // ARRANGE
         LocalDateTime now = LocalDateTime.now();
-        Card newCard = new Card(null, "Novo Card", "Descrição do card", CardType.CARD, null, null, null, now, now, null, testColumn.getId());
+        Card newCard = new Card(null, "Novo Card", "Descrição do card", CardType.CARD, null, null, now, now, null, testColumn.getId());
 
         // ACT
         Card savedCard = cardRepository.save(newCard);
@@ -105,7 +105,7 @@ public class CardRepositoryTest {
     @DisplayName("Deve encontrar um card pelo seu ID")
     void findById_shouldReturnCard_whenExists() {
         // ARRANGE
-        Card cardToSave = new Card(null, "Card para Busca", "...", CardType.CARD, null, null, null, LocalDateTime.now(), LocalDateTime.now(), null, testColumn.getId());
+        Card cardToSave = new Card(null, "Card para Busca", "...", CardType.CARD, null, null, LocalDateTime.now(), LocalDateTime.now(), null, testColumn.getId());
         Card savedCard = cardRepository.save(cardToSave);
 
         // ACT
@@ -121,7 +121,7 @@ public class CardRepositoryTest {
     void save_shouldUpdateExistingCard() {
         // ARRANGE
         LocalDateTime creationTime = LocalDateTime.now().minusHours(1);
-        Card cardToSave = new Card(null, "Título Original", "...", CardType.CARD, null, null, null, creationTime, creationTime, null, testColumn.getId());
+        Card cardToSave = new Card(null, "Título Original", "...", CardType.CARD, null, null, creationTime, creationTime, null, testColumn.getId());
         Card savedCard = cardRepository.save(cardToSave);
 
         // ACT
@@ -146,8 +146,8 @@ public class CardRepositoryTest {
     void findByBoardColumnIdIn_shouldReturnMatchingCards() {
         // ARRANGE
         LocalDateTime now = LocalDateTime.now();
-        cardRepository.save(new Card(null, "Card 1", "...", CardType.CARD, null, null, null, now, now, null, testColumn.getId()));
-        cardRepository.save(new Card(null, "Card 2", "...", CardType.CARD, null, null, null, now, now, null, testColumn.getId()));
+        cardRepository.save(new Card(null, "Card 1", "...", CardType.CARD, null, null, now, now, null, testColumn.getId()));
+        cardRepository.save(new Card(null, "Card 2", "...", CardType.CARD, null, null, now, now, null, testColumn.getId()));
 
         // ACT
         List<Card> foundCards = cardRepository.findByBoardColumnIdIn(List.of(testColumn.getId()));
