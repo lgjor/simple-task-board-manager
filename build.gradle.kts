@@ -1,7 +1,7 @@
 import java.io.File
 
 // Constante centralizada para a versão da aplicação
-val appVersion = "1.0.7"
+val appVersion = "1.0.9"
 
 val platform = when {
     org.gradle.internal.os.OperatingSystem.current().isWindows -> "win"

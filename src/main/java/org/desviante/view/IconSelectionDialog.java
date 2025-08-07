@@ -8,7 +8,6 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
-import javafx.stage.Stage;
 import org.desviante.util.IconManager;
 import org.desviante.util.IconSearchMapper;
 

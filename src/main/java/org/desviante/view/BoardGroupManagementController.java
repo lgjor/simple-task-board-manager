@@ -16,7 +16,6 @@ import org.desviante.model.BoardGroup;
 import org.desviante.service.BoardGroupService;
 import org.desviante.service.dto.BoardGroupDTO;
 import org.desviante.service.dto.CreateBoardGroupRequestDTO;
-import org.desviante.view.IconSelectionDialog;
 
 import java.net.URL;
 import java.time.format.DateTimeFormatter;
