@@ -438,6 +438,33 @@
     -fx-background-color: transparent;
 }
 
+/* Estilos específicos para ImageView de ícones */
+.icon-image-view {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+/* Estilos para células de tabela com ícones */
+.table-cell .image-view {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+/* Alinhamento centralizado para todas as células da tabela de boards */
+.table-view .table-cell {
+    -fx-alignment: center;
+}
+
+/* Alinhamento específico para células com texto */
+.table-view .table-cell:has(.text) {
+    -fx-alignment: center;
+}
+
+/* Alinhamento específico para células com ImageView */
+.table-view .table-cell:has(.image-view) {
+    -fx-alignment: center;
+}
+
 /* Separador redimensionável */
 .resizable-separator {
     -fx-background-color: #E0E0E0;
@@ -477,4 +504,152 @@
 
 .resizable-separator:hover .resize-indicator {
     -fx-text-fill: white;
+}
+
+/* --- Estilos para a tela de gerenciamento de tipos de card --- */
+
+/* Título da tela */
+.title-label {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+}
+
+/* Descrição da tela */
+.description-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #666666;
+    -fx-padding: 0 0 10 0;
+}
+
+/* Seção da tela */
+.section-label {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+    -fx-padding: 0 0 5 0;
+}
+
+/* Botão primário (Adicionar) */
+.primary-button {
+    -fx-background-color: #007BFF;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8 16;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+    -fx-cursor: hand;
+}
+
+.primary-button:hover {
+    -fx-background-color: #0056B3;
+}
+
+.primary-button:pressed {
+    -fx-background-color: #004085;
+}
+
+/* Botão secundário (Editar, Fechar) */
+.secondary-button {
+    -fx-background-color: #6C757D;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8 16;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+    -fx-cursor: hand;
+}
+
+.secondary-button:hover {
+    -fx-background-color: #545B62;
+}
+
+.secondary-button:pressed {
+    -fx-background-color: #3D4246;
+}
+
+/* Botão de perigo (Excluir) */
+.danger-button {
+    -fx-background-color: #DC3545;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8 16;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+    -fx-cursor: hand;
+}
+
+.danger-button:hover {
+    -fx-background-color: #C82333;
+}
+
+.danger-button:pressed {
+    -fx-background-color: #A71E2A;
+}
+
+/* Tabela de tipos de Card */
+.table-view {
+    -fx-background-color: white;
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 1;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+}
+
+.table-view .column-header {
+    -fx-background-color: #F8F9FA;
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 0 0 1 0;
+}
+
+.table-view .column-header .label {
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+}
+
+.table-view .table-row-cell {
+    -fx-background-color: white;
+    -fx-border-color: transparent transparent #F0F0F0 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.table-view .table-row-cell:selected {
+    -fx-background-color: #E3F2FD;
+    -fx-text-fill: #333333;
+}
+
+.table-view .table-row-cell:selected .table-cell {
+    -fx-text-fill: #333333;
+}
+
+.table-view .table-row-cell:hover {
+    -fx-background-color: #F5F5F5;
+}
+
+.table-view .table-row-cell:hover .table-cell {
+    -fx-text-fill: #333333;
+}
+
+.table-view .table-cell {
+    -fx-text-fill: #333333;
+}
+
+/* Garantir que o texto seja sempre visível em todos os estados */
+.table-view .table-row-cell .table-cell {
+    -fx-text-fill: #333333;
+    -fx-alignment: center; /* Alinhamento vertical e horizontal ao centro */
+}
+
+.table-view .table-row-cell:selected .table-cell {
+    -fx-text-fill: #333333;
+    -fx-font-weight: bold;
+    -fx-alignment: center; /* Alinhamento vertical e horizontal ao centro */
+}
+
+/* Botões desabilitados */
+.primary-button:disabled,
+.secondary-button:disabled,
+.danger-button:disabled {
+    -fx-opacity: 0.5;
+    -fx-cursor: default;
 }

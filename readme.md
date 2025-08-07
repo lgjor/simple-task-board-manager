@@ -120,6 +120,34 @@ Para garantir qualidade e estabilidade, o projeto conta com uma suíte abrangent
 3. **Execute**: Abra o aplicativo e comece a usar imediatamente
 4. **Produza**: Foque nas suas tarefas, não na ferramenta
 
+## 💾 Preservação de Dados
+
+O sistema garante que seus dados sejam preservados durante atualizações:
+
+### **Backup Automático**
+- Scripts de backup para Linux/Mac e Windows
+- Backups salvos em `~/myboards/backups/`
+- Metadados incluídos em cada backup
+
+### **Migrações Automáticas**
+- Liquibase gerencia migrações de banco automaticamente
+- Dados existentes são preservados durante atualizações
+- Verificação de integridade automática
+
+### **Processo de Atualização Segura**
+```bash
+# 1. Backup (antes da atualização)
+./scripts/backup-database.sh
+
+# 2. Instalar nova versão
+# O instalador preserva ~/myboards/
+
+# 3. Verificar integridade
+./scripts/check-database.sh
+```
+
+**📖 [Guia Completo de Atualização](ATUALIZACAO_BANCO_DADOS.md)**
+
 ## 📦 Instalação
 
 ### Windows

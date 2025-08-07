@@ -7,6 +7,7 @@ import org.desviante.model.BoardColumn;
 import org.desviante.model.BoardGroup;
 import org.desviante.model.Card;
 import org.desviante.model.enums.BoardColumnKindEnum;
+
 import org.desviante.service.dto.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +29,7 @@ public class TaskManagerFacade {
     private final CardService cardService;
     private final TaskService taskService;
     private final BoardGroupService boardGroupService;
+    private final CardTypeService cardTypeService;
 
     @Transactional(readOnly = true)
     public List<BoardSummaryDTO> getAllBoardSummaries() {
@@ -186,7 +188,7 @@ public class TaskManagerFacade {
                                     card.getId(),
                                     card.getTitle(),
                                     card.getDescription(),
-                                    card.getType(),
+                                    card.getCardType() != null ? card.getCardType().getName() : null,
                                     card.getTotalUnits(),
                                     card.getCurrentUnits(),
 
@@ -209,7 +211,7 @@ public class TaskManagerFacade {
                 request.title(),
                 request.description(),
                 request.parentColumnId(),
-                request.type()
+                request.cardTypeId()
         );
 
         // Obter o tipo da coluna para incluir no DTO
@@ -220,7 +222,7 @@ public class TaskManagerFacade {
                 newCard.getId(),
                 newCard.getTitle(),
                 newCard.getDescription(),
-                newCard.getType(),
+                newCard.getCardType() != null ? newCard.getCardType().getName() : null,
                 newCard.getTotalUnits(),
                 newCard.getCurrentUnits(),
                 formatDateTime(newCard.getCreationDate()),
@@ -243,7 +245,7 @@ public class TaskManagerFacade {
                 updatedCard.getId(),
                 updatedCard.getTitle(),
                 updatedCard.getDescription(),
-                updatedCard.getType(),
+                updatedCard.getCardType() != null ? updatedCard.getCardType().getName() : null,
                 updatedCard.getTotalUnits(),
                 updatedCard.getCurrentUnits(),
                 formatDateTime(updatedCard.getCreationDate()),
@@ -300,7 +302,7 @@ public class TaskManagerFacade {
                 updatedCard.getId(),
                 updatedCard.getTitle(),
                 updatedCard.getDescription(),
-                updatedCard.getType(),
+                updatedCard.getCardType() != null ? updatedCard.getCardType().getName() : null,
                 updatedCard.getTotalUnits(),
                 updatedCard.getCurrentUnits(),
                 formatDateTime(updatedCard.getCreationDate()),
@@ -377,5 +379,36 @@ public class TaskManagerFacade {
         return boardsWithoutGroup.stream()
                 .map(board -> calculateBoardSummary(board, columnsByBoardId, cardsByColumnId))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Retorna o serviço de tipos de card para uso na interface.
+     */
+    public CardTypeService getCardTypeService() {
+        return cardTypeService;
+    }
+    
+    public BoardGroupService getBoardGroupService() {
+        return boardGroupService;
+    }
+
+    /**
+     * Obtém todas as opções de tipos de card disponíveis.
+     * 
+     * <p>Retorna uma lista de todos os tipos de card disponíveis,
+     * incluindo os tipos padrão que foram migrados para a tabela.</p>
+     *
+     * @return lista de opções de tipos de card
+     */
+    @Transactional(readOnly = true)
+    public List<CardTypeOptionDTO> getAllCardTypeOptions() {
+        List<org.desviante.model.CardType> allTypes = cardTypeService.getAllCardTypes();
+        
+        return allTypes.stream()
+                .map(cardType -> {
+                    CardTypeDTO cardTypeDTO = CardTypeDTO.from(cardType);
+                    return CardTypeOptionDTO.fromCardType(cardTypeDTO);
+                })
+                .toList();
     }
 }

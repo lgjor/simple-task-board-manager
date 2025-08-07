@@ -186,4 +186,21 @@ public class BoardGroupRepository {
             return Optional.empty();
         }
     }
+
+    /**
+     * Verifica se existe um grupo com o nome especificado.
+     * 
+     * <p>Utilizada para validação de unicidade de nomes de grupos.
+     * A verificação é case-insensitive para evitar duplicatas com diferenças
+     * apenas de maiúsculas/minúsculas.</p>
+     * 
+     * @param name nome do grupo a ser verificado
+     * @return true se o grupo existe, false caso contrário
+     */
+    public boolean existsByName(String name) {
+        String sql = "SELECT COUNT(*) FROM board_groups WHERE UPPER(name) = UPPER(:name)";
+        var params = new MapSqlParameterSource("name", name);
+        Integer count = jdbcTemplate.queryForObject(sql, params, Integer.class);
+        return count != null && count > 0;
+    }
 } 

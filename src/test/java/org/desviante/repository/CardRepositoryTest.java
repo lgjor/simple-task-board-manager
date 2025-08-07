@@ -1,11 +1,11 @@
 package org.desviante.repository;
 
-import org.desviante.config.DataConfig;
+import org.desviante.config.TestDataConfig;
 import org.desviante.model.Board;
 import org.desviante.model.BoardColumn;
 import org.desviante.model.Card;
 import org.desviante.model.enums.BoardColumnKindEnum;
-import org.desviante.model.enums.CardType;
+import org.desviante.model.CardType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -45,7 +45,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @see Card
  * @see BoardColumn
  */
-@SpringJUnitConfig(classes = DataConfig.class)
+@SpringJUnitConfig(classes = TestDataConfig.class)
 @Sql(scripts = "/test-schema.sql") // CORREÇÃO: Garante que o schema seja criado antes dos testes.
 @Transactional // Garante que cada teste rode em uma transação isolada e seja revertido
 public class CardRepositoryTest {
@@ -84,7 +84,13 @@ public class CardRepositoryTest {
     void save_shouldInsertNewCard() {
         // ARRANGE
         LocalDateTime now = LocalDateTime.now();
-        Card newCard = new Card(null, "Novo Card", "Descrição do card", CardType.CARD, null, null, now, now, null, testColumn.getId());
+        Card newCard = Card.builder()
+                .title("Novo Card")
+                .description("Descrição do card")
+                .creationDate(now)
+                .lastUpdateDate(now)
+                .boardColumnId(testColumn.getId())
+                .build();
 
         // ACT
         Card savedCard = cardRepository.save(newCard);
@@ -105,7 +111,13 @@ public class CardRepositoryTest {
     @DisplayName("Deve encontrar um card pelo seu ID")
     void findById_shouldReturnCard_whenExists() {
         // ARRANGE
-        Card cardToSave = new Card(null, "Card para Busca", "...", CardType.CARD, null, null, LocalDateTime.now(), LocalDateTime.now(), null, testColumn.getId());
+        Card cardToSave = Card.builder()
+                .title("Card para Busca")
+                .description("...")
+                .creationDate(LocalDateTime.now())
+                .lastUpdateDate(LocalDateTime.now())
+                .boardColumnId(testColumn.getId())
+                .build();
         Card savedCard = cardRepository.save(cardToSave);
 
         // ACT
@@ -121,7 +133,13 @@ public class CardRepositoryTest {
     void save_shouldUpdateExistingCard() {
         // ARRANGE
         LocalDateTime creationTime = LocalDateTime.now().minusHours(1);
-        Card cardToSave = new Card(null, "Título Original", "...", CardType.CARD, null, null, creationTime, creationTime, null, testColumn.getId());
+        Card cardToSave = Card.builder()
+                .title("Título Original")
+                .description("...")
+                .creationDate(creationTime)
+                .lastUpdateDate(creationTime)
+                .boardColumnId(testColumn.getId())
+                .build();
         Card savedCard = cardRepository.save(cardToSave);
 
         // ACT
@@ -146,8 +164,20 @@ public class CardRepositoryTest {
     void findByBoardColumnIdIn_shouldReturnMatchingCards() {
         // ARRANGE
         LocalDateTime now = LocalDateTime.now();
-        cardRepository.save(new Card(null, "Card 1", "...", CardType.CARD, null, null, now, now, null, testColumn.getId()));
-        cardRepository.save(new Card(null, "Card 2", "...", CardType.CARD, null, null, now, now, null, testColumn.getId()));
+        cardRepository.save(Card.builder()
+                .title("Card 1")
+                .description("...")
+                .creationDate(now)
+                .lastUpdateDate(now)
+                .boardColumnId(testColumn.getId())
+                .build());
+        cardRepository.save(Card.builder()
+                .title("Card 2")
+                .description("...")
+                .creationDate(now)
+                .lastUpdateDate(now)
+                .boardColumnId(testColumn.getId())
+                .build());
 
         // ACT
         List<Card> foundCards = cardRepository.findByBoardColumnIdIn(List.of(testColumn.getId()));

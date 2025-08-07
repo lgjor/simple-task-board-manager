@@ -1,7 +1,6 @@
 package org.desviante.test;
 
-import org.desviante.config.AppConfig;
-import org.desviante.config.DataConfig;
+import org.desviante.config.TestDataConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Teste de integração para verificar a configuração do DataSource e a conexão com o banco de dados.
  */
-@SpringJUnitConfig(classes = DataConfig.class) // Carrega o contexto do Spring a partir da nossa classe de configuração.
+@SpringJUnitConfig(classes = TestDataConfig.class) // Carrega o contexto do Spring a partir da nossa classe de configuração de teste.
 class DataSourceConnectionTest {
 
     @Autowired // Pede ao Spring para injetar o bean DataSource que configuramos.

@@ -1,12 +1,12 @@
 package org.desviante.repository;
 
-import org.desviante.config.DataConfig;
+import org.desviante.config.TestDataConfig;
 import org.desviante.model.Board;
 import org.desviante.model.BoardColumn;
 import org.desviante.model.Card;
 import org.desviante.model.Task;
 import org.desviante.model.enums.BoardColumnKindEnum;
-import org.desviante.model.enums.CardType;
+import org.desviante.model.CardType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,7 +21,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringJUnitConfig(classes = DataConfig.class)
+@SpringJUnitConfig(classes = TestDataConfig.class)
 @Sql(scripts = "/test-schema.sql") // CORREÇÃO: Garante que o schema seja criado antes dos testes.
 @Transactional // Garante que cada teste rode em uma transação isolada e seja revertido
 public class TaskRepositoryTest {
@@ -45,7 +45,13 @@ public class TaskRepositoryTest {
         testBoard = boardRepository.save(new Board(null, "Board de Teste para Tasks", LocalDateTime.now(), null, null));
         testColumn = columnRepository.save(new BoardColumn(null, "Coluna de Teste para Tasks", 0, BoardColumnKindEnum.INITIAL, testBoard.getId()));
         LocalDateTime now = LocalDateTime.now();
-        testCard = cardRepository.save(new Card(null, "Card de Teste para Tasks", "Descrição", CardType.CARD, null, null, now, now, null, testColumn.getId()));
+        testCard = cardRepository.save(Card.builder()
+                .title("Card de Teste para Tasks")
+                .description("Descrição")
+                .creationDate(now)
+                .lastUpdateDate(now)
+                .boardColumnId(testColumn.getId())
+                .build());
     }
 
     @AfterEach

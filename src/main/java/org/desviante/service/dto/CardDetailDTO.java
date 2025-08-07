@@ -1,6 +1,5 @@
 package org.desviante.service.dto;
 
-import org.desviante.model.enums.CardType;
 import org.desviante.model.enums.BoardColumnKindEnum;
 
 /**
@@ -36,7 +35,7 @@ public record CardDetailDTO(
         Long id,                    // Identificador único do card
         String title,               // Título do card para exibição
         String description,         // Descrição detalhada do card
-        CardType type,              // Tipo do card (CARD, BOOK, VIDEO, COURSE)
+        String typeName,            // Nome do tipo de card
         Integer totalUnits,         // Total de unidades para progresso (páginas, minutos, módulos)
         Integer currentUnits,       // Unidades atuais para progresso
         String creationDate,        // Data de criação formatada como string

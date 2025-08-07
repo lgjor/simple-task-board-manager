@@ -1,7 +1,7 @@
 import java.io.File
 
 // Constante centralizada para a versão da aplicação
-val appVersion = "1.0.4"
+val appVersion = "1.0.7"
 
 val platform = when {
     org.gradle.internal.os.OperatingSystem.current().isWindows -> "win"
@@ -25,6 +25,7 @@ plugins {
     id("java")
     id("application")
     id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("io.freefair.lombok") version "8.4"
 }
 
 group = "org.desviante"
@@ -78,6 +79,12 @@ dependencies {
         exclude(group = "org.springframework.boot", module = "spring-boot-starter-logging")
         exclude(group = "org.apache.logging.log4j")
     }
+    implementation("jakarta.annotation:jakarta.annotation-api:2.1.1")
+    // Liquibase para migrações de banco (comentado temporariamente devido a conflitos)
+    // implementation("org.springframework.boot:spring-boot-starter-liquibase"){
+    //     exclude(group = "org.springframework.boot", module = "spring-boot-starter-logging")
+    //     exclude(group = "org.apache.logging.log4j")
+    // }
     implementation("org.slf4j:slf4j-simple:2.0.13")
     runtimeOnly("com.h2database:h2:2.3.232")
     compileOnly("org.projectlombok:lombok:1.18.32")
@@ -184,6 +191,10 @@ tasks.register<Exec>("jpackage") {
         "--win-dir-chooser",
         "--win-menu",
         "--win-shortcut",
+        "--win-per-user-install",
+        "--win-upgrade-uuid", "550e8400-e29b-41d4-a716-446655440000",
+        "--win-help-url", "https://github.com/desviante/simple-task-board-manager",
+        "--win-update-url", "https://github.com/desviante/simple-task-board-manager/releases",
         "--vendor", "AuDesviante",
         "--app-version", appVersion,
         "--icon", iconFile.absolutePath

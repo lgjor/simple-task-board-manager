@@ -3,7 +3,7 @@ package org.desviante.service;
 import org.desviante.exception.ResourceNotFoundException;
 import org.desviante.model.BoardColumn;
 import org.desviante.model.Card;
-import org.desviante.model.enums.CardType;
+import org.desviante.model.CardType;
 import org.desviante.repository.BoardColumnRepository;
 import org.desviante.repository.CardRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -46,6 +46,9 @@ class CardServiceTest {
     @Mock
     private BoardColumnRepository columnRepository;
 
+    @Mock
+    private CardTypeService customCardTypeService;
+
     @InjectMocks
     private CardService cardService;
 
@@ -56,12 +59,19 @@ class CardServiceTest {
         String title = "Test Card";
         String description = "Test Description";
         Long parentColumnId = 1L;
-        CardType type = CardType.CARD;
+        Long customTypeId = 1L;
 
         BoardColumn parentColumn = new BoardColumn();
         parentColumn.setId(parentColumnId);
 
+        CardType cardType = CardType.builder()
+                .id(customTypeId)
+                .name("CARD")
+                .unitLabel("card")
+                .build();
+
         when(columnRepository.findById(parentColumnId)).thenReturn(Optional.of(parentColumn));
+        when(customCardTypeService.getCardTypeById(customTypeId)).thenReturn(cardType);
         when(cardRepository.save(any(Card.class))).thenAnswer(invocation -> {
             Card card = invocation.getArgument(0);
             card.setId(1L);
@@ -69,14 +79,14 @@ class CardServiceTest {
         });
 
         // Act
-        Card result = cardService.createCard(title, description, parentColumnId, type);
+        Card result = cardService.createCard(title, description, parentColumnId, customTypeId);
 
         // Assert
         assertNotNull(result);
         assertEquals(title, result.getTitle());
         assertEquals(description, result.getDescription());
         assertEquals(parentColumnId, result.getBoardColumnId());
-        assertEquals(type, result.getType());
+        assertEquals(customTypeId, result.getCardTypeId());
         assertNotNull(result.getCreationDate());
         assertNotNull(result.getLastUpdateDate());
         assertNull(result.getCompletionDate());
@@ -90,13 +100,13 @@ class CardServiceTest {
         String title = "Test Card";
         String description = "Test Description";
         Long parentColumnId = 999L;
-        CardType type = CardType.CARD;
+        Long customTypeId = 1L;
 
         when(columnRepository.findById(parentColumnId)).thenReturn(Optional.empty());
 
         // Act & Assert
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
-                () -> cardService.createCard(title, description, parentColumnId, type));
+                () -> cardService.createCard(title, description, parentColumnId, customTypeId));
 
         assertEquals("Coluna com ID 999 não encontrada.", exception.getMessage());
         verify(cardRepository, never()).save(any(Card.class));
@@ -226,12 +236,19 @@ class CardServiceTest {
         String title = "Test Book";
         String description = "Test Book Description";
         Long parentColumnId = 1L;
-        CardType type = CardType.BOOK;
+        Long customTypeId = 2L;
 
         BoardColumn parentColumn = new BoardColumn();
         parentColumn.setId(parentColumnId);
 
+        CardType cardType = CardType.builder()
+                .id(customTypeId)
+                .name("BOOK")
+                .unitLabel("páginas")
+                .build();
+
         when(columnRepository.findById(parentColumnId)).thenReturn(Optional.of(parentColumn));
+        when(customCardTypeService.getCardTypeById(customTypeId)).thenReturn(cardType);
         when(cardRepository.save(any(Card.class))).thenAnswer(invocation -> {
             Card card = invocation.getArgument(0);
             card.setId(1L);
@@ -239,13 +256,13 @@ class CardServiceTest {
         });
 
         // Act
-        Card result = cardService.createCard(title, description, parentColumnId, type);
+        Card result = cardService.createCard(title, description, parentColumnId, customTypeId);
 
         // Assert
         assertNotNull(result);
         assertEquals(title, result.getTitle());
         assertEquals(description, result.getDescription());
-        assertEquals(type, result.getType());
+        assertEquals(customTypeId, result.getCardTypeId());
         assertEquals(1, result.getTotalUnits());
         assertEquals(0, result.getCurrentUnits());
         verify(cardRepository).save(any(Card.class));
@@ -258,12 +275,19 @@ class CardServiceTest {
         String title = "Test Video";
         String description = "Test Video Description";
         Long parentColumnId = 1L;
-        CardType type = CardType.VIDEO;
+        Long customTypeId = 3L;
 
         BoardColumn parentColumn = new BoardColumn();
         parentColumn.setId(parentColumnId);
 
+        CardType cardType = CardType.builder()
+                .id(customTypeId)
+                .name("VIDEO")
+                .unitLabel("minutos")
+                .build();
+
         when(columnRepository.findById(parentColumnId)).thenReturn(Optional.of(parentColumn));
+        when(customCardTypeService.getCardTypeById(customTypeId)).thenReturn(cardType);
         when(cardRepository.save(any(Card.class))).thenAnswer(invocation -> {
             Card card = invocation.getArgument(0);
             card.setId(1L);
@@ -271,13 +295,13 @@ class CardServiceTest {
         });
 
         // Act
-        Card result = cardService.createCard(title, description, parentColumnId, type);
+        Card result = cardService.createCard(title, description, parentColumnId, customTypeId);
 
         // Assert
         assertNotNull(result);
         assertEquals(title, result.getTitle());
         assertEquals(description, result.getDescription());
-        assertEquals(type, result.getType());
+        assertEquals(customTypeId, result.getCardTypeId());
         assertEquals(1, result.getTotalUnits());
         assertEquals(0, result.getCurrentUnits());
         verify(cardRepository).save(any(Card.class));
@@ -290,12 +314,19 @@ class CardServiceTest {
         String title = "Test Course";
         String description = "Test Course Description";
         Long parentColumnId = 1L;
-        CardType type = CardType.COURSE;
+        Long customTypeId = 4L;
 
         BoardColumn parentColumn = new BoardColumn();
         parentColumn.setId(parentColumnId);
 
+        CardType cardType = CardType.builder()
+                .id(customTypeId)
+                .name("COURSE")
+                .unitLabel("aulas")
+                .build();
+
         when(columnRepository.findById(parentColumnId)).thenReturn(Optional.of(parentColumn));
+        when(customCardTypeService.getCardTypeById(customTypeId)).thenReturn(cardType);
         when(cardRepository.save(any(Card.class))).thenAnswer(invocation -> {
             Card card = invocation.getArgument(0);
             card.setId(1L);
@@ -303,13 +334,13 @@ class CardServiceTest {
         });
 
         // Act
-        Card result = cardService.createCard(title, description, parentColumnId, type);
+        Card result = cardService.createCard(title, description, parentColumnId, customTypeId);
 
         // Assert
         assertNotNull(result);
         assertEquals(title, result.getTitle());
         assertEquals(description, result.getDescription());
-        assertEquals(type, result.getType());
+        assertEquals(customTypeId, result.getCardTypeId());
         assertEquals(1, result.getTotalUnits());
         assertEquals(0, result.getCurrentUnits());
         verify(cardRepository).save(any(Card.class));
@@ -322,12 +353,19 @@ class CardServiceTest {
         String title = "Test Card";
         String description = "Test Description";
         Long parentColumnId = 1L;
-        CardType type = CardType.CARD;
+        Long customTypeId = 1L;
 
         BoardColumn parentColumn = new BoardColumn();
         parentColumn.setId(parentColumnId);
 
+        CardType cardType = CardType.builder()
+                .id(customTypeId)
+                .name("CARD")
+                .unitLabel("card")
+                .build();
+
         when(columnRepository.findById(parentColumnId)).thenReturn(Optional.of(parentColumn));
+        when(customCardTypeService.getCardTypeById(customTypeId)).thenReturn(cardType);
         when(cardRepository.save(any(Card.class))).thenAnswer(invocation -> {
             Card card = invocation.getArgument(0);
             card.setId(1L);
@@ -335,13 +373,14 @@ class CardServiceTest {
         });
 
         // Act
-        Card result = cardService.createCard(title, description, parentColumnId, type);
+        Card result = cardService.createCard(title, description, parentColumnId, customTypeId);
 
         // Assert
         assertNotNull(result);
-        assertTrue(result.isProgressable(), "Cards do tipo CARD devem suportar progresso");
-        assertNull(result.getTotalUnits());
-        assertNull(result.getCurrentUnits());
+        // Cards do tipo CARD agora suportam progresso básico (total=1, current=0)
+        assertTrue(result.isProgressable(), "Cards do tipo CARD agora suportam progresso básico");
+        assertEquals(1, result.getTotalUnits());
+        assertEquals(0, result.getCurrentUnits());
         verify(cardRepository).save(any(Card.class));
     }
 
@@ -350,6 +389,12 @@ class CardServiceTest {
     void shouldCalculateProgressCorrectly() {
         // Arrange
         Card card = new Card();
+        CardType cardType = CardType.builder()
+                .id(2L)
+                .name("BOOK")
+                .unitLabel("páginas")
+                .build();
+        card.setCardType(cardType);
         card.setTotalUnits(100);
         card.setCurrentUnits(50);
 
@@ -395,6 +440,12 @@ class CardServiceTest {
     void shouldReturnMaxProgressWhenCurrentUnitsExceedsTotalUnits() {
         // Arrange
         Card card = new Card();
+        CardType cardType = CardType.builder()
+                .id(2L)
+                .name("BOOK")
+                .unitLabel("páginas")
+                .build();
+        card.setCardType(cardType);
         card.setTotalUnits(100);
         card.setCurrentUnits(150);
 
@@ -403,5 +454,53 @@ class CardServiceTest {
 
         // Assert
         assertEquals(100.0, progress, 0.01);
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao criar card com título vazio")
+    void shouldThrowExceptionWhenCreatingCardWithEmptyTitle() {
+        // Arrange
+        String emptyTitle = "";
+        String description = "Test Description";
+        Long parentColumnId = 1L;
+        Long customTypeId = 1L;
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            () -> cardService.createCard(emptyTitle, description, parentColumnId, customTypeId));
+        
+        assertEquals("Título do card não pode ser vazio", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao criar card com título nulo")
+    void shouldThrowExceptionWhenCreatingCardWithNullTitle() {
+        // Arrange
+        String nullTitle = null;
+        String description = "Test Description";
+        Long parentColumnId = 1L;
+        Long customTypeId = 1L;
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            () -> cardService.createCard(nullTitle, description, parentColumnId, customTypeId));
+        
+        assertEquals("Título do card não pode ser vazio", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao criar card com título contendo apenas espaços")
+    void shouldThrowExceptionWhenCreatingCardWithWhitespaceOnlyTitle() {
+        // Arrange
+        String whitespaceTitle = "   ";
+        String description = "Test Description";
+        Long parentColumnId = 1L;
+        Long customTypeId = 1L;
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            () -> cardService.createCard(whitespaceTitle, description, parentColumnId, customTypeId));
+        
+        assertEquals("Título do card não pode ser vazio", exception.getMessage());
     }
 }

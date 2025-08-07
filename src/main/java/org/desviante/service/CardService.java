@@ -4,8 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.desviante.exception.ResourceNotFoundException;
 import org.desviante.model.BoardColumn;
 import org.desviante.model.Card;
+import org.desviante.model.CardType;
 import org.desviante.model.enums.BoardColumnKindEnum;
-import org.desviante.model.enums.CardType;
+
 import org.desviante.repository.BoardColumnRepository;
 import org.desviante.repository.CardRepository;
 import org.springframework.stereotype.Service;
@@ -46,6 +47,7 @@ public class CardService {
 
     private final CardRepository cardRepository;
     private final BoardColumnRepository columnRepository;
+    private final CardTypeService CardTypeService;
 
     /**
      * Cria um novo card em uma coluna específica.
@@ -67,27 +69,35 @@ public class CardService {
      * @throws ResourceNotFoundException se a coluna pai não for encontrada
      */
     @Transactional
-    public Card createCard(String title, String description, Long parentColumnId, CardType type) {
+    public Card createCard(String title, String description, Long parentColumnId, Long cardTypeId) {
+        // Valida se o título não está vazio
+        if (title == null || title.trim().isEmpty()) {
+            throw new IllegalArgumentException("Título do card não pode ser vazio");
+        }
+
         // Valida se a coluna pai existe antes de criar o card.
         columnRepository.findById(parentColumnId)
                 .orElseThrow(() -> new ResourceNotFoundException("Coluna com ID " + parentColumnId + " não encontrada."));
 
         Card newCard = new Card();
-        newCard.setTitle(title);
+        newCard.setTitle(title.trim());
         newCard.setDescription(description);
         newCard.setBoardColumnId(parentColumnId);
-        newCard.setType(type);
+        
+        // Se não especificado, usar o tipo CARD padrão
+        Long typeId = cardTypeId != null ? cardTypeId : CardTypeService.getDefaultCardTypeId();
+        newCard.setCardTypeId(typeId);
 
-        // Configurar campos de progresso baseado no tipo do card
-        if (type != CardType.CARD) {
-            // Cards que suportam progresso devem ter totalUnits inicializado com valor válido
-            newCard.setTotalUnits(1);
-            newCard.setCurrentUnits(0);
-        } else {
-            // Cards do tipo CARD não usam progresso
-            newCard.setTotalUnits(null);
-            newCard.setCurrentUnits(null);
+        // Carregar o objeto CardType completo para o card
+        if (typeId != null) {
+            CardType cardType = CardTypeService.getCardTypeById(typeId);
+            newCard.setCardType(cardType);
         }
+
+        // Configurar campos de progresso para todos os tipos de card
+        // Todos os cards devem ter progresso inicializado
+        newCard.setTotalUnits(1);
+        newCard.setCurrentUnits(0);
 
         // LÓGICA DE NEGÓCIO: Definir as datas no serviço é a prática correta.
         LocalDateTime now = LocalDateTime.now();
@@ -96,7 +106,15 @@ public class CardService {
         // Um novo card nunca está concluído.
         newCard.setCompletionDate(null);
 
-        return cardRepository.save(newCard);
+        Card savedCard = cardRepository.save(newCard);
+        
+        // Carregar o objeto CardType completo após salvar
+        if (savedCard.getCardTypeId() != null) {
+            CardType cardType = CardTypeService.getCardTypeById(savedCard.getCardTypeId());
+            savedCard.setCardType(cardType);
+        }
+        
+        return savedCard;
     }
 
     /**
@@ -219,7 +237,20 @@ public class CardService {
      */
     @Transactional(readOnly = true)
     public Optional<Card> getCardById(Long id) {
-        return cardRepository.findById(id);
+        Optional<Card> cardOpt = cardRepository.findById(id);
+        if (cardOpt.isPresent()) {
+            Card card = cardOpt.get();
+            // Carregar o objeto CardType completo se necessário
+            if (card.getCardTypeId() != null && card.getCardType() == null) {
+                try {
+                    CardType cardType = CardTypeService.getCardTypeById(card.getCardTypeId());
+                    card.setCardType(cardType);
+                } catch (ResourceNotFoundException e) {
+                    // Se o tipo não for encontrado, deixar como null
+                }
+            }
+        }
+        return cardOpt;
     }
 
     /**
@@ -235,7 +266,21 @@ public class CardService {
     @Transactional(readOnly = true)
     public List<Card> getCardsForColumns(List<Long> columnIds) {
         // O repositório já trata a lista vazia, então a delegação direta é segura.
-        return cardRepository.findByBoardColumnIdIn(columnIds);
+        List<Card> cards = cardRepository.findByBoardColumnIdIn(columnIds);
+        
+        // Carregar os tipos de card para todos os cards
+        for (Card card : cards) {
+            if (card.getCardTypeId() != null && card.getCardType() == null) {
+                try {
+                    CardType cardType = CardTypeService.getCardTypeById(card.getCardTypeId());
+                    card.setCardType(cardType);
+                } catch (ResourceNotFoundException e) {
+                    // Se o tipo não for encontrado, deixar como null
+                }
+            }
+        }
+        
+        return cards;
     }
 
     /**
@@ -258,4 +303,20 @@ public class CardService {
         cardRepository.deleteById(id);
     }
 
+    /**
+     * Obtém o nome do tipo de card pelo ID.
+     *
+     * @param typeId ID do tipo de card
+     * @return nome do tipo de card ou null se não encontrado
+     */
+    private String getCardTypeName(Long typeId) {
+        if (typeId == null) {
+            return null;
+        }
+        try {
+            return CardTypeService.getCardTypeById(typeId).getName();
+        } catch (ResourceNotFoundException e) {
+            return null;
+        }
+    }
 }

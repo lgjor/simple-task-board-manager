@@ -39,8 +39,9 @@ public class SimpleTaskBoardManagerApplication {
                 .headless(false)
                 .run(args);
 
+
+
         // Agora que o Spring está pronto, lançamos a aplicação JavaFX.
         Application.launch(MainApp.class, args);
     }
-
 }

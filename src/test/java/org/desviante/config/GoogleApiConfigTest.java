@@ -6,13 +6,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+import org.desviante.config.TestGoogleApiConfig;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 // Este teste agora só será executado se o arquivo de credenciais existir.
 // Isso evita que o build quebre em ambientes onde o arquivo não está configurado.
 @EnabledIf("org.desviante.config.GoogleApiConfigTest#credentialsFileExists")
-@SpringJUnitConfig(classes = {AppConfig.class, GoogleApiConfig.class})
+@SpringJUnitConfig(classes = {TestGoogleApiConfig.class, GoogleApiConfig.class})
 class GoogleApiConfigTest {
 
     @Autowired(required = false)

@@ -91,6 +91,8 @@ public class BoardViewController {
     private Button editGroupButton;
     @FXML
     private Button refreshButton;
+    @FXML
+    private Button cardTypesButton;
     // O botão linkGoogleButton foi removido
     @FXML
     private Button googleTaskButton;
@@ -211,6 +213,7 @@ public class BoardViewController {
                     setStyle("");
                 } else {
                     setText(item);
+                    setAlignment(javafx.geometry.Pos.CENTER);
                     if ("Sem Grupo".equals(item)) {
                         setStyle("-fx-text-fill: #adb5bd; -fx-font-style: italic;");
                     } else {
@@ -238,20 +241,84 @@ public class BoardViewController {
                     setText(null);
                     ImageView imageView = createEmojiImageView(item);
                     setGraphic(imageView);
+                    setAlignment(javafx.geometry.Pos.CENTER);
                 }
             }
         });
 
         // Configurar coluna do nome do board
         boardNameColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().name()));
+        boardNameColumn.setCellFactory(column -> new TableCell<BoardSummaryDTO, String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item);
+                    setAlignment(javafx.geometry.Pos.CENTER);
+                }
+            }
+        });
         
         boardStatusColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().status()));
+        boardStatusColumn.setCellFactory(column -> new TableCell<BoardSummaryDTO, String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item);
+                    setAlignment(javafx.geometry.Pos.CENTER);
+                }
+            }
+        });
+        
         statusInitialColumn.setCellValueFactory(cellData ->
                 new SimpleStringProperty(cellData.getValue().percentInitial() + " %"));
+        statusInitialColumn.setCellFactory(column -> new TableCell<BoardSummaryDTO, String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item);
+                    setAlignment(javafx.geometry.Pos.CENTER);
+                }
+            }
+        });
+        
         statusPendingColumn.setCellValueFactory(cellData ->
                 new SimpleStringProperty(cellData.getValue().percentPending() + " %"));
+        statusPendingColumn.setCellFactory(column -> new TableCell<BoardSummaryDTO, String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item);
+                    setAlignment(javafx.geometry.Pos.CENTER);
+                }
+            }
+        });
+        
         statusFinalColumn.setCellValueFactory(cellData ->
                 new SimpleStringProperty(cellData.getValue().percentFinal() + " %"));
+        statusFinalColumn.setCellFactory(column -> new TableCell<BoardSummaryDTO, String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item);
+                    setAlignment(javafx.geometry.Pos.CENTER);
+                }
+            }
+        });
 
         boardsTableView.getSelectionModel().selectedItemProperty().addListener(
                 (observable, oldValue, newValue) -> {
@@ -895,468 +962,98 @@ public class BoardViewController {
     }
 
     @FXML
+    private void handleCardTypes() {
+        try {
+            // Carregar a tela de gerenciamento de tipos de card
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/card-type-management.fxml"));
+            Parent root = loader.load();
+            
+            // Obter o controlador
+            CardTypeManagementController controller = loader.getController();
+            
+            // Configurar o serviço
+            controller.setCardTypeService(facade.getCardTypeService());
+            
+            // Criar uma nova janela
+            javafx.stage.Stage stage = new javafx.stage.Stage();
+            stage.setTitle("Gerenciamento de Tipos de Card");
+            stage.setScene(new javafx.scene.Scene(root));
+            stage.setMinWidth(600);
+            stage.setMinHeight(400);
+            stage.setResizable(true);
+            
+            // Centralizar a janela
+            stage.centerOnScreen();
+            
+            // Mostrar a janela
+            stage.show();
+            
+        } catch (IOException e) {
+            showError("Erro", "Não foi possível abrir a tela de gerenciamento de tipos de card: " + e.getMessage());
+        }
+    }
+
+    @FXML
     private void handleCreateGroup() {
-        // Criar dialog para criar grupo
-        Dialog<BoardGroup> dialog = new Dialog<>();
-        dialog.setTitle("Criar Novo Grupo");
-        dialog.setHeaderText("Preencha as informações do novo grupo");
-
-        // Configurar botões
-        ButtonType createButtonType = new ButtonType("Criar", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(createButtonType, ButtonType.CANCEL);
-
-        // Criar campos do formulário
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(20, 150, 10, 10));
-
-        TextField nameField = new TextField();
-        nameField.setPromptText("Nome do grupo");
-        TextArea descriptionField = new TextArea();
-        descriptionField.setPromptText("Descrição (opcional)");
-        descriptionField.setPrefRowCount(3);
-        descriptionField.setWrapText(true);
-
-        // Lista de códigos de emojis PNG disponíveis (50 ícones verificados e existentes)
-        String[] availableIcons = {
-            // 📁 Pastas e Arquivos
-            "1f4c1", "1f4c2", "1f4c3", "1f4c4", "1f4c5", "1f4c6", "1f4c7", "1f4c8", "1f4c9",
+        try {
+            // Carregar a tela de gerenciamento de grupos de board
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/board-group-management.fxml"));
+            Parent root = loader.load();
             
-            // 💰 Dinheiro e Finanças
-            "1f4b0", "1f4b1", "1f4b2", "1f4b3", "1f4b4", "1f4b5", "1f4b6", "1f4b7", "1f4b8", "1f4b9",
+            // Obter o controlador
+            BoardGroupManagementController controller = loader.getController();
             
-            // 💻 Tecnologia e Computação
-            "1f4bb", "1f4bd", "1f4be", "1f4bf", "1f4c0",
+            // Configurar o serviço
+            controller.setBoardGroupService(facade.getBoardGroupService());
             
-            // 🏠 Casa e Vida Doméstica
-            "1f3e0", "1f3e1", "1f3e2", "1f3e3", "1f3e4", "1f3e5", "1f3e6", "1f3e7", "1f3e8", "1f3e9",
+            // Criar uma nova janela
+            javafx.stage.Stage stage = new javafx.stage.Stage();
+            stage.setTitle("Gerenciamento de Grupos de Board");
+            stage.setScene(new javafx.scene.Scene(root));
+            stage.setMinWidth(800);
+            stage.setMinHeight(500);
+            stage.setResizable(true);
             
-            // 🏢 Organizações e Lugares
-            "1f3ea", "1f3eb", "1f3ec", "1f3ed", "1f3ee", "1f3ef", "1f3f0", "1f3f3",
+            // Centralizar a janela
+            stage.centerOnScreen();
             
-            // 🚀 Transporte e Mobilidade
-            "1f680", "1f681", "1f682", "1f683", "1f684", "1f685", "1f686", "1f687", "1f688", "1f689",
+            // Mostrar a janela
+            stage.show();
             
-            // 🔥 Elementos e Natureza
-            "1f525", "1f526", "1f527", "1f528", "1f529", "1f52a", "1f52b", "1f52c", "1f52d", "1f52e",
-            
-            // 💡 Ideias e Inovação
-            "1f4a1", "1f4a2", "1f4a3", "1f4a4", "1f4a5", "1f4a6", "1f4a7", "1f4a8", "1f4a9", "1f4aa",
-            
-            // ⭐ Símbolos e Indicadores
-            "2b50", "2b55",
-            
-            // 📚 Conhecimento e Estudo
-            "1f4da", "1f4db", "1f4dc", "1f4dd", "1f4de", "1f4df", "1f4e0", "1f4e1", "1f4e2", "1f4e3",
-            
-            // 🎓 Educação e Aprendizado
-            "1f393", "1f396", "1f397", "1f399",
-            
-            // 📱 Dispositivos
-            "1f4f1", "1f4f2", "1f4f3", "1f4f4", "1f4f5", "1f4f6", "1f4f7", "1f4f8", "1f4f9", "1f4fa",
-            
-            // 🎨 Criatividade e Arte
-            "1f3a8", "1f3a9", "1f3aa", "1f3ab", "1f3ac", "1f3ad", "1f3ae", "1f3af", "1f3b0", "1f3b1",
-            
-            // 🏆 Conquistas e Prêmios
-            "1f3c6", "1f3c7", "1f3c8", "1f3c9", "1f3ca", "1f3cb", "1f3cc", "1f3cd", "1f3ce", "1f3cf",
-            
-            // 🎯 Objetivos e Metas
-            "1f3af", "1f3b2", "1f3b3", "1f3b4", "1f3b5", "1f3b6", "1f3b7", "1f3b8", "1f3b9", "1f3ba"
-        };
-
-        ComboBox<String> iconComboBox = new ComboBox<>();
-        iconComboBox.getItems().addAll(availableIcons);
-        iconComboBox.setValue("1f4c1"); // Ícone padrão (pasta)
-        iconComboBox.setPromptText("Selecione um ícone");
-        iconComboBox.getStyleClass().add("icon-combo-box");
-        
-        // Configurar o ComboBox para mostrar imagens PNG
-        iconComboBox.setCellFactory(param -> new ListCell<String>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                    setGraphic(null);
-                } else {
-                    setText(null); // Não mostrar texto, apenas imagem
-                    ImageView imageView = createEmojiImageView(item);
-                    setGraphic(imageView);
-                    getStyleClass().setAll("icon-list-cell");
-                }
-            }
-        });
-        
-        iconComboBox.setButtonCell(new ListCell<String>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText("📁");
-                    setGraphic(null);
-                } else {
-                    setText(null); // Não mostrar texto, apenas imagem
-                    ImageView imageView = createEmojiImageView(item);
-                    setGraphic(imageView);
-                }
-                getStyleClass().setAll("icon-combo-button");
-            }
-        });
-
-        grid.add(new Label("Nome:"), 0, 0);
-        grid.add(nameField, 1, 0);
-        grid.add(new Label("Descrição:"), 0, 1);
-        grid.add(descriptionField, 1, 1);
-        grid.add(new Label("Ícone:"), 0, 2);
-        grid.add(iconComboBox, 1, 2);
-
-        dialog.getDialogPane().setContent(grid);
-
-        // Focar no campo nome
-        Platform.runLater(nameField::requestFocus);
-
-        // Converter resultado
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == createButtonType) {
-                String name = nameField.getText().trim();
-                String description = descriptionField.getText().trim();
-                String icon = iconComboBox.getValue();
-
-                if (name.isEmpty()) {
-                    showError("Erro de Validação", "O nome do grupo é obrigatório.");
-                    return null;
-                }
-
-                try {
-                    BoardGroup newGroup = facade.createBoardGroup(name, description, icon);
-                    showInfo("Grupo Criado", "Grupo '" + name + "' criado com sucesso!");
-                    return newGroup;
-                } catch (Exception e) {
-                    showError("Erro ao Criar Grupo", "Não foi possível criar o grupo: " + e.getMessage());
-                    return null;
-                }
-            }
-            return null;
-        });
-
-        // Mostrar dialog e processar resultado
-        Optional<BoardGroup> result = dialog.showAndWait();
-        if (result.isPresent()) {
-            // Recarregar grupos e atualizar filtro
-            loadBoardGroups();
-            // Manter o filtro atual
-            Object currentFilter = groupFilterComboBox.getValue();
-            if (currentFilter != null) {
-                // Se estava filtrando por um grupo específico, manter
-                groupFilterComboBox.setValue(currentFilter);
-            }
+        } catch (IOException e) {
+            showError("Erro", "Não foi possível abrir a tela de gerenciamento de grupos de board: " + e.getMessage());
         }
     }
 
     @FXML
     private void handleEditGroup() {
-        // Primeiro, mostrar dialog para selecionar o grupo a editar
-        Dialog<BoardGroup> selectDialog = new Dialog<>();
-        selectDialog.setTitle("Selecionar Grupo para Editar");
-        selectDialog.setHeaderText("Escolha o grupo que você deseja editar");
-
-        // Configurar botões
-        ButtonType selectButtonType = new ButtonType("Editar", ButtonBar.ButtonData.OK_DONE);
-        ButtonType deleteButtonType = new ButtonType("Excluir", ButtonBar.ButtonData.OTHER);
-        selectDialog.getDialogPane().getButtonTypes().addAll(selectButtonType, deleteButtonType, ButtonType.CANCEL);
-
-        // Criar ComboBox para selecionar grupo
-        ComboBox<BoardGroup> groupComboBox = new ComboBox<>();
-        groupComboBox.setPromptText("Selecione um grupo");
-        
-        // Configurar o ComboBox para mostrar o nome do grupo
-        groupComboBox.setCellFactory(param -> new ListCell<BoardGroup>() {
-            @Override
-            protected void updateItem(BoardGroup item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText("Selecione um grupo");
-                } else {
-                    setText(item.getName());
-                }
-            }
-        });
-
-        groupComboBox.setButtonCell(new ListCell<BoardGroup>() {
-            @Override
-            protected void updateItem(BoardGroup item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText("Selecione um grupo");
-                } else {
-                    setText(item.getName());
-                }
-            }
-        });
-
-        // Carregar grupos existentes
         try {
-            List<BoardGroup> groups = facade.getAllBoardGroups();
-            if (groups.isEmpty()) {
-                showError("Nenhum Grupo", "Não há grupos para editar. Crie um grupo primeiro.");
-                return;
-            }
-            groupComboBox.getItems().addAll(groups);
-        } catch (Exception e) {
-            e.printStackTrace();
-            showError("Erro ao Carregar Grupos", "Não foi possível carregar os grupos: " + e.getMessage());
-            return;
-        }
-
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(20, 150, 10, 10));
-
-        grid.add(new Label("Grupo:"), 0, 0);
-        grid.add(groupComboBox, 1, 0);
-
-        selectDialog.getDialogPane().setContent(grid);
-
-        // Focar no ComboBox
-        Platform.runLater(groupComboBox::requestFocus);
-
-        // Converter resultado da seleção
-        selectDialog.setResultConverter(dialogButton -> {
-            if (dialogButton == selectButtonType) {
-                return groupComboBox.getValue();
-            } else if (dialogButton == deleteButtonType) {
-                BoardGroup selectedGroup = groupComboBox.getValue();
-                if (selectedGroup == null) {
-                    showError("Nenhum Grupo Selecionado", "Por favor, selecione um grupo para excluir.");
-                    return null;
-                }
-                
-                // Confirmar exclusão
-                Alert confirmationDialog = new Alert(Alert.AlertType.CONFIRMATION);
-                confirmationDialog.setTitle("Confirmar Exclusão");
-                confirmationDialog.setHeaderText("Excluir o grupo '" + selectedGroup.getName() + "'?");
-                confirmationDialog.setContentText("Esta ação é irreversível. Todos os boards deste grupo ficarão sem grupo (Sem Grupo).");
-
-                Optional<ButtonType> confirmationResult = confirmationDialog.showAndWait();
-                if (confirmationResult.isPresent() && confirmationResult.get() == ButtonType.OK) {
-                    try {
-                        facade.deleteBoardGroup(selectedGroup.getId());
-                        showInfo("Grupo Excluído", "Grupo '" + selectedGroup.getName() + "' foi excluído com sucesso!");
-                        return new BoardGroup(); // Retorna um objeto vazio para indicar que foi excluído
-                    } catch (Exception e) {
-                        showError("Erro ao Excluir Grupo", "Não foi possível excluir o grupo: " + e.getMessage());
-                        return null;
-                    }
-                }
-                return null; // Usuário cancelou a exclusão
-            }
-            return null;
-        });
-
-        // Mostrar dialog de seleção
-        Optional<BoardGroup> selectedGroup = selectDialog.showAndWait();
-        if (selectedGroup.isPresent()) {
-            BoardGroup groupResult = selectedGroup.get();
-            if (groupResult.getId() == null) {
-                // Grupo foi excluído
-                loadBoardGroups();
-                loadBoards();
-            } else {
-                // Agora mostrar dialog para editar o grupo selecionado
-                showEditGroupDialog(groupResult);
-            }
-        }
-    }
-
-    private void showEditGroupDialog(BoardGroup groupToEdit) {
-        // Criar dialog para editar grupo
-        Dialog<BoardGroup> dialog = new Dialog<>();
-        dialog.setTitle("Editar Grupo");
-        dialog.setHeaderText("Editando o grupo: " + groupToEdit.getName());
-
-        // Configurar botões
-        ButtonType saveButtonType = new ButtonType("Salvar", ButtonBar.ButtonData.OK_DONE);
-        ButtonType deleteButtonType = new ButtonType("Excluir", ButtonBar.ButtonData.OTHER);
-        dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, deleteButtonType, ButtonType.CANCEL);
-
-        // Criar campos do formulário
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(20, 150, 10, 10));
-
-        TextField nameField = new TextField(groupToEdit.getName());
-        nameField.setPromptText("Nome do grupo");
-        
-        TextArea descriptionField = new TextArea(groupToEdit.getDescription() != null ? groupToEdit.getDescription() : "");
-        descriptionField.setPromptText("Descrição (opcional)");
-        descriptionField.setPrefRowCount(3);
-        descriptionField.setWrapText(true);
-        
-        // Lista de códigos de emojis PNG disponíveis (50 ícones verificados e existentes)
-        String[] availableIcons = {
-            // 📁 Pastas e Arquivos
-            "1f4c1", "1f4c2", "1f4c3", "1f4c4", "1f4c5", "1f4c6", "1f4c7", "1f4c8", "1f4c9",
+            // Carregar a tela de gerenciamento de grupos de board
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/board-group-management.fxml"));
+            Parent root = loader.load();
             
-            // 💰 Dinheiro e Finanças
-            "1f4b0", "1f4b1", "1f4b2", "1f4b3", "1f4b4", "1f4b5", "1f4b6", "1f4b7", "1f4b8", "1f4b9",
+            // Obter o controlador
+            BoardGroupManagementController controller = loader.getController();
             
-            // 💻 Tecnologia e Computação
-            "1f4bb", "1f4bd", "1f4be", "1f4bf", "1f4c0",
+            // Configurar o serviço
+            controller.setBoardGroupService(facade.getBoardGroupService());
             
-            // 🏠 Casa e Vida Doméstica
-            "1f3e0", "1f3e1", "1f3e2", "1f3e3", "1f3e4", "1f3e5", "1f3e6", "1f3e7", "1f3e8", "1f3e9",
+            // Criar uma nova janela
+            javafx.stage.Stage stage = new javafx.stage.Stage();
+            stage.setTitle("Gerenciamento de Grupos de Board");
+            stage.setScene(new javafx.scene.Scene(root));
+            stage.setMinWidth(800);
+            stage.setMinHeight(500);
+            stage.setResizable(true);
             
-            // 🏢 Organizações e Lugares
-            "1f3ea", "1f3eb", "1f3ec", "1f3ed", "1f3ee", "1f3ef", "1f3f0", "1f3f3",
+            // Centralizar a janela
+            stage.centerOnScreen();
             
-            // 🚀 Transporte e Mobilidade
-            "1f680", "1f681", "1f682", "1f683", "1f684", "1f685", "1f686", "1f687", "1f688", "1f689",
+            // Mostrar a janela
+            stage.show();
             
-            // 🔥 Elementos e Natureza
-            "1f525", "1f526", "1f527", "1f528", "1f529", "1f52a", "1f52b", "1f52c", "1f52d", "1f52e",
-            
-            // 💡 Ideias e Inovação
-            "1f4a1", "1f4a2", "1f4a3", "1f4a4", "1f4a5", "1f4a6", "1f4a7", "1f4a8", "1f4a9", "1f4aa",
-            
-            // ⭐ Símbolos e Indicadores
-            "2b50", "2b55",
-            
-            // 📚 Conhecimento e Estudo
-            "1f4da", "1f4db", "1f4dc", "1f4dd", "1f4de", "1f4df", "1f4e0", "1f4e1", "1f4e2", "1f4e3",
-            
-            // 🎓 Educação e Aprendizado
-            "1f393", "1f396", "1f397", "1f399",
-            
-            // 📱 Dispositivos
-            "1f4f1", "1f4f2", "1f4f3", "1f4f4", "1f4f5", "1f4f6", "1f4f7", "1f4f8", "1f4f9", "1f4fa",
-            
-            // 🎨 Criatividade e Arte
-            "1f3a8", "1f3a9", "1f3aa", "1f3ab", "1f3ac", "1f3ad", "1f3ae", "1f3af", "1f3b0", "1f3b1",
-            
-            // 🏆 Conquistas e Prêmios
-            "1f3c6", "1f3c7", "1f3c8", "1f3c9", "1f3ca", "1f3cb", "1f3cc", "1f3cd", "1f3ce", "1f3cf",
-            
-            // 🎯 Objetivos e Metas
-            "1f3af", "1f3b2", "1f3b3", "1f3b4", "1f3b5", "1f3b6", "1f3b7", "1f3b8", "1f3b9", "1f3ba"
-        };
-
-        ComboBox<String> iconComboBox = new ComboBox<>();
-        iconComboBox.getItems().addAll(availableIcons);
-        iconComboBox.setValue(groupToEdit.getIcon() != null ? groupToEdit.getIcon() : "1f4c1");
-        iconComboBox.setPromptText("Selecione um ícone");
-        iconComboBox.getStyleClass().add("icon-combo-box");
-        
-        // Configurar o ComboBox para mostrar imagens PNG
-        iconComboBox.setCellFactory(param -> new ListCell<String>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                    setGraphic(null);
-                } else {
-                    setText(null); // Não mostrar texto, apenas imagem
-                    ImageView imageView = createEmojiImageView(item);
-                    setGraphic(imageView);
-                    getStyleClass().setAll("icon-list-cell");
-                }
-            }
-        });
-        
-        iconComboBox.setButtonCell(new ListCell<String>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText("📁");
-                    setGraphic(null);
-                } else {
-                    setText(null); // Não mostrar texto, apenas imagem
-                    ImageView imageView = createEmojiImageView(item);
-                    setGraphic(imageView);
-                }
-                getStyleClass().setAll("icon-combo-button");
-            }
-        });
-
-        grid.add(new Label("Nome:"), 0, 0);
-        grid.add(nameField, 1, 0);
-        grid.add(new Label("Descrição:"), 0, 1);
-        grid.add(descriptionField, 1, 1);
-        grid.add(new Label("Ícone:"), 0, 2);
-        grid.add(iconComboBox, 1, 2);
-
-        dialog.getDialogPane().setContent(grid);
-
-        // Focar no campo nome
-        Platform.runLater(nameField::requestFocus);
-
-        // Converter resultado
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == saveButtonType) {
-                String name = nameField.getText().trim();
-                String description = descriptionField.getText().trim();
-                String icon = iconComboBox.getValue();
-
-                if (name.isEmpty()) {
-                    showError("Erro de Validação", "O nome do grupo é obrigatório.");
-                    return null;
-                }
-
-                try {
-                    BoardGroup updatedGroup = facade.updateBoardGroup(groupToEdit.getId(), name, description, icon);
-                    showInfo("Grupo Atualizado", "Grupo '" + name + "' atualizado com sucesso!");
-                    return updatedGroup;
-                } catch (Exception e) {
-                    showError("Erro ao Atualizar Grupo", "Não foi possível atualizar o grupo: " + e.getMessage());
-                    return null;
-                }
-            } else if (dialogButton == deleteButtonType) {
-                // Confirmar exclusão
-                Alert confirmationDialog = new Alert(Alert.AlertType.CONFIRMATION);
-                confirmationDialog.setTitle("Confirmar Exclusão");
-                confirmationDialog.setHeaderText("Excluir o grupo '" + groupToEdit.getName() + "'?");
-                confirmationDialog.setContentText("Esta ação é irreversível. Todos os boards deste grupo ficarão sem grupo (Sem Grupo).");
-
-                Optional<ButtonType> confirmationResult = confirmationDialog.showAndWait();
-                if (confirmationResult.isPresent() && confirmationResult.get() == ButtonType.OK) {
-                    try {
-                        facade.deleteBoardGroup(groupToEdit.getId());
-                        showInfo("Grupo Excluído", "Grupo '" + groupToEdit.getName() + "' foi excluído com sucesso!");
-                        return new BoardGroup(); // Retorna um objeto vazio para indicar que foi excluído
-                    } catch (Exception e) {
-                        showError("Erro ao Excluir Grupo", "Não foi possível excluir o grupo: " + e.getMessage());
-                        return null;
-                    }
-                }
-                return null; // Usuário cancelou a exclusão
-            }
-            return null;
-        });
-
-        // Mostrar dialog e processar resultado
-        Optional<BoardGroup> result = dialog.showAndWait();
-        if (result.isPresent()) {
-            BoardGroup groupResult = result.get();
-            if (groupResult.getId() == null) {
-                // Grupo foi excluído
-                loadBoardGroups();
-                loadBoards();
-            } else {
-                // Grupo foi atualizado
-                loadBoardGroups();
-                loadBoards();
-                // Manter o filtro atual
-                Object currentFilter = groupFilterComboBox.getValue();
-                if (currentFilter != null) {
-                    // Se estava filtrando por um grupo específico, manter
-                    groupFilterComboBox.setValue(currentFilter);
-                }
-            }
+        } catch (IOException e) {
+            showError("Erro", "Não foi possível abrir a tela de gerenciamento de grupos de board: " + e.getMessage());
         }
     }
 
@@ -1400,6 +1097,7 @@ public class BoardViewController {
             imageView.setFitHeight(16);
             imageView.setPreserveRatio(true);
             imageView.setSmooth(true);
+            imageView.getStyleClass().add("icon-image-view");
             return imageView;
         }
         return null;

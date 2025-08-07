@@ -298,6 +298,21 @@ public class BoardGroupService {
     }
 
     /**
+     * Verifica se existe um grupo com o nome especificado.
+     * 
+     * <p>Utilizada para validação de unicidade de nomes de grupos.
+     * A verificação é case-insensitive para evitar duplicatas com diferenças
+     * apenas de maiúsculas/minúsculas.</p>
+     * 
+     * @param name nome do grupo a ser verificado
+     * @return true se o grupo existe, false caso contrário
+     */
+    @Transactional(readOnly = true)
+    public boolean existsByName(String name) {
+        return boardGroupRepository.existsByName(name);
+    }
+
+    /**
      * Gera uma cor hexadecimal aleatória para identificação visual do grupo.
      * 
      * <p>Utiliza um conjunto predefinido de cores para garantir boa

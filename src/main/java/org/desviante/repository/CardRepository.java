@@ -51,7 +51,7 @@ public class CardRepository {
         this.jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
         this.jdbcInsert = new SimpleJdbcInsert(dataSource)
                 .withTableName("cards")
-                .usingColumns("title", "description", "type", "total_units", "current_units", "creation_date", "last_update_date", "completion_date", "board_column_id")
+                .usingColumns("title", "description", "card_type_id", "total_units", "current_units", "creation_date", "last_update_date", "completion_date", "board_column_id")
                 .usingGeneratedKeyColumns("id");
     }
 
@@ -68,10 +68,12 @@ public class CardRepository {
         card.setTitle(rs.getString("title"));
         card.setDescription(rs.getString("description"));
         
-        // Mapear o tipo do card
-        String typeStr = rs.getString("type");
-        if (typeStr != null) {
-            card.setType(org.desviante.model.enums.CardType.valueOf(typeStr));
+        // Mapear o tipo de card
+        Long cardTypeId = rs.getObject("card_type_id", Long.class);
+        if (cardTypeId != null) {
+            card.setCardTypeId(cardTypeId);
+            // TODO: Carregar o objeto CardType completo se necessário
+            // Por enquanto, deixamos como null para evitar dependência circular
         }
         
         // Mapear campos de progresso
@@ -141,7 +143,7 @@ public class CardRepository {
         var params = new MapSqlParameterSource()
                 .addValue("title", card.getTitle())
                 .addValue("description", card.getDescription())
-                .addValue("type", card.getType() != null ? card.getType().name() : "CARD")
+                .addValue("card_type_id", card.getCardTypeId())
                 .addValue("total_units", card.getTotalUnits())
                 .addValue("current_units", card.getCurrentUnits())
                 .addValue("creation_date", card.getCreationDate())
@@ -158,7 +160,7 @@ public class CardRepository {
                     UPDATE cards SET
                         title = :title,
                         description = :description,
-                        type = :type,
+                        card_type_id = :card_type_id,
                         total_units = :total_units,
                         current_units = :current_units,
                         last_update_date = :last_update_date,

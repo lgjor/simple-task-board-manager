@@ -5,6 +5,7 @@ DROP TABLE IF EXISTS cards CASCADE;
 DROP TABLE IF EXISTS board_columns CASCADE;
 DROP TABLE IF EXISTS boards CASCADE;
 DROP TABLE IF EXISTS board_groups CASCADE;
+DROP TABLE IF EXISTS card_types CASCADE;
 
 -- Definição da tabela 'board_groups'
 CREATE TABLE board_groups (
@@ -55,6 +56,15 @@ CREATE TABLE board_columns (
     CONSTRAINT fk_board_columns_to_boards FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE
 );
 
+-- Definição da tabela 'card_types' (para tipos de card)
+CREATE TABLE card_types (
+    id              BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name            VARCHAR(255) NOT NULL UNIQUE,
+    unit_label      VARCHAR(100) NOT NULL,
+    creation_date   TIMESTAMP NOT NULL,
+    last_update_date TIMESTAMP NOT NULL
+);
+
 -- Definição da tabela 'cards'
 CREATE TABLE cards (
     id                BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -67,8 +77,10 @@ CREATE TABLE cards (
     last_update_date  TIMESTAMP NOT NULL,
     completion_date   TIMESTAMP,
     board_column_id   BIGINT NOT NULL,
+    card_type_id    BIGINT,
 
-    CONSTRAINT fk_cards_to_board_columns FOREIGN KEY (board_column_id) REFERENCES board_columns(id) ON DELETE CASCADE
+    CONSTRAINT fk_cards_to_board_columns FOREIGN KEY (board_column_id) REFERENCES board_columns(id) ON DELETE CASCADE,
+    CONSTRAINT fk_cards_to_card_types FOREIGN KEY (card_type_id) REFERENCES card_types(id) ON DELETE SET NULL
 );
 
 -- Definição da tabela 'tasks' (para integração com Google Tasks)
@@ -105,6 +117,19 @@ INSERT INTO board_columns (name, order_index, kind, board_id) VALUES
 ('Inicial', 1, 'INITIAL', 1),
 ('Em Andamento', 2, 'PENDING', 1),
 ('Finalizado', 3, 'FINAL', 1);
+
+-- Inserir tipos padrão na tabela card_types
+INSERT INTO card_types (name, unit_label, creation_date, last_update_date) VALUES 
+('CARD', 'card', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('BOOK', 'páginas', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('VIDEO', 'minutos', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('COURSE', 'aulas', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- Inserir grupos padrão na tabela board_groups
+INSERT INTO board_groups (name, description, color, icon, creation_date) VALUES 
+('Projetos pessoais', 'Projetos pessoais e hobbies', '#FFEAA7', '1f4bb', CURRENT_TIMESTAMP),
+('Livros', 'Leitura e estudo de livros', '#4ECDC4', '1f4da', CURRENT_TIMESTAMP),
+('Trabalho', 'Tarefas profissionais e trabalho', '#45B7D1', '1f528', CURRENT_TIMESTAMP);
 
 -- Inserir um card de exemplo na coluna inicial (ID 1)
 INSERT INTO cards (title, description, board_column_id, creation_date, last_update_date) VALUES 

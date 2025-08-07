@@ -7,7 +7,7 @@ import org.desviante.model.BoardColumn;
 import org.desviante.model.BoardGroup;
 import org.desviante.model.Card;
 import org.desviante.model.enums.BoardColumnKindEnum;
-import org.desviante.model.enums.CardType;
+import org.desviante.model.CardType;
 import org.desviante.service.dto.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -47,7 +47,10 @@ class TaskManagerFacadeIntegrationTest {
     @Configuration
     @Import(TestDataSourceConfig.class)
     @ComponentScan(basePackages = {"org.desviante.service", "org.desviante.repository"},
-            excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = GoogleTasksApiService.class))
+            excludeFilters = {
+                @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = GoogleTasksApiService.class),
+                @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = DatabaseMigrationService.class)
+            })
     static class TestConfig {
         @Bean
         public GoogleTasksApiService googleTasksApiService() {
@@ -95,9 +98,9 @@ class TaskManagerFacadeIntegrationTest {
         BoardColumn col1 = columnService.createColumn("To Do", 0, BoardColumnKindEnum.INITIAL, board.getId());
         BoardColumn col2 = columnService.createColumn("Done", 1, BoardColumnKindEnum.FINAL, board.getId());
 
-        cardService.createCard("Tarefa 1", "Descrição 1", col1.getId(), CardType.CARD);
-        cardService.createCard("Tarefa 2", "Descrição 2", col1.getId(), CardType.CARD);
-        cardService.createCard("Tarefa 3", "Descrição 3", col2.getId(), CardType.CARD);
+        cardService.createCard("Tarefa 1", "Descrição 1", col1.getId(), 1L); // ID do tipo CARD
+        cardService.createCard("Tarefa 2", "Descrição 2", col1.getId(), 1L); // ID do tipo CARD
+        cardService.createCard("Tarefa 3", "Descrição 3", col2.getId(), 1L); // ID do tipo CARD
 
         // --- Act ---
         // 2. Chama o método da fachada que estamos testando.
@@ -145,7 +148,7 @@ class TaskManagerFacadeIntegrationTest {
         BoardColumn column = columnService.createColumn("Coluna de Teste", 0, BoardColumnKindEnum.INITIAL, board.getId());
 
         // 2. Criar o objeto de requisição que a UI enviaria.
-        var request = new CreateCardRequestDTO("Nova Tarefa via Fachada", "Descrição da tarefa.", column.getId(), CardType.CARD);
+        var request = new CreateCardRequestDTO("Nova Tarefa via Fachada", "Descrição da tarefa.", column.getId(), 1L); // ID do tipo CARD
 
         // --- Act ---
         // 3. Chamar o método da fachada que estamos testando.
@@ -162,7 +165,7 @@ class TaskManagerFacadeIntegrationTest {
         Optional<Card> persistedCardOpt = cardService.getCardById(resultDTO.id());
         assertTrue(persistedCardOpt.isPresent(), "O card deveria ter sido salvo no banco de dados.");
         assertEquals("Descrição da tarefa.", persistedCardOpt.get().getDescription());
-        assertEquals(CardType.CARD, persistedCardOpt.get().getType(), "O card deve ter o tipo CARD");
+        assertEquals(1L, persistedCardOpt.get().getCardTypeId(), "O card deve ter o tipo CARD (ID 1)");
     }
 
     @Test
@@ -172,7 +175,7 @@ class TaskManagerFacadeIntegrationTest {
         Board board = boardService.createBoard("Board de Teste para Livros");
         BoardColumn column = columnService.createColumn("Coluna de Teste", 0, BoardColumnKindEnum.INITIAL, board.getId());
 
-        var request = new CreateCardRequestDTO("Livro de Teste", "Descrição do livro.", column.getId(), CardType.BOOK);
+        var request = new CreateCardRequestDTO("Livro de Teste", "Descrição do livro.", column.getId(), 2L); // ID do tipo BOOK
 
         // --- Act ---
         CardDetailDTO resultDTO = taskManagerFacade.createNewCard(request);
@@ -185,7 +188,7 @@ class TaskManagerFacadeIntegrationTest {
         Optional<Card> persistedCardOpt = cardService.getCardById(resultDTO.id());
         assertTrue(persistedCardOpt.isPresent());
         assertEquals("Descrição do livro.", persistedCardOpt.get().getDescription());
-        assertEquals(CardType.BOOK, persistedCardOpt.get().getType(), "O card deve ter o tipo BOOK");
+        assertEquals(2L, persistedCardOpt.get().getCardTypeId(), "O card deve ter o tipo BOOK (ID 2)");
         assertTrue(persistedCardOpt.get().isProgressable(), "Cards do tipo BOOK devem suportar progresso");
     }
 
@@ -196,7 +199,7 @@ class TaskManagerFacadeIntegrationTest {
         Board board = boardService.createBoard("Board de Teste para Vídeos");
         BoardColumn column = columnService.createColumn("Coluna de Teste", 0, BoardColumnKindEnum.INITIAL, board.getId());
 
-        var request = new CreateCardRequestDTO("Vídeo de Teste", "Descrição do vídeo.", column.getId(), CardType.VIDEO);
+        var request = new CreateCardRequestDTO("Vídeo de Teste", "Descrição do vídeo.", column.getId(), 3L); // ID do tipo VIDEO
 
         // --- Act ---
         CardDetailDTO resultDTO = taskManagerFacade.createNewCard(request);
@@ -209,7 +212,7 @@ class TaskManagerFacadeIntegrationTest {
         Optional<Card> persistedCardOpt = cardService.getCardById(resultDTO.id());
         assertTrue(persistedCardOpt.isPresent());
         assertEquals("Descrição do vídeo.", persistedCardOpt.get().getDescription());
-        assertEquals(CardType.VIDEO, persistedCardOpt.get().getType(), "O card deve ter o tipo VIDEO");
+        assertEquals(3L, persistedCardOpt.get().getCardTypeId(), "O card deve ter o tipo VIDEO (ID 3)");
         assertTrue(persistedCardOpt.get().isProgressable(), "Cards do tipo VIDEO devem suportar progresso");
     }
 
@@ -220,7 +223,7 @@ class TaskManagerFacadeIntegrationTest {
         Board board = boardService.createBoard("Board de Teste para Cursos");
         BoardColumn column = columnService.createColumn("Coluna de Teste", 0, BoardColumnKindEnum.INITIAL, board.getId());
 
-        var request = new CreateCardRequestDTO("Curso de Teste", "Descrição do curso.", column.getId(), CardType.COURSE);
+        var request = new CreateCardRequestDTO("Curso de Teste", "Descrição do curso.", column.getId(), 4L); // ID do tipo COURSE
 
         // --- Act ---
         CardDetailDTO resultDTO = taskManagerFacade.createNewCard(request);
@@ -233,7 +236,7 @@ class TaskManagerFacadeIntegrationTest {
         Optional<Card> persistedCardOpt = cardService.getCardById(resultDTO.id());
         assertTrue(persistedCardOpt.isPresent());
         assertEquals("Descrição do curso.", persistedCardOpt.get().getDescription());
-        assertEquals(CardType.COURSE, persistedCardOpt.get().getType(), "O card deve ter o tipo COURSE");
+        assertEquals(4L, persistedCardOpt.get().getCardTypeId(), "O card deve ter o tipo COURSE (ID 4)");
         assertTrue(persistedCardOpt.get().isProgressable(), "Cards do tipo COURSE devem suportar progresso");
     }
 
@@ -245,7 +248,7 @@ class TaskManagerFacadeIntegrationTest {
         Board board = boardService.createBoard("Board de Teste de Movimentação");
         BoardColumn initialColumn = columnService.createColumn("Coluna A", 0, BoardColumnKindEnum.INITIAL, board.getId());
         BoardColumn targetColumn = columnService.createColumn("Coluna B", 1, BoardColumnKindEnum.PENDING, board.getId());
-        Card cardToMove = cardService.createCard("Card para Mover", "...", initialColumn.getId(), CardType.CARD);
+        Card cardToMove = cardService.createCard("Card para Mover", "...", initialColumn.getId(), 1L); // ID do tipo CARD
 
         // --- Act ---
         // 2. Chamar o método da fachada para mover o card para a segunda coluna.
@@ -268,7 +271,7 @@ class TaskManagerFacadeIntegrationTest {
         // 1. Criar a estrutura completa para ter um card para deletar.
         Board board = boardService.createBoard("Board de Teste de Deleção");
         BoardColumn column = columnService.createColumn("Coluna A", 0, BoardColumnKindEnum.INITIAL, board.getId());
-        Card cardToDelete = cardService.createCard("Card a ser Deletado", "...", column.getId(), CardType.CARD);
+        Card cardToDelete = cardService.createCard("Card a ser Deletado", "...", column.getId(), 1L); // ID do tipo CARD
         Long cardId = cardToDelete.getId();
 
         // Verificação de sanidade: garantir que o card existe antes de tentarmos deletá-lo.
@@ -360,7 +363,7 @@ class TaskManagerFacadeIntegrationTest {
         // 1. Criar a estrutura necessária para ter um card para editar.
         Board board = boardService.createBoard("Board de Teste");
         BoardColumn column = columnService.createColumn("Coluna de Teste", 0, BoardColumnKindEnum.INITIAL, board.getId());
-        Card originalCard = cardService.createCard("Título Antigo", "Descrição Antiga", column.getId(), CardType.CARD);
+        Card originalCard = cardService.createCard("Título Antigo", "Descrição Antiga", column.getId(), 1L); // ID do tipo CARD
 
         // 2. Criar o DTO de requisição com os novos dados.
         var request = new UpdateCardDetailsDTO("Título Novo e Melhorado", "Descrição nova e mais detalhada.", null, null);

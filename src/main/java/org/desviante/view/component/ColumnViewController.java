@@ -10,13 +10,15 @@ import javafx.scene.control.*;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
-import org.desviante.model.enums.CardType;
+import org.desviante.model.CardType;
 import org.desviante.service.TaskManagerFacade;
 import org.desviante.service.dto.BoardColumnDetailDTO;
 import org.desviante.service.dto.CardDetailDTO;
+import org.desviante.service.dto.CardTypeOptionDTO;
 import org.desviante.service.dto.CreateCardRequestDTO;
 import org.desviante.service.dto.UpdateCardDetailsDTO;
 
+import java.util.List;
 import java.util.function.BiConsumer;
 // CORREÇÃO: A linha 'import java.util.function.Runnable;' foi removida.
 // A interface Runnable está em java.lang e é importada automaticamente.
@@ -136,39 +138,89 @@ public class ColumnViewController {
         grid.setPadding(new Insets(20, 150, 10, 10));
 
         TextField titleField = new TextField();
-        titleField.setPromptText("Título do card");
+        titleField.setPromptText("Título do card *");
+        titleField.setStyle("-fx-prompt-text-fill: gray;");
+        
         TextArea descriptionArea = new TextArea();
         descriptionArea.setPromptText("Descrição (opcional)");
         
-        ComboBox<CardType> typeComboBox = new ComboBox<>();
-        typeComboBox.getItems().addAll(CardType.values());
-        typeComboBox.setValue(CardType.CARD); // Valor padrão
-        typeComboBox.setCellFactory(param -> new ListCell<CardType>() {
+        ComboBox<CardTypeOptionDTO> typeComboBox = new ComboBox<>();
+        
+        // Carregar tipos de card
+        List<CardTypeOptionDTO> typeOptions = facade.getAllCardTypeOptions();
+        typeComboBox.getItems().addAll(typeOptions);
+        
+        // Definir valor padrão (primeiro tipo disponível)
+        if (!typeOptions.isEmpty()) {
+            typeComboBox.setValue(typeOptions.get(0));
+        }
+        
+        typeComboBox.setCellFactory(param -> new ListCell<CardTypeOptionDTO>() {
             @Override
-            protected void updateItem(CardType item, boolean empty) {
+            protected void updateItem(CardTypeOptionDTO item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setText("");
                 } else {
-                    setText(item.name() + " (" + item.getUnitLabel() + ")");
+                    setText(item.getDisplayName());
                 }
             }
         });
         typeComboBox.setButtonCell(typeComboBox.getCellFactory().call(null));
 
+        // Label de erro para o título
+        Label titleErrorLabel = new Label();
+        titleErrorLabel.setStyle("-fx-text-fill: red; -fx-font-size: 11px;");
+        titleErrorLabel.setVisible(false);
+
         grid.add(new Label("Título:"), 0, 0);
         grid.add(titleField, 1, 0);
-        grid.add(new Label("Descrição:"), 0, 1);
-        grid.add(descriptionArea, 1, 1);
-        grid.add(new Label("Tipo:"), 0, 2);
-        grid.add(typeComboBox, 1, 2);
+        grid.add(titleErrorLabel, 1, 1);
+        grid.add(new Label("Descrição:"), 0, 2);
+        grid.add(descriptionArea, 1, 2);
+        grid.add(new Label("Tipo:"), 0, 3);
+        grid.add(typeComboBox, 1, 3);
 
         dialog.getDialogPane().setContent(grid);
         Platform.runLater(titleField::requestFocus);
 
+        // Obter referência ao botão Criar
+        Button createButton = (Button) dialog.getDialogPane().lookupButton(createButtonType);
+        
+        // Função para validar o título
+        Runnable validateTitle = () -> {
+            String title = titleField.getText();
+            boolean isValid = title != null && !title.trim().isEmpty();
+            
+            if (!isValid) {
+                titleErrorLabel.setText("O título é obrigatório");
+                titleErrorLabel.setVisible(true);
+                createButton.setDisable(true);
+            } else {
+                titleErrorLabel.setVisible(false);
+                createButton.setDisable(false);
+            }
+        };
+
+        // Adicionar listener para validar em tempo real
+        titleField.textProperty().addListener((observable, oldValue, newValue) -> {
+            validateTitle.run();
+        });
+
+        // Validar inicialmente
+        validateTitle.run();
+
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == createButtonType) {
-                return new CardCreationData(titleField.getText(), descriptionArea.getText(), typeComboBox.getValue());
+                String title = titleField.getText();
+                if (title == null || title.trim().isEmpty()) {
+                    // Mostrar erro e não fechar o diálogo
+                    titleErrorLabel.setText("O título é obrigatório");
+                    titleErrorLabel.setVisible(true);
+                    titleField.requestFocus();
+                    return null; // Retorna null para manter o diálogo aberto
+                }
+                return new CardCreationData(title.trim(), descriptionArea.getText(), typeComboBox.getValue());
             }
             return null;
         });
@@ -176,34 +228,32 @@ public class ColumnViewController {
         dialog.showAndWait().ifPresent(result -> {
             String title = result.title();
             String description = result.description();
-            CardType type = result.type();
+            CardTypeOptionDTO selectedType = result.type();
 
-            if (title != null && !title.trim().isEmpty()) {
-                try {
-                    var request = new CreateCardRequestDTO(title, description, this.columnData.id(), type);
-                    CardDetailDTO newCardDTO = facade.createNewCard(request);
+            try {
+                var request = new CreateCardRequestDTO(title, description, this.columnData.id(), selectedType.cardTypeId());
+                CardDetailDTO newCardDTO = facade.createNewCard(request);
 
-                    FXMLLoader cardLoader = new FXMLLoader(getClass().getResource("/view/card-view.fxml"));
-                    Parent cardNode = cardLoader.load();
-                    CardViewController cardController = cardLoader.getController();
-                    cardNode.setUserData(cardController);
+                FXMLLoader cardLoader = new FXMLLoader(getClass().getResource("/view/card-view.fxml"));
+                Parent cardNode = cardLoader.load();
+                CardViewController cardController = cardLoader.getController();
+                cardNode.setUserData(cardController);
 
-                    cardController.setData(
-                            this.facade,
-                            this.boardName,
-                            newCardDTO,
-                            this.onCardUpdate
-                    );
+                cardController.setData(
+                        this.facade,
+                        this.boardName,
+                        newCardDTO,
+                        this.onCardUpdate
+                );
 
-                    addCard(cardNode);
+                addCard(cardNode);
 
-                    if (onDataChange != null) {
-                        onDataChange.run();
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    new Alert(Alert.AlertType.ERROR, "Falha ao criar o novo card: " + e.getMessage()).showAndWait();
+                if (onDataChange != null) {
+                    onDataChange.run();
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
+                new Alert(Alert.AlertType.ERROR, "Falha ao criar o novo card: " + e.getMessage()).showAndWait();
             }
         });
     }
@@ -214,9 +264,9 @@ public class ColumnViewController {
     private static class CardCreationData {
         private final String title;
         private final String description;
-        private final CardType type;
+        private final CardTypeOptionDTO type;
 
-        public CardCreationData(String title, String description, CardType type) {
+        public CardCreationData(String title, String description, CardTypeOptionDTO type) {
             this.title = title;
             this.description = description;
             this.type = type;
@@ -224,6 +274,6 @@ public class ColumnViewController {
 
         public String title() { return title; }
         public String description() { return description; }
-        public CardType type() { return type; }
+        public CardTypeOptionDTO type() { return type; }
     }
 }

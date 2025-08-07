@@ -1,6 +1,6 @@
 package org.desviante.repository;
 
-import org.desviante.config.DataConfig;
+import org.desviante.config.TestDataConfig;
 import org.desviante.model.BoardGroup;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import org.springframework.transaction.annotation.Transactional;
 
-@SpringJUnitConfig(classes = DataConfig.class)
+@SpringJUnitConfig(classes = TestDataConfig.class)
 @Sql(scripts = "/test-schema.sql")
 @Transactional // Garante que cada teste rode em uma transação isolada e seja revertido
 class BoardGroupRepositoryTest {
@@ -83,9 +83,22 @@ class BoardGroupRepositoryTest {
         List<BoardGroup> result = boardGroupRepository.findAll();
 
         // Then
-        assertThat(result).hasSize(2);
+        // Considerando os 3 grupos padrão + 2 grupos de teste = 5 grupos
+        assertThat(result).hasSize(5);
+        
+        // Verificar se os grupos estão ordenados alfabeticamente
+        // Os grupos padrão vêm primeiro: "Livros", "Projetos pessoais", "Trabalho"
+        // Depois os grupos de teste: "A Group", "B Group"
         assertThat(result.get(0).getName()).isEqualTo("A Group");
         assertThat(result.get(1).getName()).isEqualTo("B Group");
+        assertThat(result.get(2).getName()).isEqualTo("Livros");
+        assertThat(result.get(3).getName()).isEqualTo("Projetos pessoais");
+        assertThat(result.get(4).getName()).isEqualTo("Trabalho");
+        
+        // Verificar se os ícones estão corretos (códigos PNG)
+        assertThat(result.get(2).getIcon()).isEqualTo("1f4da"); // 📚 Livro
+        assertThat(result.get(3).getIcon()).isEqualTo("1f4bb"); // 💻 Computador
+        assertThat(result.get(4).getIcon()).isEqualTo("1f528"); // 🔨 Martelo
     }
 
     @Test

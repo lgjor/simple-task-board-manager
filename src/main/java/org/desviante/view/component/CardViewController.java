@@ -9,7 +9,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import org.desviante.model.enums.CardType;
+import org.desviante.model.CardType;
 import org.desviante.service.TaskManagerFacade;
 import org.desviante.service.dto.CardDetailDTO;
 import org.desviante.service.dto.CreateTaskRequestDTO;
@@ -168,23 +168,14 @@ public class CardViewController {
      * Atualiza a label da categoria do card
      */
     private void updateCardTypeLabel(CardDetailDTO card) {
-        CardType cardType = card.type();
+        String typeName = card.typeName();
         String typeText = "";
         
-        switch (cardType) {
-            case BOOK:
-                typeText = "Livro";
-                break;
-            case VIDEO:
-                typeText = "Vídeo";
-                break;
-            case COURSE:
-                typeText = "Curso";
-                break;
-            case CARD:
-            default:
-                typeText = "Card";
-                break;
+        if (typeName != null && !typeName.trim().isEmpty()) {
+            // Usar o nome real do tipo de Card
+            typeText = typeName;
+        } else {
+            typeText = "Card";
         }
         
         cardTypeLabel.setText(typeText);
@@ -197,10 +188,10 @@ public class CardViewController {
      */
     private void updateProgressFields(CardDetailDTO card) {
         // Usar o tipo do card do DTO
-        CardType cardType = card.type();
+        String typeName = card.typeName();
         
         // Mostrar/esconder campos baseado no tipo
-        showProgressFieldsForType(cardType);
+        showProgressFieldsForType(typeName);
         
         // Atualizar valores dos spinners
         updateSpinnerValues(card);
@@ -248,19 +239,21 @@ public class CardViewController {
     /**
      * Mostra/esconde campos de progresso baseado no tipo do card
      */
-    private void showProgressFieldsForType(CardType cardType) {
-        boolean showProgress = cardType != null;
+    private void showProgressFieldsForType(String typeName) {
+        // Todos os tipos de card mostram progresso e status
+        // Se typeName for null ou vazio, tratar como "Card" mas ainda mostrar progresso
+        boolean showProgress = true; // Sempre mostrar progresso para todos os tipos
         progressContainer.setVisible(showProgress);
         progressContainer.setManaged(showProgress);
         
         if (showProgress) {
-            configureProgressFieldsForType(cardType);
+            configureProgressFieldsForType(typeName);
         } else {
             hideAllProgressFields();
         }
     }
 
-    private void configureProgressFieldsForType(CardType cardType) {
+    private void configureProgressFieldsForType(String typeName) {
         // Usar labels padrão para todos os tipos
         totalLabel.setText("Total:");
         currentLabel.setText("Atual:");
@@ -282,7 +275,7 @@ public class CardViewController {
      * Atualiza o display de progresso baseado nos valores dos spinners
      */
     private void updateProgressDisplay() {
-        if (cardData == null || cardData.type() == null) {
+        if (cardData == null) {
             progressValueLabel.setText("0%");
             return;
         }

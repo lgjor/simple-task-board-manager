@@ -1,7 +1,6 @@
 package org.desviante.model;
 
 import lombok.*;
-import org.desviante.model.enums.CardType;
 import org.desviante.model.enums.BoardColumnKindEnum;
 
 import java.time.LocalDateTime;
@@ -59,15 +58,11 @@ public class Card {
     private String description;
 
     /**
-     * Tipo do card que define seu comportamento e campos específicos.
-     * <p>Determina se o card suporta acompanhamento de progresso e quais
-     * campos específicos estão disponíveis. Cards do tipo CARD não utilizam
-     * campos de progresso, enquanto outros tipos (BOOK, VIDEO, COURSE) podem
-     * acompanhar progresso através de unidades genéricas.</p>
+     * Tipo de card que permite criar cards personalizados com seus próprios labels de unidade.</p>
      * 
      * @see CardType
      */
-    private CardType type;
+    private CardType cardType;
 
     /**
      * Total de unidades para acompanhamento de progresso.
@@ -88,13 +83,18 @@ public class Card {
     /**
      * Calcula o percentual de progresso do card de forma unificada.
      * 
-     * <p>Para todos os tipos de card, calcula baseado em currentUnits/totalUnits.
+     * <p>Para cards que suportam progresso, calcula baseado em currentUnits/totalUnits.
      * Se não houver unidades definidas ou total for inválido, retorna 0%.</p>
      * 
      * @return percentual de progresso (0.0 a 100.0)
      */
     public Double getProgressPercentage() {
-        // Para todos os tipos, progresso baseado nas unidades
+        // Verificar se o card suporta progresso
+        if (!isProgressable()) {
+            return 0.0;
+        }
+        
+        // Progresso baseado nas unidades
         if (totalUnits == null || totalUnits <= 0 || currentUnits == null || currentUnits < 0) {
             return 0.0;
         }
@@ -134,28 +134,37 @@ public class Card {
      */
     private Long boardColumnId;
 
+    /**
+     * Identificador do tipo de card associado ao card.
+     * <p>Quando um card usa um tipo de card,
+     * este campo armazena o ID do tipo de card.</p>
+     * 
+     * @see CardType
+     */
+    private Long cardTypeId;
+
 
 
     /**
      * Verifica se o card suporta acompanhamento de progresso.
      * 
-     * <p>Todos os tipos de card suportam progresso: CARD baseado na conclusão,
-     * outros tipos (BOOK, VIDEO, COURSE) através de unidades.</p>
+     * <p>Todos os cards agora suportam progresso básico através
+     * de unidades (total=1, current=0 para cards simples).</p>
      * 
      * @return true se o card suporta progresso, false caso contrário
      */
     public boolean isProgressable() {
-        return type != null;
+        return cardType != null;
     }
 
     /**
      * Verifica se o card é do tipo especificado.
      * 
-     * @param cardType tipo a ser verificado
+     * @param typeName nome do tipo a ser verificado
      * @return true se o card é do tipo especificado, false caso contrário
      */
-    public boolean isType(CardType cardType) {
-        return type == cardType;
+    public boolean isType(String typeName) {
+        return cardType != null && typeName.equals(cardType.getName());
     }
 
     /**

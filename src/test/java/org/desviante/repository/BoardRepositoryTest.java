@@ -1,6 +1,6 @@
 package org.desviante.repository;
 
-import org.desviante.config.DataConfig;
+import org.desviante.config.TestDataConfig;
 import org.desviante.model.Board;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,7 +15,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringJUnitConfig(classes = DataConfig.class)
+@SpringJUnitConfig(classes = TestDataConfig.class)
 @Sql(scripts = "/test-schema.sql") // CORREÇÃO: Garante que o schema seja criado antes dos testes.
 @Transactional // Garante que cada teste rode em uma transação isolada e seja revertido
 public class BoardRepositoryTest {

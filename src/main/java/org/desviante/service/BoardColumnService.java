@@ -64,7 +64,11 @@ public class BoardColumnService {
         boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Board com ID " + boardId + " não encontrado. Impossível criar coluna."));
 
-        BoardColumn newColumn = new BoardColumn(null, name, orderIndex, kind, boardId);
+        BoardColumn newColumn = new BoardColumn();
+        newColumn.setName(name);
+        newColumn.setOrderIndex(orderIndex);
+        newColumn.setKind(kind);
+        newColumn.setBoardId(boardId);
         return columnRepository.save(newColumn);
     }
 

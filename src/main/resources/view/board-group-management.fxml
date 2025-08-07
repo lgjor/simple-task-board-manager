@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<VBox fx:id="rootContainer" spacing="10" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.desviante.view.BoardGroupManagementController">
+    <padding>
+        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+    </padding>
+    
+    <!-- Cabeçalho -->
+    <HBox alignment="CENTER_LEFT" spacing="10">
+        <Label text="Gerenciamento de Grupos de Board" styleClass="title-label" />
+    </HBox>
+    
+    <!-- Descrição -->
+    <Label text="Crie e gerencie grupos de board com seus próprios ícones e cores personalizadas para organizar melhor seus quadros." 
+           styleClass="description-label" wrapText="true" />
+    
+    <!-- Tabela de grupos de board -->
+    <VBox spacing="5">
+        <Label text="Grupos de Board:" styleClass="section-label" />
+        
+        <TableView fx:id="groupsTable" VBox.vgrow="ALWAYS" prefHeight="300">
+            <columns>
+                <TableColumn fx:id="iconColumn" text="Ícone" prefWidth="80" />
+                <TableColumn fx:id="nameColumn" text="Nome" prefWidth="200" />
+                <TableColumn fx:id="descriptionColumn" text="Descrição" prefWidth="250" />
+                <TableColumn fx:id="creationDateColumn" text="Data de Criação" prefWidth="200" />
+            </columns>
+        </TableView>
+    </VBox>
+    
+    <!-- Botões de ação -->
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Button fx:id="addButton" text="Adicionar" styleClass="primary-button" />
+        <Button fx:id="editButton" text="Editar" styleClass="secondary-button" />
+        <Button fx:id="deleteButton" text="Excluir" styleClass="danger-button" />
+        <Region HBox.hgrow="ALWAYS" />
+        <Button fx:id="closeButton" text="Fechar" styleClass="secondary-button" />
+    </HBox>
+</VBox> 

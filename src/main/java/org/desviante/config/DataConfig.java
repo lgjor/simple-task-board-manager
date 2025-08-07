@@ -14,6 +14,11 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import javax.sql.DataSource;
 import java.io.File;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.logging.Logger;
 
 /**
  * Configuração de dados e persistência da aplicação.
@@ -26,7 +31,7 @@ import java.io.File;
  * <ul>
  *   <li>DataSource H2 com pool de conexões HikariCP</li>
  *   <li>Gerenciador de transações para operações JDBC</li>
- *   <li>Inicializador automático do banco de dados</li>
+ *   <li>Inicializador automático do banco de dados com preservação de dados</li>
  *   <li>Escaneamento de repositórios para injeção de dependência</li>
  * </ul>
  *
@@ -45,6 +50,7 @@ import java.io.File;
 public class DataConfig {
 
     private static final String DB_FILE_PATH = System.getProperty("user.home") + "/myboards/board_h2_db";
+    private static final Logger logger = Logger.getLogger(DataConfig.class.getName());
 
     /**
      * Configura e retorna a fonte de dados H2 com pool de conexões HikariCP.
@@ -86,14 +92,14 @@ public class DataConfig {
     }
 
     /**
-     * Configura o inicializador automático do banco de dados.
+     * Configura o inicializador automático do banco de dados com preservação de dados.
      *
-     * <p>Executa o script schema.sql apenas na primeira execução da aplicação,
-     * verificando se o arquivo físico do banco já existe. Isso evita a execução
-     * desnecessária de DROP TABLE em execuções subsequentes.</p>
+     * <p>Executa o script schema.sql apenas quando necessário, preservando dados existentes.
+     * Verifica se o banco existe e se as tabelas necessárias estão presentes antes
+     * de executar qualquer script de inicialização.</p>
      *
      * @param dataSource fonte de dados configurada
-     * @return DataSourceInitializer configurado para inicialização condicional
+     * @return DataSourceInitializer configurado para inicialização segura
      * @see org.springframework.jdbc.datasource.init.DataSourceInitializer
      * @see org.springframework.jdbc.datasource.init.ResourceDatabasePopulator
      */
@@ -105,14 +111,51 @@ public class DataConfig {
         initializer.setDataSource(dataSource);
         initializer.setDatabasePopulator(populator);
 
-        // 1. Verifica se o arquivo físico do banco de dados já existe.
-        //    O H2 cria um arquivo com a extensão .mv.db.
+        // Verifica se o banco existe e se precisa de inicialização
         File dbFile = new File(DB_FILE_PATH + ".mv.db");
-
-        // 2. Habilita o inicializador (que roda o script) APENAS se o arquivo NÃO existir.
-        //    Isso garante que o `DROP TABLE` só seja executado na primeira vez.
-        initializer.setEnabled(!dbFile.exists());
+        boolean shouldInitialize = !dbFile.exists() || !isDatabaseValid(dataSource);
+        
+        logger.info("Banco de dados existe: " + dbFile.exists());
+        logger.info("Banco de dados válido: " + isDatabaseValid(dataSource));
+        logger.info("Inicialização necessária: " + shouldInitialize);
+        
+        initializer.setEnabled(shouldInitialize);
 
         return initializer;
+    }
+
+    /**
+     * Verifica se o banco de dados é válido e contém as tabelas necessárias.
+     *
+     * @param dataSource fonte de dados para verificação
+     * @return true se o banco é válido, false caso contrário
+     */
+    private boolean isDatabaseValid(DataSource dataSource) {
+        try (Connection connection = dataSource.getConnection()) {
+            DatabaseMetaData metaData = connection.getMetaData();
+            
+            // Lista de tabelas obrigatórias
+            String[] requiredTables = {
+                "BOARDS", "BOARD_COLUMNS", "CARDS", "TASKS", 
+                "BOARD_GROUPS", "CARD_TYPES"
+            };
+            
+            // Verifica se todas as tabelas obrigatórias existem
+            for (String tableName : requiredTables) {
+                try (ResultSet tables = metaData.getTables(null, null, tableName, new String[]{"TABLE"})) {
+                    if (!tables.next()) {
+                        logger.warning("Tabela obrigatória não encontrada: " + tableName);
+                        return false;
+                    }
+                }
+            }
+            
+            logger.info("Banco de dados válido - todas as tabelas obrigatórias encontradas");
+            return true;
+            
+        } catch (SQLException e) {
+            logger.severe("Erro ao verificar integridade do banco: " + e.getMessage());
+            return false;
+        }
     }
 }
