@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
-import org.desviante.config.TestGoogleApiConfig;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
