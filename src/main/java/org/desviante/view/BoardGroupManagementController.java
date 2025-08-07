@@ -16,6 +16,7 @@ import org.desviante.model.BoardGroup;
 import org.desviante.service.BoardGroupService;
 import org.desviante.service.dto.BoardGroupDTO;
 import org.desviante.service.dto.CreateBoardGroupRequestDTO;
+import org.desviante.view.IconSelectionDialog;
 
 import java.net.URL;
 import java.time.format.DateTimeFormatter;
@@ -270,14 +271,43 @@ public class BoardGroupManagementController implements Initializable {
         descriptionField.setPrefRowCount(3);
         descriptionField.setWrapText(true);
         
+        // Campo de ícone com preview visual e botão para seleção
+        HBox iconBox = new HBox(5);
+        iconBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        
+        // Preview do ícone atual
+        ImageView iconPreview = new ImageView();
+        iconPreview.setFitWidth(24);
+        iconPreview.setFitHeight(24);
+        iconPreview.setPreserveRatio(true);
+        iconPreview.setSmooth(true);
+        
+        // Campo de texto (oculto, usado apenas internamente)
         TextField iconField = new TextField();
-        iconField.setPromptText("Ícone (ex: 📁, 🏠, 💼, 📚)");
+        iconField.setVisible(false);
+        iconField.setManaged(false);
+        
+        // Label para mostrar o ícone selecionado
+        Label iconLabel = new Label("Nenhum ícone selecionado");
+        iconLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: gray;");
+        
+        Button selectIconButton = new Button("Escolher Ícone");
+        selectIconButton.setOnAction(e -> {
+            String currentIcon = iconField.getText().trim();
+            IconSelectionDialog.showIconSelection(currentIcon).ifPresent(selectedIcon -> {
+                iconField.setText(selectedIcon);
+                updateIconPreview(iconPreview, iconLabel, selectedIcon);
+            });
+        });
+        
+        iconBox.getChildren().addAll(iconPreview, iconLabel, selectIconButton);
 
         // Preencher campos se estiver editando
         if (existingGroup != null) {
             nameField.setText(existingGroup.name());
             descriptionField.setText(existingGroup.description());
             iconField.setText(existingGroup.icon());
+            updateIconPreview(iconPreview, iconLabel, existingGroup.icon());
         }
 
         grid.add(new Label("Nome:"), 0, 0);
@@ -285,7 +315,7 @@ public class BoardGroupManagementController implements Initializable {
         grid.add(new Label("Descrição:"), 0, 1);
         grid.add(descriptionField, 1, 1);
         grid.add(new Label("Ícone:"), 0, 2);
-        grid.add(iconField, 1, 2);
+        grid.add(iconBox, 1, 2);
 
         dialog.getDialogPane().setContent(grid);
         Platform.runLater(nameField::requestFocus);
@@ -316,6 +346,41 @@ public class BoardGroupManagementController implements Initializable {
         });
 
         return dialog;
+    }
+    
+    /**
+     * Atualiza o preview do ícone e o texto da label
+     */
+    private void updateIconPreview(ImageView iconPreview, Label iconLabel, String iconCode) {
+        if (iconCode == null || iconCode.trim().isEmpty()) {
+            iconPreview.setImage(null);
+            iconLabel.setText("Nenhum ícone selecionado");
+            iconLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: gray;");
+            return;
+        }
+        
+        try {
+            // Tentar carregar o ícone
+            String iconPath = "/icons/emoji/" + iconCode + ".png";
+            URL iconUrl = getClass().getResource(iconPath);
+            
+            if (iconUrl != null) {
+                Image iconImage = new Image(iconUrl.toExternalForm());
+                iconPreview.setImage(iconImage);
+                iconLabel.setText(""); // Sem texto quando o ícone é carregado com sucesso
+                iconLabel.setStyle("-fx-font-size: 12px;");
+            } else {
+                // Se não encontrar o ícone, mostrar apenas o código
+                iconPreview.setImage(null);
+                iconLabel.setText("Código: " + iconCode);
+                iconLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: orange;");
+            }
+        } catch (Exception e) {
+            // Em caso de erro, mostrar apenas o código
+            iconPreview.setImage(null);
+            iconLabel.setText("Código: " + iconCode);
+            iconLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: orange;");
+        }
     }
 
     /**
