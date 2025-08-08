@@ -172,7 +172,7 @@ java -jar build/libs/simple-task-board-manager-1.0.0-all.jar
 
 ## <div id="changelog">📋 Changelog</div>
 
-### [v1.2.0] - 2025-01-08
+### [v1.1.0] - 2025-01-08
 
 #### ✨ Melhorias na Interface
 - **Controles de Movimentação**: Adicionados botões ↑/↓ para mover cards dentro da mesma coluna
