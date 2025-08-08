@@ -16,7 +16,8 @@ Desenvolvido para manter você focado no que realmente importa: **resolver suas 
   <a href="#tecnologias">Tecnologias</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
   <a href="#funcionalidades">Funcionalidades</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
   <a href="#arquitetura">Arquitetura</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
-  <a href="#testes">Testes</a>
+  <a href="#testes">Testes</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+  <a href="#changelog">Changelog</a>
 </p>
 
 ## <div id="diferencial">🎯 Nosso Diferencial: Simplicidade que Foca na Produtividade</div>
@@ -168,6 +169,48 @@ git clone https://github.com/lgjor/simple-task-board-manager.git
 ./gradlew build
 java -jar build/libs/simple-task-board-manager-1.0.0-all.jar
 ```
+
+## <div id="changelog">📋 Changelog</div>
+
+### [v1.2.0] - 2025-01-08
+
+#### ✨ Melhorias na Interface
+- **Controles de Movimentação**: Adicionados botões ↑/↓ para mover cards dentro da mesma coluna
+- **Posicionamento Otimizado**: Controles de movimentação posicionados no canto superior direito do card
+- **Feedback Visual**: Remoção de alertas redundantes - interface atualizada automaticamente após movimentação
+- **Tooltips Informativos**: Dicas visuais nos botões de movimentação
+
+#### 🔧 Correções Técnicas
+- **Validação de Dados**: Corrigido erro de validação que impedia atualização da interface
+- **Atualização em Tempo Real**: Interface agora atualiza automaticamente após movimentação de cards
+- **Lógica de Movimentação**: Corrigida query SQL para encontrar cards adjacentes corretamente
+- **Comunicação entre Controllers**: Melhorada notificação entre CardViewController e BoardViewController
+
+#### 🎨 Melhorias de UX
+- **Interface Mais Limpa**: Removidos alertas desnecessários para movimentação bem-sucedida
+- **Feedback Imediato**: Usuário vê mudanças instantaneamente na interface
+- **Experiência Fluida**: Movimentação de cards sem interrupções na interface
+
+### [v1.0.9] - 2025-01-07
+
+#### ✨ Novas Funcionalidades
+- **Sistema de Progresso**: Cards agora exibem progresso visual com percentuais
+- **Controles de Edição**: Interface de edição in-place com spinners para progresso
+- **Validação em Tempo Real**: Validação automática de valores de progresso
+- **Status Dinâmico**: Status do card baseado na coluna atual
+
+#### 🔧 Melhorias Técnicas
+- **Arquitetura Modular**: Componentes reutilizáveis e desacoplados
+- **Persistência Robusta**: Sistema de backup e migração de dados
+- **Interface Responsiva**: Adaptação a diferentes tamanhos de tela
+
+### [v1.0.8] - 2025-01-06
+
+#### 🎉 Lançamento Inicial
+- **Interface Kanban**: Boards visuais com colunas organizacionais
+- **Drag & Drop**: Movimentação intuitiva de cards entre colunas
+- **Persistência Local**: Banco de dados H2 para armazenamento local
+- **Arquitetura Spring Boot**: Base sólida para desenvolvimento futuro
 
 ## 🤝 Contribuindo
 

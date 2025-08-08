@@ -17,6 +17,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -410,5 +411,77 @@ public class TaskManagerFacade {
                     return CardTypeOptionDTO.fromCardType(cardTypeDTO);
                 })
                 .toList();
+    }
+
+    /**
+     * Move um card para cima na mesma coluna.
+     * 
+     * @param cardId ID do card a ser movido
+     * @return true se o card foi movido, false se já estava no topo
+     */
+    @Transactional
+    public boolean moveCardUp(Long cardId) {
+        return cardService.moveCardUp(cardId);
+    }
+
+    /**
+     * Move um card para baixo na mesma coluna.
+     * 
+     * @param cardId ID do card a ser movido
+     * @return true se o card foi movido, false se já estava na base
+     */
+    @Transactional
+    public boolean moveCardDown(Long cardId) {
+        return cardService.moveCardDown(cardId);
+    }
+
+    /**
+     * Verifica se um card pode ser movido para cima.
+     * 
+     * @param cardId ID do card
+     * @return true se o card pode ser movido para cima, false caso contrário
+     */
+    @Transactional(readOnly = true)
+    public boolean canMoveCardUp(Long cardId) {
+        return cardService.canMoveCardUp(cardId);
+    }
+
+    /**
+     * Verifica se um card pode ser movido para baixo.
+     * 
+     * @param cardId ID do card
+     * @return true se o card pode ser movido para baixo, false caso contrário
+     */
+    @Transactional(readOnly = true)
+    public boolean canMoveCardDown(Long cardId) {
+        return cardService.canMoveCardDown(cardId);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Card> getCardById(Long cardId) {
+        return cardService.getCardById(cardId);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<CardDetailDTO> getCardDetailById(Long cardId) {
+        return cardService.getCardById(cardId)
+                .map(card -> {
+                    // Obter o tipo da coluna para incluir no DTO
+                    BoardColumn column = columnService.getColumnById(card.getBoardColumnId())
+                            .orElse(null);
+                    
+                    return new CardDetailDTO(
+                            card.getId(),
+                            card.getTitle(),
+                            card.getDescription(),
+                            card.getCardType() != null ? card.getCardType().getName() : null,
+                            card.getTotalUnits(),
+                            card.getCurrentUnits(),
+                            formatDateTime(card.getCreationDate()),
+                            formatDateTime(card.getLastUpdateDate()),
+                            formatDateTime(card.getCompletionDate()),
+                            column != null ? column.getKind() : null
+                    );
+                });
     }
 }

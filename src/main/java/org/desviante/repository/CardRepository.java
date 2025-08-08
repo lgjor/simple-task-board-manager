@@ -88,6 +88,11 @@ public class CardRepository {
             card.setCompletionDate(completionTimestamp.toLocalDateTime());
         }
         card.setBoardColumnId(rs.getLong("board_column_id"));
+        
+        // Mapear o campo order_index
+        Integer orderIndex = rs.getObject("order_index", Integer.class);
+        card.setOrderIndex(orderIndex != null ? orderIndex : 0);
+        
         return card;
     };
 
@@ -112,17 +117,17 @@ public class CardRepository {
      * 
      * <p>Método otimizado para carregar cards de várias colunas
      * em uma única consulta, reduzindo o número de acessos ao banco.
-     * Os cards são retornados ordenados por data de criação (ASC)
-     * para manter a sequência cronológica.</p>
+     * Os cards são retornados ordenados por order_index (ASC)
+     * para manter a sequência manual definida pelo usuário.</p>
      * 
      * @param columnIds lista de identificadores das colunas
-     * @return lista de cards ordenados por data de criação
+     * @return lista de cards ordenados por order_index
      */
     public List<Card> findByBoardColumnIdIn(List<Long> columnIds) {
         if (columnIds == null || columnIds.isEmpty()) {
             return Collections.emptyList();
         }
-        String sql = "SELECT * FROM cards WHERE board_column_id IN (:columnIds) ORDER BY creation_date ASC";
+        String sql = "SELECT * FROM cards WHERE board_column_id IN (:columnIds) ORDER BY order_index ASC, creation_date ASC";
         var params = new MapSqlParameterSource("columnIds", columnIds);
         return jdbcTemplate.query(sql, params, cardRowMapper);
     }
@@ -149,7 +154,8 @@ public class CardRepository {
                 .addValue("creation_date", card.getCreationDate())
                 .addValue("last_update_date", card.getLastUpdateDate())
                 .addValue("completion_date", card.getCompletionDate())
-                .addValue("board_column_id", card.getBoardColumnId());
+                .addValue("board_column_id", card.getBoardColumnId())
+                .addValue("order_index", card.getOrderIndex());
 
         if (card.getId() == null) {
             Number newId = jdbcInsert.executeAndReturnKey(params);
@@ -165,12 +171,87 @@ public class CardRepository {
                         current_units = :current_units,
                         last_update_date = :last_update_date,
                         completion_date = :completion_date,
-                        board_column_id = :board_column_id
+                        board_column_id = :board_column_id,
+                        order_index = :order_index
                     WHERE id = :id
                     """;
             jdbcTemplate.update(sql, params);
         }
         return card;
+    }
+
+    /**
+     * Busca cards de uma coluna específica ordenados por order_index.
+     * 
+     * @param columnId identificador da coluna
+     * @return lista de cards ordenados por order_index
+     */
+    public List<Card> findByBoardColumnId(Long columnId) {
+        String sql = "SELECT * FROM cards WHERE board_column_id = :columnId ORDER BY order_index ASC, creation_date ASC";
+        var params = new MapSqlParameterSource("columnId", columnId);
+        return jdbcTemplate.query(sql, params, cardRowMapper);
+    }
+
+    /**
+     * Busca o próximo card na mesma coluna.
+     * 
+     * @param columnId identificador da coluna
+     * @param currentOrderIndex order_index do card atual
+     * @return Optional contendo o próximo card se existir
+     */
+    public Optional<Card> findNextCard(Long columnId, Integer currentOrderIndex) {
+        String sql = "SELECT * FROM cards WHERE board_column_id = :columnId AND order_index > :currentOrderIndex ORDER BY order_index ASC LIMIT 1";
+        var params = new MapSqlParameterSource()
+                .addValue("columnId", columnId)
+                .addValue("currentOrderIndex", currentOrderIndex);
+        try {
+            return Optional.ofNullable(jdbcTemplate.queryForObject(sql, params, cardRowMapper));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Busca o card anterior na mesma coluna.
+     * 
+     * @param columnId identificador da coluna
+     * @param currentOrderIndex order_index do card atual
+     * @return Optional contendo o card anterior se existir
+     */
+    public Optional<Card> findPreviousCard(Long columnId, Integer currentOrderIndex) {
+        String sql = "SELECT * FROM cards WHERE board_column_id = :columnId AND order_index < :currentOrderIndex ORDER BY order_index DESC LIMIT 1";
+        var params = new MapSqlParameterSource()
+                .addValue("columnId", columnId)
+                .addValue("currentOrderIndex", currentOrderIndex);
+        try {
+            return Optional.ofNullable(jdbcTemplate.queryForObject(sql, params, cardRowMapper));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Troca a posição de dois cards na mesma coluna.
+     * 
+     * @param card1Id ID do primeiro card
+     * @param card1NewOrder nova ordem do primeiro card
+     * @param card2Id ID do segundo card
+     * @param card2NewOrder nova ordem do segundo card
+     */
+    @Transactional
+    public void swapCardPositions(Long card1Id, Integer card1NewOrder, Long card2Id, Integer card2NewOrder) {
+        // Atualiza o primeiro card
+        String sql = "UPDATE cards SET order_index = :newOrder WHERE id = :cardId";
+        var params1 = new MapSqlParameterSource()
+                .addValue("newOrder", card1NewOrder)
+                .addValue("cardId", card1Id);
+        jdbcTemplate.update(sql, params1);
+
+        // Atualiza o segundo card
+        var params2 = new MapSqlParameterSource()
+                .addValue("newOrder", card2NewOrder)
+                .addValue("cardId", card2Id);
+        jdbcTemplate.update(sql, params2);
     }
 
     /**

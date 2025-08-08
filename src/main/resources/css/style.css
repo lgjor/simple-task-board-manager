@@ -56,6 +56,12 @@
     -fx-padding: 0 0 2 0; /* Pequeno espaçamento abaixo */
 }
 
+/* Header do card com tipo e controles de movimentação */
+.card-header {
+    -fx-alignment: center-left;
+    -fx-spacing: 0;
+}
+
 /* --- Estilos para campos de progresso --- */
 
 /* Separador da seção de progresso */
@@ -652,4 +658,46 @@
 .danger-button:disabled {
     -fx-opacity: 0.5;
     -fx-cursor: default;
+}
+
+/* Estilos para botões de movimentação */
+.move-button {
+    -fx-background-color: #F8F9FA;
+    -fx-border-color: #DEE2E6;
+    -fx-border-width: 1;
+    -fx-background-radius: 3;
+    -fx-border-radius: 3;
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #6C757D;
+    -fx-min-width: 20px;
+    -fx-min-height: 20px;
+    -fx-pref-width: 20px;
+    -fx-pref-height: 20px;
+    -fx-max-width: 20px;
+    -fx-max-height: 20px;
+    -fx-cursor: hand;
+    -fx-transition: all 0.2s ease-in-out;
+}
+
+.move-button:hover {
+    -fx-background-color: #E9ECEF;
+    -fx-border-color: #ADB5BD;
+    -fx-text-fill: #495057;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 2, 0, 0, 1);
+}
+
+.move-button:pressed {
+    -fx-background-color: #DEE2E6;
+    -fx-border-color: #ADB5BD;
+    -fx-text-fill: #343A40;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 1, 0, 0, 0);
+}
+
+.move-button:disabled {
+    -fx-opacity: 0.4;
+    -fx-cursor: default;
+    -fx-background-color: #F8F9FA;
+    -fx-border-color: #E9ECEF;
+    -fx-text-fill: #ADB5BD;
 }

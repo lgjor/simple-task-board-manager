@@ -58,6 +58,7 @@ CREATE TABLE cards (
     last_update_date  TIMESTAMP NOT NULL,
     completion_date   TIMESTAMP,
     board_column_id   BIGINT NOT NULL,
+    order_index       INTEGER DEFAULT 0,
 
     CONSTRAINT fk_cards_to_board_columns FOREIGN KEY (board_column_id) REFERENCES board_columns(id) ON DELETE CASCADE,
     CONSTRAINT fk_cards_to_card_types FOREIGN KEY (card_type_id) REFERENCES card_types(id) ON DELETE SET NULL
@@ -82,6 +83,7 @@ CREATE TABLE tasks (
 -- Cria índices para as chaves estrangeiras, melhorando a performance de joins e buscas.
 CREATE INDEX idx_board_columns_board_id ON board_columns(board_id);
 CREATE INDEX idx_cards_board_column_id ON cards(board_column_id);
+CREATE INDEX idx_cards_column_order ON cards(board_column_id, order_index);
 CREATE INDEX idx_tasks_card_id ON tasks(card_id);
 CREATE INDEX idx_boards_group_id ON boards(group_id);
 
@@ -110,5 +112,5 @@ INSERT INTO board_groups (name, description, color, icon, creation_date) VALUES
 ('Trabalho', 'Tarefas profissionais e trabalho', '#45B7D1', '1f528', CURRENT_TIMESTAMP);
 
 -- Inserir um card de exemplo na coluna inicial (ID 1)
-INSERT INTO cards (title, description, card_type_id, board_column_id, creation_date, last_update_date) VALUES 
-('Card de Exemplo', 'Este é um card de exemplo para demonstrar o sistema', 1, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+INSERT INTO cards (title, description, card_type_id, board_column_id, order_index, creation_date, last_update_date) VALUES 
+('Card de Exemplo', 'Este é um card de exemplo para demonstrar o sistema', 1, 1, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);

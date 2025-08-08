@@ -81,6 +81,13 @@ public class Card {
     private Integer currentUnits;
 
     /**
+     * Índice de ordem do card.
+     * <p>Representa a posição do card na coluna do quadro.
+     * Útil para ordenação e exibição em interfaces.</p>
+     */
+    private Integer orderIndex;
+
+    /**
      * Calcula o percentual de progresso do card de forma unificada.
      * 
      * <p>Para cards que suportam progresso, calcula baseado em currentUnits/totalUnits.

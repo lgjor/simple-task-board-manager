@@ -6,7 +6,6 @@ import org.desviante.model.BoardColumn;
 import org.desviante.model.BoardGroup;
 import org.desviante.model.Card;
 import org.desviante.model.enums.BoardColumnKindEnum;
-import org.desviante.model.CardType;
 import org.desviante.repository.BoardGroupRepository;
 import org.desviante.repository.BoardRepository;
 import org.desviante.service.dto.BoardSummaryDTO;
@@ -264,6 +263,7 @@ class BoardGroupServiceTest {
                 .creationDate(LocalDateTime.now())
                 .lastUpdateDate(LocalDateTime.now())
                 .boardColumnId(1L)
+                .orderIndex(1)
                 .build();
         Card card2 = Card.builder()
                 .id(2L)
@@ -272,6 +272,7 @@ class BoardGroupServiceTest {
                 .creationDate(LocalDateTime.now())
                 .lastUpdateDate(LocalDateTime.now())
                 .boardColumnId(2L)
+                .orderIndex(1)
                 .build();
         
         when(boardGroupRepository.findById(groupId)).thenReturn(Optional.of(group));
@@ -380,6 +381,7 @@ class BoardGroupServiceTest {
                 .creationDate(LocalDateTime.now())
                 .lastUpdateDate(LocalDateTime.now())
                 .boardColumnId(1L)
+                .orderIndex(1)
                 .build();
         Card card2 = Card.builder()
                 .id(2L)
@@ -388,6 +390,7 @@ class BoardGroupServiceTest {
                 .creationDate(LocalDateTime.now())
                 .lastUpdateDate(LocalDateTime.now())
                 .boardColumnId(1L)
+                .orderIndex(2)
                 .build();
         
         when(boardGroupRepository.findById(groupId)).thenReturn(Optional.of(group));
@@ -425,6 +428,7 @@ class BoardGroupServiceTest {
                 .creationDate(LocalDateTime.now())
                 .lastUpdateDate(LocalDateTime.now())
                 .boardColumnId(1L)
+                .orderIndex(1)
                 .build();
         Card card2 = Card.builder()
                 .id(2L)
@@ -433,6 +437,7 @@ class BoardGroupServiceTest {
                 .creationDate(LocalDateTime.now())
                 .lastUpdateDate(LocalDateTime.now())
                 .boardColumnId(1L)
+                .orderIndex(2)
                 .build();
         
         when(boardGroupRepository.findById(groupId)).thenReturn(Optional.of(group));
@@ -473,6 +478,7 @@ class BoardGroupServiceTest {
                 .creationDate(LocalDateTime.now())
                 .lastUpdateDate(LocalDateTime.now())
                 .boardColumnId(1L)
+                .orderIndex(1)
                 .build();
         Card card2 = Card.builder()
                 .id(2L)
@@ -481,6 +487,7 @@ class BoardGroupServiceTest {
                 .creationDate(LocalDateTime.now())
                 .lastUpdateDate(LocalDateTime.now())
                 .boardColumnId(2L)
+                .orderIndex(1)
                 .build();
         Card card3 = Card.builder()
                 .id(3L)
@@ -489,6 +496,7 @@ class BoardGroupServiceTest {
                 .creationDate(LocalDateTime.now())
                 .lastUpdateDate(LocalDateTime.now())
                 .boardColumnId(3L)
+                .orderIndex(1)
                 .build();
         
         when(boardGroupRepository.findById(groupId)).thenReturn(Optional.of(group));
@@ -529,6 +537,7 @@ class BoardGroupServiceTest {
                 .creationDate(LocalDateTime.now())
                 .lastUpdateDate(LocalDateTime.now())
                 .boardColumnId(1L)
+                .orderIndex(1)
                 .build();
         Card card2 = Card.builder()
                 .id(2L)
@@ -537,6 +546,7 @@ class BoardGroupServiceTest {
                 .creationDate(LocalDateTime.now())
                 .lastUpdateDate(LocalDateTime.now())
                 .boardColumnId(1L)
+                .orderIndex(2)
                 .build();
         Card card3 = Card.builder()
                 .id(3L)
@@ -545,6 +555,7 @@ class BoardGroupServiceTest {
                 .creationDate(LocalDateTime.now())
                 .lastUpdateDate(LocalDateTime.now())
                 .boardColumnId(2L)
+                .orderIndex(1)
                 .build();
         Card card4 = Card.builder()
                 .id(4L)
@@ -553,6 +564,7 @@ class BoardGroupServiceTest {
                 .creationDate(LocalDateTime.now())
                 .lastUpdateDate(LocalDateTime.now())
                 .boardColumnId(2L)
+                .orderIndex(2)
                 .build();
         Card card5 = Card.builder()
                 .id(5L)
@@ -561,6 +573,7 @@ class BoardGroupServiceTest {
                 .creationDate(LocalDateTime.now())
                 .lastUpdateDate(LocalDateTime.now())
                 .boardColumnId(2L)
+                .orderIndex(3)
                 .build();
         Card card6 = Card.builder()
                 .id(6L)
@@ -569,6 +582,7 @@ class BoardGroupServiceTest {
                 .creationDate(LocalDateTime.now())
                 .lastUpdateDate(LocalDateTime.now())
                 .boardColumnId(3L)
+                .orderIndex(1)
                 .build();
         Card card7 = Card.builder()
                 .id(7L)
@@ -577,6 +591,7 @@ class BoardGroupServiceTest {
                 .creationDate(LocalDateTime.now())
                 .lastUpdateDate(LocalDateTime.now())
                 .boardColumnId(3L)
+                .orderIndex(2)
                 .build();
         
         when(boardGroupRepository.findById(groupId)).thenReturn(Optional.of(group));
@@ -641,6 +656,7 @@ class BoardGroupServiceTest {
                 .creationDate(LocalDateTime.now())
                 .lastUpdateDate(LocalDateTime.now())
                 .boardColumnId(999L) // ID de coluna inexistente
+                .orderIndex(1)
                 .build();
         
         when(boardGroupRepository.findById(groupId)).thenReturn(Optional.of(group));

@@ -90,6 +90,7 @@ public class CardRepositoryTest {
                 .creationDate(now)
                 .lastUpdateDate(now)
                 .boardColumnId(testColumn.getId())
+                .orderIndex(1)
                 .build();
 
         // ACT
@@ -117,6 +118,7 @@ public class CardRepositoryTest {
                 .creationDate(LocalDateTime.now())
                 .lastUpdateDate(LocalDateTime.now())
                 .boardColumnId(testColumn.getId())
+                .orderIndex(1)
                 .build();
         Card savedCard = cardRepository.save(cardToSave);
 
@@ -139,6 +141,7 @@ public class CardRepositoryTest {
                 .creationDate(creationTime)
                 .lastUpdateDate(creationTime)
                 .boardColumnId(testColumn.getId())
+                .orderIndex(1)
                 .build();
         Card savedCard = cardRepository.save(cardToSave);
 
@@ -170,6 +173,7 @@ public class CardRepositoryTest {
                 .creationDate(now)
                 .lastUpdateDate(now)
                 .boardColumnId(testColumn.getId())
+                .orderIndex(1)
                 .build());
         cardRepository.save(Card.builder()
                 .title("Card 2")
@@ -177,6 +181,7 @@ public class CardRepositoryTest {
                 .creationDate(now)
                 .lastUpdateDate(now)
                 .boardColumnId(testColumn.getId())
+                .orderIndex(2)
                 .build());
 
         // ACT

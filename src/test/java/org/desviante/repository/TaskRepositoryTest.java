@@ -51,6 +51,7 @@ public class TaskRepositoryTest {
                 .creationDate(now)
                 .lastUpdateDate(now)
                 .boardColumnId(testColumn.getId())
+                .orderIndex(1)
                 .build());
     }
 

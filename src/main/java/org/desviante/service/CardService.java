@@ -106,6 +106,11 @@ public class CardService {
         // Um novo card nunca está concluído.
         newCard.setCompletionDate(null);
 
+        // Define o order_index como o próximo valor disponível na coluna
+        List<Card> existingCards = cardRepository.findByBoardColumnId(parentColumnId);
+        int nextOrderIndex = existingCards.size() + 1;
+        newCard.setOrderIndex(nextOrderIndex);
+
         Card savedCard = cardRepository.save(newCard);
         
         // Carregar o objeto CardType completo após salvar
@@ -141,6 +146,11 @@ public class CardService {
 
         card.setBoardColumnId(newColumnId);
         card.setLastUpdateDate(LocalDateTime.now());
+
+        // Define o order_index como o próximo valor disponível na nova coluna
+        List<Card> existingCards = cardRepository.findByBoardColumnId(newColumnId);
+        int nextOrderIndex = existingCards.size() + 1;
+        card.setOrderIndex(nextOrderIndex);
 
         // LÓGICA DE CONCLUSÃO REFINADA:
         // Se a nova coluna for do tipo FINAL, define a data de conclusão.
@@ -303,20 +313,111 @@ public class CardService {
         cardRepository.deleteById(id);
     }
 
+
+
     /**
-     * Obtém o nome do tipo de card pelo ID.
-     *
-     * @param typeId ID do tipo de card
-     * @return nome do tipo de card ou null se não encontrado
+     * Move um card para cima na mesma coluna.
+     * 
+     * <p>Troca a posição do card atual com o card anterior na mesma coluna.
+     * Se o card já estiver no topo, não faz nada.</p>
+     * 
+     * @param cardId ID do card a ser movido
+     * @return true se o card foi movido, false se já estava no topo
+     * @throws ResourceNotFoundException se o card não for encontrado
      */
-    private String getCardTypeName(Long typeId) {
-        if (typeId == null) {
-            return null;
+    @Transactional
+    public boolean moveCardUp(Long cardId) {
+        Card currentCard = getCardById(cardId)
+                .orElseThrow(() -> new ResourceNotFoundException("Card com ID " + cardId + " não encontrado."));
+
+        // Busca o card anterior na mesma coluna
+        Optional<Card> previousCard = cardRepository.findPreviousCard(
+                currentCard.getBoardColumnId(), 
+                currentCard.getOrderIndex()
+        );
+
+        if (previousCard.isEmpty()) {
+            return false; // Card já está no topo
         }
-        try {
-            return CardTypeService.getCardTypeById(typeId).getName();
-        } catch (ResourceNotFoundException e) {
-            return null;
+
+        Card previous = previousCard.get();
+        
+        // Troca as posições
+        cardRepository.swapCardPositions(
+                currentCard.getId(), previous.getOrderIndex(),
+                previous.getId(), currentCard.getOrderIndex()
+        );
+
+        return true;
+    }
+
+    /**
+     * Move um card para baixo na mesma coluna.
+     * 
+     * <p>Troca a posição do card atual com o próximo card na mesma coluna.
+     * Se o card já estiver na base, não faz nada.</p>
+     * 
+     * @param cardId ID do card a ser movido
+     * @return true se o card foi movido, false se já estava na base
+     * @throws ResourceNotFoundException se o card não for encontrado
+     */
+    @Transactional
+    public boolean moveCardDown(Long cardId) {
+        Card currentCard = getCardById(cardId)
+                .orElseThrow(() -> new ResourceNotFoundException("Card com ID " + cardId + " não encontrado."));
+
+        // Busca o próximo card na mesma coluna
+        Optional<Card> nextCard = cardRepository.findNextCard(
+                currentCard.getBoardColumnId(), 
+                currentCard.getOrderIndex()
+        );
+
+        if (nextCard.isEmpty()) {
+            return false; // Card já está na base
         }
+
+        Card next = nextCard.get();
+        
+        // Troca as posições
+        cardRepository.swapCardPositions(
+                currentCard.getId(), next.getOrderIndex(),
+                next.getId(), currentCard.getOrderIndex()
+        );
+
+        return true;
+    }
+
+    /**
+     * Verifica se um card pode ser movido para cima.
+     * 
+     * @param cardId ID do card
+     * @return true se o card pode ser movido para cima, false caso contrário
+     */
+    @Transactional(readOnly = true)
+    public boolean canMoveCardUp(Long cardId) {
+        Optional<Card> cardOpt = getCardById(cardId);
+        if (cardOpt.isEmpty()) {
+            return false;
+        }
+
+        Card card = cardOpt.get();
+        return cardRepository.findPreviousCard(card.getBoardColumnId(), card.getOrderIndex()).isPresent();
+    }
+
+    /**
+     * Verifica se um card pode ser movido para baixo.
+     * 
+     * @param cardId ID do card
+     * @return true se o card pode ser movido para baixo, false caso contrário
+     */
+    @Transactional(readOnly = true)
+    public boolean canMoveCardDown(Long cardId) {
+        Optional<Card> cardOpt = getCardById(cardId);
+        if (cardOpt.isEmpty()) {
+            return false;
+        }
+
+        Card card = cardOpt.get();
+        return cardRepository.findNextCard(card.getBoardColumnId(), card.getOrderIndex()).isPresent();
     }
 }

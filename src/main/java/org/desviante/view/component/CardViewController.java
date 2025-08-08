@@ -3,13 +3,13 @@ package org.desviante.view.component;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import org.desviante.model.CardType;
 import org.desviante.service.TaskManagerFacade;
 import org.desviante.service.dto.CardDetailDTO;
 import org.desviante.service.dto.CreateTaskRequestDTO;
@@ -46,6 +46,11 @@ public class CardViewController {
     @FXML private Button saveButton;
     @FXML private Button deleteButton;
 
+    // --- COMPONENTES DE CONTROLE DE MOVIMENTAÇÃO ---
+    @FXML private HBox moveControlsBox;
+    @FXML private Button moveUpButton;
+    @FXML private Button moveDownButton;
+
     // --- CAMPOS DE PROGRESSO ---
     @FXML private VBox progressContainer;
     
@@ -76,6 +81,24 @@ public class CardViewController {
         setupDragAndDrop();
         setupEditMode();
         setupProgressSpinners();
+        setupTooltips();
+        
+        // Garantir que os controles de movimentação estejam configurados corretamente
+        moveControlsBox.setVisible(false);
+        moveControlsBox.setManaged(false);
+        editControlsBox.setVisible(false);
+        editControlsBox.setManaged(false);
+    }
+
+    /**
+     * Configura os tooltips dos botões de movimentação
+     */
+    private void setupTooltips() {
+        Tooltip moveUpTooltip = new Tooltip("Mover para cima");
+        Tooltip moveDownTooltip = new Tooltip("Mover para baixo");
+        
+        Tooltip.install(moveUpButton, moveUpTooltip);
+        Tooltip.install(moveDownButton, moveDownTooltip);
     }
 
     /**
@@ -162,6 +185,9 @@ public class CardViewController {
         descriptionLabel.setText(card.description());
         updateProgressFields(card);
         updateFooter(card);
+        
+        // Garantir que os controles de movimentação sejam exibidos em modo de visualização
+        switchToDisplayMode();
     }
 
     /**
@@ -438,6 +464,10 @@ public class CardViewController {
         editControlsBox.setVisible(true);
         editControlsBox.setManaged(true);
         
+        // Ocultar controles de movimentação em modo de edição
+        moveControlsBox.setVisible(false);
+        moveControlsBox.setManaged(false);
+        
         // Mostrar campos de progresso em modo de edição e torná-los editáveis
         if (progressContainer.isVisible()) {
             progressContainer.setVisible(true);
@@ -474,6 +504,10 @@ public class CardViewController {
         
         editControlsBox.setVisible(false);
         editControlsBox.setManaged(false);
+        
+        // Mostrar controles de movimentação em modo de visualização
+        moveControlsBox.setVisible(true);
+        moveControlsBox.setManaged(true);
         
         // Manter campos de progresso visíveis mas ocultar os controles "total" e "atual"
         if (progressContainer.isVisible()) {
@@ -593,6 +627,68 @@ public class CardViewController {
             
         } catch (Exception e) {
             showAlert("Erro", "Erro ao criar tarefa: " + e.getMessage(), Alert.AlertType.ERROR);
+        }
+    }
+
+    @FXML
+    private void handleMoveUp() {
+        if (cardData == null) {
+            showAlert("Erro", "Nenhum card selecionado para mover.", Alert.AlertType.ERROR);
+            return;
+        }
+
+        try {
+            boolean moved = facade.moveCardUp(cardData.id());
+            if (moved) {
+                // Notificar o controlador pai para recarregar a interface
+                Platform.runLater(() -> {
+                    if (onSaveCallback != null) {
+                        // Notificar mudança para recarregar toda a visão Kanban
+                        // Usar valores válidos para evitar erro de validação
+                        onSaveCallback.accept(cardData.id(), new UpdateCardDetailsDTO(
+                            cardData.title(), 
+                            cardData.description(), 
+                            cardData.totalUnits() != null ? cardData.totalUnits() : 1,
+                            cardData.currentUnits() != null ? cardData.currentUnits() : 0
+                        ));
+                    }
+                });
+            } else {
+                showAlert("Informação", "Card já está no topo da coluna.", Alert.AlertType.INFORMATION);
+            }
+        } catch (Exception e) {
+            showAlert("Erro", "Falha ao mover card para cima: " + e.getMessage(), Alert.AlertType.ERROR);
+        }
+    }
+
+    @FXML
+    private void handleMoveDown() {
+        if (cardData == null) {
+            showAlert("Erro", "Nenhum card selecionado para mover.", Alert.AlertType.ERROR);
+            return;
+        }
+
+        try {
+            boolean moved = facade.moveCardDown(cardData.id());
+            if (moved) {
+                // Notificar o controlador pai para recarregar a interface
+                Platform.runLater(() -> {
+                    if (onSaveCallback != null) {
+                        // Notificar mudança para recarregar toda a visão Kanban
+                        // Usar valores válidos para evitar erro de validação
+                        onSaveCallback.accept(cardData.id(), new UpdateCardDetailsDTO(
+                            cardData.title(), 
+                            cardData.description(), 
+                            cardData.totalUnits() != null ? cardData.totalUnits() : 1,
+                            cardData.currentUnits() != null ? cardData.currentUnits() : 0
+                        ));
+                    }
+                });
+            } else {
+                showAlert("Informação", "Card já está na base da coluna.", Alert.AlertType.INFORMATION);
+            }
+        } catch (Exception e) {
+            showAlert("Erro", "Falha ao mover card para baixo: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
 
