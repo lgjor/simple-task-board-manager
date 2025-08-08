@@ -77,7 +77,8 @@ CREATE TABLE cards (
     last_update_date  TIMESTAMP NOT NULL,
     completion_date   TIMESTAMP,
     board_column_id   BIGINT NOT NULL,
-    card_type_id    BIGINT,
+    card_type_id      BIGINT,
+    progress_type     VARCHAR(50) DEFAULT 'PERCENTAGE',
 
     CONSTRAINT fk_cards_to_board_columns FOREIGN KEY (board_column_id) REFERENCES board_columns(id) ON DELETE CASCADE,
     CONSTRAINT fk_cards_to_card_types FOREIGN KEY (card_type_id) REFERENCES card_types(id) ON DELETE SET NULL

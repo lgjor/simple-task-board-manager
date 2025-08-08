@@ -10,13 +10,13 @@ import javafx.scene.control.*;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
-import org.desviante.model.CardType;
 import org.desviante.service.TaskManagerFacade;
 import org.desviante.service.dto.BoardColumnDetailDTO;
 import org.desviante.service.dto.CardDetailDTO;
 import org.desviante.service.dto.CardTypeOptionDTO;
 import org.desviante.service.dto.CreateCardRequestDTO;
 import org.desviante.service.dto.UpdateCardDetailsDTO;
+import org.desviante.model.enums.ProgressType;
 
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -168,6 +168,28 @@ public class ColumnViewController {
         });
         typeComboBox.setButtonCell(typeComboBox.getCellFactory().call(null));
 
+        // ComboBox para tipo de progresso (sem CUSTOM)
+        ComboBox<ProgressType> progressTypeComboBox = new ComboBox<>();
+        progressTypeComboBox.getItems().addAll(
+                ProgressType.PERCENTAGE,
+                ProgressType.CHECKLIST,
+                ProgressType.NONE
+        );
+        progressTypeComboBox.setValue(ProgressType.PERCENTAGE); // Valor padrão
+        
+        progressTypeComboBox.setCellFactory(param -> new ListCell<ProgressType>() {
+            @Override
+            protected void updateItem(ProgressType item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText("");
+                } else {
+                    setText(item.getDisplayName());
+                }
+            }
+        });
+        progressTypeComboBox.setButtonCell(progressTypeComboBox.getCellFactory().call(null));
+
         // Label de erro para o título
         Label titleErrorLabel = new Label();
         titleErrorLabel.setStyle("-fx-text-fill: red; -fx-font-size: 11px;");
@@ -180,6 +202,8 @@ public class ColumnViewController {
         grid.add(descriptionArea, 1, 2);
         grid.add(new Label("Tipo:"), 0, 3);
         grid.add(typeComboBox, 1, 3);
+        grid.add(new Label("Progresso:"), 0, 4);
+        grid.add(progressTypeComboBox, 1, 4);
 
         dialog.getDialogPane().setContent(grid);
         Platform.runLater(titleField::requestFocus);
@@ -220,7 +244,7 @@ public class ColumnViewController {
                     titleField.requestFocus();
                     return null; // Retorna null para manter o diálogo aberto
                 }
-                return new CardCreationData(title.trim(), descriptionArea.getText(), typeComboBox.getValue());
+                return new CardCreationData(title.trim(), descriptionArea.getText(), typeComboBox.getValue(), progressTypeComboBox.getValue());
             }
             return null;
         });
@@ -229,9 +253,10 @@ public class ColumnViewController {
             String title = result.title();
             String description = result.description();
             CardTypeOptionDTO selectedType = result.type();
+            ProgressType selectedProgressType = result.progressType();
 
             try {
-                var request = new CreateCardRequestDTO(title, description, this.columnData.id(), selectedType.cardTypeId());
+                var request = new CreateCardRequestDTO(title, description, this.columnData.id(), selectedType.cardTypeId(), selectedProgressType);
                 CardDetailDTO newCardDTO = facade.createNewCard(request);
 
                 FXMLLoader cardLoader = new FXMLLoader(getClass().getResource("/view/card-view.fxml"));
@@ -248,12 +273,12 @@ public class ColumnViewController {
 
                 addCard(cardNode);
 
+                // Notificar mudança de dados
                 if (onDataChange != null) {
                     onDataChange.run();
                 }
             } catch (Exception e) {
-                e.printStackTrace();
-                new Alert(Alert.AlertType.ERROR, "Falha ao criar o novo card: " + e.getMessage()).showAndWait();
+                new Alert(Alert.AlertType.ERROR, "Erro ao criar o card: " + e.getMessage()).showAndWait();
             }
         });
     }
@@ -265,15 +290,18 @@ public class ColumnViewController {
         private final String title;
         private final String description;
         private final CardTypeOptionDTO type;
+        private final ProgressType progressType;
 
-        public CardCreationData(String title, String description, CardTypeOptionDTO type) {
+        public CardCreationData(String title, String description, CardTypeOptionDTO type, ProgressType progressType) {
             this.title = title;
             this.description = description;
             this.type = type;
+            this.progressType = progressType;
         }
 
         public String title() { return title; }
         public String description() { return description; }
         public CardTypeOptionDTO type() { return type; }
+        public ProgressType progressType() { return progressType; }
     }
 }

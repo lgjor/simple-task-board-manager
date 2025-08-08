@@ -1,5 +1,7 @@
 package org.desviante.service.dto;
 
+import org.desviante.model.enums.ProgressType;
+
 /**
  * DTO para encapsular dados de requisição para criação de um novo Card.
  * 
@@ -29,5 +31,6 @@ public record CreateCardRequestDTO(
         String title,               // Título do card a ser criado
         String description,         // Descrição detalhada do card
         Long parentColumnId,        // ID da coluna onde o card será criado
-        Long cardTypeId           // ID do tipo de card a ser criado
+        Long cardTypeId,          // ID do tipo de card a ser criado
+        ProgressType progressType   // Tipo de progresso do card (pode ser null)
 ) {}

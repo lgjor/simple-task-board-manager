@@ -4,6 +4,7 @@ import org.desviante.exception.ResourceNotFoundException;
 import org.desviante.model.BoardColumn;
 import org.desviante.model.Card;
 import org.desviante.model.CardType;
+import org.desviante.model.enums.ProgressType;
 import org.desviante.repository.BoardColumnRepository;
 import org.desviante.repository.CardRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -395,6 +396,7 @@ class CardServiceTest {
                 .unitLabel("páginas")
                 .build();
         card.setCardType(cardType);
+        card.setProgressType(ProgressType.PERCENTAGE);
         card.setTotalUnits(100);
         card.setCurrentUnits(50);
 
@@ -446,6 +448,7 @@ class CardServiceTest {
                 .unitLabel("páginas")
                 .build();
         card.setCardType(cardType);
+        card.setProgressType(ProgressType.PERCENTAGE);
         card.setTotalUnits(100);
         card.setCurrentUnits(150);
 

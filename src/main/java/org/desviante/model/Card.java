@@ -2,6 +2,7 @@ package org.desviante.model;
 
 import lombok.*;
 import org.desviante.model.enums.BoardColumnKindEnum;
+import org.desviante.model.enums.ProgressType;
 
 import java.time.LocalDateTime;
 
@@ -150,18 +151,27 @@ public class Card {
      */
     private Long cardTypeId;
 
+    /**
+     * Tipo de progresso do card.
+     * <p>Define se e como o progresso deve ser exibido e calculado.
+     * Cards podem ter progresso percentual, customizado ou nenhum progresso.</p>
+     * 
+     * @see ProgressType
+     */
+    private ProgressType progressType;
+
 
 
     /**
      * Verifica se o card suporta acompanhamento de progresso.
      * 
-     * <p>Todos os cards agora suportam progresso básico através
-     * de unidades (total=1, current=0 para cards simples).</p>
+     * <p>O progresso é habilitado baseado no tipo de progresso definido.
+     * Cards com progressType NONE não mostram progresso na interface.</p>
      * 
      * @return true se o card suporta progresso, false caso contrário
      */
     public boolean isProgressable() {
-        return cardType != null;
+        return progressType != null && progressType.isEnabled();
     }
 
     /**
@@ -172,6 +182,18 @@ public class Card {
      */
     public boolean isType(String typeName) {
         return cardType != null && typeName.equals(cardType.getName());
+    }
+
+    /**
+     * Obtém o tipo de progresso do card, retornando o padrão se não definido.
+     * 
+     * <p>Se o progressType for null, retorna PERCENTAGE para manter
+     * compatibilidade com cards existentes.</p>
+     * 
+     * @return tipo de progresso do card
+     */
+    public ProgressType getProgressTypeOrDefault() {
+        return progressType != null ? progressType : ProgressType.PERCENTAGE;
     }
 
     /**

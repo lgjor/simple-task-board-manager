@@ -1,6 +1,7 @@
 package org.desviante.service.dto;
 
 import org.desviante.model.enums.BoardColumnKindEnum;
+import org.desviante.model.enums.ProgressType;
 
 /**
  * DTO para transferência de dados detalhados de um Card para a interface do usuário.
@@ -41,6 +42,7 @@ public record CardDetailDTO(
         String creationDate,        // Data de criação formatada como string
         String lastUpdateDate,      // Data da última atualização formatada como string
         String completionDate,      // Data de conclusão formatada como string (pode ser null)
-        BoardColumnKindEnum columnKind // Tipo da coluna onde o card está localizado
+        BoardColumnKindEnum columnKind, // Tipo da coluna onde o card está localizado
+        ProgressType progressType   // Tipo de progresso do card (NONE, PERCENTAGE, CUSTOM)
 ) {
 }

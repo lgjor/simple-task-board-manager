@@ -7,6 +7,7 @@ import org.desviante.model.BoardColumn;
 import org.desviante.model.BoardGroup;
 import org.desviante.model.Card;
 import org.desviante.model.enums.BoardColumnKindEnum;
+import org.desviante.repository.ChecklistItemRepository;
 
 import org.desviante.service.dto.*;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,7 @@ public class TaskManagerFacade {
     private final TaskService taskService;
     private final BoardGroupService boardGroupService;
     private final CardTypeService cardTypeService;
+    private final ChecklistItemRepository checklistItemRepository;
 
     @Transactional(readOnly = true)
     public List<BoardSummaryDTO> getAllBoardSummaries() {
@@ -192,11 +194,11 @@ public class TaskManagerFacade {
                                     card.getCardType() != null ? card.getCardType().getName() : null,
                                     card.getTotalUnits(),
                                     card.getCurrentUnits(),
-
                                     formatDateTime(card.getCreationDate()),
                                     formatDateTime(card.getLastUpdateDate()),
                                     formatDateTime(card.getCompletionDate()),
-                                    column.getKind() // Adicionar o tipo da coluna
+                                    column.getKind(), // Adicionar o tipo da coluna
+                                    card.getProgressTypeOrDefault() // Adicionar o tipo de progresso
                             ))
                             .collect(Collectors.toList());
                     return new BoardColumnDetailDTO(column.getId(), column.getName(), cardDTOs);
@@ -212,7 +214,8 @@ public class TaskManagerFacade {
                 request.title(),
                 request.description(),
                 request.parentColumnId(),
-                request.cardTypeId()
+                request.cardTypeId(),
+                request.progressType()
         );
 
         // Obter o tipo da coluna para incluir no DTO
@@ -229,7 +232,8 @@ public class TaskManagerFacade {
                 formatDateTime(newCard.getCreationDate()),
                 formatDateTime(newCard.getLastUpdateDate()),
                 formatDateTime(newCard.getCompletionDate()),
-                column.getKind() // Adicionar o tipo da coluna
+                column.getKind(), // Adicionar o tipo da coluna
+                newCard.getProgressTypeOrDefault() // Adicionar o tipo de progresso
         );
     }
 
@@ -252,7 +256,8 @@ public class TaskManagerFacade {
                 formatDateTime(updatedCard.getCreationDate()),
                 formatDateTime(updatedCard.getLastUpdateDate()),
                 formatDateTime(updatedCard.getCompletionDate()),
-                newColumn.getKind() // Adicionar o tipo da nova coluna
+                newColumn.getKind(), // Adicionar o tipo da nova coluna
+                updatedCard.getProgressTypeOrDefault() // Adicionar o tipo de progresso
         );
     }
 
@@ -291,7 +296,8 @@ public class TaskManagerFacade {
                 request.title(), 
                 request.description(),
                 request.totalUnits(),
-                request.currentUnits()
+                request.currentUnits(),
+                request.progressType()
         );
 
         // 2. Obter o tipo da coluna atual
@@ -309,7 +315,8 @@ public class TaskManagerFacade {
                 formatDateTime(updatedCard.getCreationDate()),
                 formatDateTime(updatedCard.getLastUpdateDate()),
                 formatDateTime(updatedCard.getCompletionDate()),
-                column.getKind() // Adicionar o tipo da coluna
+                column.getKind(), // Adicionar o tipo da coluna
+                updatedCard.getProgressTypeOrDefault() // Adicionar o tipo de progresso
         );
     }
 
@@ -391,6 +398,10 @@ public class TaskManagerFacade {
     
     public BoardGroupService getBoardGroupService() {
         return boardGroupService;
+    }
+    
+    public ChecklistItemRepository getChecklistItemRepository() {
+        return checklistItemRepository;
     }
 
     /**
@@ -480,7 +491,8 @@ public class TaskManagerFacade {
                             formatDateTime(card.getCreationDate()),
                             formatDateTime(card.getLastUpdateDate()),
                             formatDateTime(card.getCompletionDate()),
-                            column != null ? column.getKind() : null
+                            column != null ? column.getKind() : null,
+                            card.getProgressTypeOrDefault()
                     );
                 });
     }

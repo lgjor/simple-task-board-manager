@@ -7,6 +7,7 @@ import org.desviante.model.BoardColumn;
 import org.desviante.model.BoardGroup;
 import org.desviante.model.Card;
 import org.desviante.model.enums.BoardColumnKindEnum;
+import org.desviante.model.enums.ProgressType;
 import org.desviante.model.CardType;
 import org.desviante.service.dto.*;
 import org.junit.jupiter.api.DisplayName;
@@ -148,7 +149,7 @@ class TaskManagerFacadeIntegrationTest {
         BoardColumn column = columnService.createColumn("Coluna de Teste", 0, BoardColumnKindEnum.INITIAL, board.getId());
 
         // 2. Criar o objeto de requisição que a UI enviaria.
-        var request = new CreateCardRequestDTO("Nova Tarefa via Fachada", "Descrição da tarefa.", column.getId(), 1L); // ID do tipo CARD
+        var request = new CreateCardRequestDTO("Nova Tarefa via Fachada", "Descrição da tarefa.", column.getId(), 1L, ProgressType.PERCENTAGE); // ID do tipo CARD
 
         // --- Act ---
         // 3. Chamar o método da fachada que estamos testando.
@@ -175,7 +176,7 @@ class TaskManagerFacadeIntegrationTest {
         Board board = boardService.createBoard("Board de Teste para Livros");
         BoardColumn column = columnService.createColumn("Coluna de Teste", 0, BoardColumnKindEnum.INITIAL, board.getId());
 
-        var request = new CreateCardRequestDTO("Livro de Teste", "Descrição do livro.", column.getId(), 2L); // ID do tipo BOOK
+        var request = new CreateCardRequestDTO("Livro de Teste", "Descrição do livro.", column.getId(), 2L, ProgressType.PERCENTAGE); // ID do tipo BOOK
 
         // --- Act ---
         CardDetailDTO resultDTO = taskManagerFacade.createNewCard(request);
@@ -199,7 +200,7 @@ class TaskManagerFacadeIntegrationTest {
         Board board = boardService.createBoard("Board de Teste para Vídeos");
         BoardColumn column = columnService.createColumn("Coluna de Teste", 0, BoardColumnKindEnum.INITIAL, board.getId());
 
-        var request = new CreateCardRequestDTO("Vídeo de Teste", "Descrição do vídeo.", column.getId(), 3L); // ID do tipo VIDEO
+        var request = new CreateCardRequestDTO("Vídeo de Teste", "Descrição do vídeo.", column.getId(), 3L, ProgressType.PERCENTAGE); // ID do tipo VIDEO
 
         // --- Act ---
         CardDetailDTO resultDTO = taskManagerFacade.createNewCard(request);
@@ -223,7 +224,7 @@ class TaskManagerFacadeIntegrationTest {
         Board board = boardService.createBoard("Board de Teste para Cursos");
         BoardColumn column = columnService.createColumn("Coluna de Teste", 0, BoardColumnKindEnum.INITIAL, board.getId());
 
-        var request = new CreateCardRequestDTO("Curso de Teste", "Descrição do curso.", column.getId(), 4L); // ID do tipo COURSE
+        var request = new CreateCardRequestDTO("Curso de Teste", "Descrição do curso.", column.getId(), 4L, ProgressType.PERCENTAGE); // ID do tipo COURSE
 
         // --- Act ---
         CardDetailDTO resultDTO = taskManagerFacade.createNewCard(request);
@@ -366,7 +367,7 @@ class TaskManagerFacadeIntegrationTest {
         Card originalCard = cardService.createCard("Título Antigo", "Descrição Antiga", column.getId(), 1L); // ID do tipo CARD
 
         // 2. Criar o DTO de requisição com os novos dados.
-        var request = new UpdateCardDetailsDTO("Título Novo e Melhorado", "Descrição nova e mais detalhada.", null, null);
+        var request = new UpdateCardDetailsDTO("Título Novo e Melhorado", "Descrição nova e mais detalhada.", null, null, ProgressType.PERCENTAGE);
 
         // --- Act ---
         // 3. Chamar o método da fachada que estamos testando.
@@ -404,7 +405,7 @@ class TaskManagerFacadeIntegrationTest {
                 "O card não deveria existir antes da tentativa de atualização.");
 
         // 2. Criar o DTO de requisição com dados válidos.
-        var request = new UpdateCardDetailsDTO("Título Tentativo", "Descrição tentativa", null, null);
+        var request = new UpdateCardDetailsDTO("Título Tentativo", "Descrição tentativa", null, null, ProgressType.PERCENTAGE);
 
         // --- Act & Assert ---
         // 3. Chamar o método da fachada e verificar se a exceção correta é lançada.

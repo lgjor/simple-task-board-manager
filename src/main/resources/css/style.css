@@ -701,3 +701,207 @@
     -fx-border-color: #E9ECEF;
     -fx-text-fill: #ADB5BD;
 }
+
+/* --- Estilos para Checklist --- */
+
+.checklist-container {
+    -fx-background-color: #F8F9FA;
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 1;
+    -fx-border-radius: 5;
+    -fx-background-radius: 5;
+    -fx-padding: 12;
+    -fx-spacing: 8;
+}
+
+.checklist-header {
+    -fx-padding: 0 0 8 0;
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 0 0 1 0;
+}
+
+.checklist-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+}
+
+.checklist-progress {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #666666;
+    -fx-background-color: #E8F5E8;
+    -fx-padding: 4 8;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+}
+
+.checklist-items {
+    -fx-spacing: 4;
+    -fx-padding: 8 0;
+}
+
+.add-item-container {
+    -fx-padding: 8 0;
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 1 0 0 0;
+}
+
+.new-item-input {
+    -fx-font-size: 12px;
+    -fx-padding: 6 8;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+    -fx-border-color: #CCCCCC;
+    -fx-border-width: 1;
+}
+
+.new-item-input:focused {
+    -fx-border-color: #007BFF;
+    -fx-border-width: 2;
+}
+
+.add-item-button {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 3 8;
+    -fx-min-height: 24;
+    -fx-pref-height: 24;
+    -fx-max-height: 24;
+    -fx-background-color: #F1F3F5; /* cinza claro, igual aos outros */
+    -fx-text-fill: #495057;
+    -fx-border-color: #CED4DA;
+    -fx-border-width: 1;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-cursor: hand;
+}
+
+.add-item-button:hover {
+    -fx-background-color: #E9ECEF;
+    -fx-text-fill: #343A40;
+}
+
+.add-item-button:pressed {
+    -fx-background-color: #DEE2E6;
+}
+
+.checklist-actions {
+    -fx-padding: 8 0 0 0;
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 1 0 0 0;
+    -fx-alignment: center; /* garante centralização também via CSS */
+}
+
+.clear-completed-button {
+    -fx-font-size: 10px;
+    -fx-padding: 3 8;
+    -fx-min-height: 24;
+    -fx-pref-height: 24;
+    -fx-max-height: 24;
+    -fx-background-color: #F1F3F5; /* cinza claro */
+    -fx-text-fill: #495057;       /* cinza escuro */
+    -fx-border-color: #CED4DA;
+    -fx-border-width: 1;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-cursor: hand;
+}
+
+.clear-completed-button:hover {
+    -fx-background-color: #E9ECEF;
+    -fx-text-fill: #343A40;
+}
+
+.remove-all-button {
+    -fx-font-size: 10px;
+    -fx-padding: 3 8;
+    -fx-min-height: 24;
+    -fx-pref-height: 24;
+    -fx-max-height: 24;
+    -fx-background-color: #F1F3F5; /* cinza claro */
+    -fx-text-fill: #495057;       /* cinza escuro */
+    -fx-border-color: #CED4DA;
+    -fx-border-width: 1;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-cursor: hand;
+}
+
+.remove-all-button:hover {
+    -fx-background-color: #E9ECEF;
+    -fx-text-fill: #343A40;
+}
+
+/* Estilo para itens do checklist */
+.checklist-item-box {
+    -fx-background-color: white;
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 6 8;
+    -fx-spacing: 8;
+}
+
+.checklist-item-box:hover {
+    -fx-background-color: #F8F9FA;
+    -fx-border-color: #007BFF;
+}
+
+.checklist-item-checkbox {
+    -fx-font-size: 14px;
+}
+
+.checklist-item-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #333333;
+}
+
+.checklist-item-label.completed {
+    -fx-strikethrough: true;
+    -fx-text-fill: #666666;
+}
+
+.checklist-item-button {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 3 8;            /* menor para padronizar tamanho */
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-min-height: 24;          /* altura unificada */
+    -fx-pref-height: 24;
+    -fx-max-height: 24;
+    -fx-cursor: hand;
+}
+
+.checklist-edit-button {
+    -fx-background-color: #F1F3F5; /* cinza claro */
+    -fx-text-fill: #495057;       /* cinza escuro */
+    -fx-border-color: #CED4DA;
+    -fx-border-width: 1;
+}
+
+.checklist-edit-button:hover {
+    -fx-background-color: #E9ECEF; /* hover cinza */
+    -fx-text-fill: #343A40;
+}
+
+.checklist-remove-button {
+    -fx-background-color: #F1F3F5; /* cinza claro */
+    -fx-text-fill: #495057;       /* cinza escuro */
+    -fx-font-weight: bold;
+    -fx-border-color: #CED4DA;
+    -fx-border-width: 1;
+}
+
+.checklist-remove-button:hover {
+    -fx-background-color: #E9ECEF; /* hover cinza */
+    -fx-text-fill: #343A40;
+}
+
+/* estado pressionado para ambos */
+.checklist-edit-button:pressed,
+.checklist-remove-button:pressed {
+    -fx-background-color: #DEE2E6;
+}

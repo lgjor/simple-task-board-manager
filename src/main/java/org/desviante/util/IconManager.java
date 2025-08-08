@@ -2,6 +2,10 @@ package org.desviante.util;
 
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.PixelReader;
+import javafx.scene.image.PixelWriter;
+import javafx.scene.image.WritableImage;
+import javafx.scene.paint.Color;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -218,6 +222,55 @@ public class IconManager {
      */
     public static ImageView createIconView(String iconCode) {
         return createIconView(iconCode, 16, 16);
+    }
+
+    /**
+     * Cria um ImageView removendo um fundo próximo ao branco (chroma key simpificado).
+     * Útil para emojis PNG com fundo branco.
+     *
+     * @param iconCode código do ícone
+     * @param width largura desejada
+     * @param height altura desejada
+     * @param tolerance tolerância (0..1) para considerar como branco (ex.: 0.15)
+     * @return ImageView com fundo transparente quando possível; null se não encontrado
+     */
+    public static ImageView createIconViewWithoutWhiteBackground(String iconCode, double width, double height, double tolerance) {
+        Image src = loadIcon(iconCode);
+        if (src == null) {
+            return null;
+        }
+
+        int w = (int) src.getWidth();
+        int h = (int) src.getHeight();
+        PixelReader reader = src.getPixelReader();
+        if (reader == null) {
+            return null;
+        }
+        WritableImage out = new WritableImage(w, h);
+        PixelWriter writer = out.getPixelWriter();
+
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                Color c = reader.getColor(x, y);
+                // Considera "quase branco" se RGB próximo de 1.0 e alfa alto
+                boolean nearWhite = (1.0 - c.getRed() < tolerance)
+                        && (1.0 - c.getGreen() < tolerance)
+                        && (1.0 - c.getBlue() < tolerance)
+                        && c.getOpacity() > 0.8;
+                if (nearWhite) {
+                    writer.setColor(x, y, new Color(c.getRed(), c.getGreen(), c.getBlue(), 0.0));
+                } else {
+                    writer.setColor(x, y, c);
+                }
+            }
+        }
+
+        ImageView view = new ImageView(out);
+        view.setFitWidth(width);
+        view.setFitHeight(height);
+        view.setPreserveRatio(true);
+        view.setSmooth(true);
+        return view;
     }
     
     /**

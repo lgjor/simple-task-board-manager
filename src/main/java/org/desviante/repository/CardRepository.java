@@ -51,7 +51,7 @@ public class CardRepository {
         this.jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
         this.jdbcInsert = new SimpleJdbcInsert(dataSource)
                 .withTableName("cards")
-                .usingColumns("title", "description", "card_type_id", "total_units", "current_units", "creation_date", "last_update_date", "completion_date", "board_column_id")
+                .usingColumns("title", "description", "card_type_id", "total_units", "current_units", "progress_type", "creation_date", "last_update_date", "completion_date", "board_column_id")
                 .usingGeneratedKeyColumns("id");
     }
 
@@ -72,13 +72,27 @@ public class CardRepository {
         Long cardTypeId = rs.getObject("card_type_id", Long.class);
         if (cardTypeId != null) {
             card.setCardTypeId(cardTypeId);
-            // TODO: Carregar o objeto CardType completo se necessário
-            // Por enquanto, deixamos como null para evitar dependência circular
+            // Intencional: não carregamos o objeto CardType aqui para evitar acoplamento no repositório.
+            // A camada de serviço (ex.: CardService) é responsável por carregar o CardType quando necessário.
         }
         
         // Mapear campos de progresso
         card.setTotalUnits(rs.getObject("total_units", Integer.class));
         card.setCurrentUnits(rs.getObject("current_units", Integer.class));
+        
+        // Mapear o tipo de progresso
+        String progressTypeStr = rs.getString("progress_type");
+        if (progressTypeStr != null) {
+            try {
+                card.setProgressType(org.desviante.model.enums.ProgressType.valueOf(progressTypeStr));
+            } catch (IllegalArgumentException e) {
+                // Se o valor não for válido, usar PERCENTAGE como padrão
+                card.setProgressType(org.desviante.model.enums.ProgressType.PERCENTAGE);
+            }
+        } else {
+            // Se for null, usar PERCENTAGE como padrão para compatibilidade
+            card.setProgressType(org.desviante.model.enums.ProgressType.PERCENTAGE);
+        }
         
         card.setCreationDate(rs.getTimestamp("creation_date").toLocalDateTime());
         card.setLastUpdateDate(rs.getTimestamp("last_update_date").toLocalDateTime());
@@ -151,6 +165,7 @@ public class CardRepository {
                 .addValue("card_type_id", card.getCardTypeId())
                 .addValue("total_units", card.getTotalUnits())
                 .addValue("current_units", card.getCurrentUnits())
+                .addValue("progress_type", card.getProgressTypeOrDefault().name())
                 .addValue("creation_date", card.getCreationDate())
                 .addValue("last_update_date", card.getLastUpdateDate())
                 .addValue("completion_date", card.getCompletionDate())
@@ -169,6 +184,7 @@ public class CardRepository {
                         card_type_id = :card_type_id,
                         total_units = :total_units,
                         current_units = :current_units,
+                        progress_type = :progress_type,
                         last_update_date = :last_update_date,
                         completion_date = :completion_date,
                         board_column_id = :board_column_id,

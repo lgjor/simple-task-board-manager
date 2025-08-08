@@ -1,6 +1,7 @@
 -- Garante que as tabelas sejam recriadas do zero a cada inicialização,
 -- evitando erros de "tabela já existe" e garantindo um ambiente limpo para testes.
 DROP TABLE IF EXISTS tasks CASCADE;
+DROP TABLE IF EXISTS checklist_items CASCADE;
 DROP TABLE IF EXISTS cards CASCADE;
 DROP TABLE IF EXISTS board_columns CASCADE;
 DROP TABLE IF EXISTS boards CASCADE;
@@ -54,6 +55,7 @@ CREATE TABLE cards (
     card_type_id    BIGINT,
     total_units       INT,
     current_units     INT,
+    progress_type     VARCHAR(50) DEFAULT 'PERCENTAGE',
     creation_date     TIMESTAMP NOT NULL,
     last_update_date  TIMESTAMP NOT NULL,
     completion_date   TIMESTAMP,
@@ -63,6 +65,21 @@ CREATE TABLE cards (
     CONSTRAINT fk_cards_to_board_columns FOREIGN KEY (board_column_id) REFERENCES board_columns(id) ON DELETE CASCADE,
     CONSTRAINT fk_cards_to_card_types FOREIGN KEY (card_type_id) REFERENCES card_types(id) ON DELETE SET NULL
 );
+
+-- Definição da tabela 'checklist_items' (compatível com H2)
+CREATE TABLE checklist_items (
+    id              BIGINT AUTO_INCREMENT PRIMARY KEY,
+    card_id         BIGINT NOT NULL,
+    text            VARCHAR(1000) NOT NULL,
+    completed       BOOLEAN NOT NULL DEFAULT FALSE,
+    order_index     INT NOT NULL DEFAULT 0,
+    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    completed_at    TIMESTAMP,
+    CONSTRAINT fk_checklist_items_cards FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_checklist_items_card_id ON checklist_items(card_id);
+CREATE INDEX idx_checklist_items_order_index ON checklist_items(order_index);
 
 -- Definição da tabela 'tasks' (para integração com Google Tasks)
 CREATE TABLE tasks (
@@ -112,5 +129,5 @@ INSERT INTO board_groups (name, description, color, icon, creation_date) VALUES
 ('Trabalho', 'Tarefas profissionais e trabalho', '#45B7D1', '1f528', CURRENT_TIMESTAMP);
 
 -- Inserir um card de exemplo na coluna inicial (ID 1)
-INSERT INTO cards (title, description, card_type_id, board_column_id, order_index, creation_date, last_update_date) VALUES 
-('Card de Exemplo', 'Este é um card de exemplo para demonstrar o sistema', 1, 1, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+INSERT INTO cards (title, description, card_type_id, board_column_id, order_index, progress_type, creation_date, last_update_date) VALUES 
+('Card de Exemplo', 'Este é um card de exemplo para demonstrar o sistema', 1, 1, 1, 'PERCENTAGE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);

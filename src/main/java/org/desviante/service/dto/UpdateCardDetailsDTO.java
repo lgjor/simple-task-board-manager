@@ -1,5 +1,7 @@
 package org.desviante.service.dto;
 
+import org.desviante.model.enums.ProgressType;
+
 /**
  * DTO para encapsular dados de requisição para atualização de detalhes de um Card.
  * 
@@ -32,6 +34,7 @@ public record UpdateCardDetailsDTO(
         String title,               // Novo título do card
         String description,         // Nova descrição do card
         Integer totalUnits,         // Total de unidades para progresso (pode ser null)
-        Integer currentUnits        // Unidades atuais para progresso (pode ser null)
+        Integer currentUnits,       // Unidades atuais para progresso (pode ser null)
+        ProgressType progressType   // Tipo de progresso do card (pode ser null)
 ) {
 }

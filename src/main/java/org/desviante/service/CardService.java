@@ -6,6 +6,7 @@ import org.desviante.model.BoardColumn;
 import org.desviante.model.Card;
 import org.desviante.model.CardType;
 import org.desviante.model.enums.BoardColumnKindEnum;
+import org.desviante.model.enums.ProgressType;
 
 import org.desviante.repository.BoardColumnRepository;
 import org.desviante.repository.CardRepository;
@@ -70,6 +71,11 @@ public class CardService {
      */
     @Transactional
     public Card createCard(String title, String description, Long parentColumnId, Long cardTypeId) {
+        return createCard(title, description, parentColumnId, cardTypeId, ProgressType.PERCENTAGE);
+    }
+    
+    @Transactional
+    public Card createCard(String title, String description, Long parentColumnId, Long cardTypeId, ProgressType progressType) {
         // Valida se o título não está vazio
         if (title == null || title.trim().isEmpty()) {
             throw new IllegalArgumentException("Título do card não pode ser vazio");
@@ -98,6 +104,9 @@ public class CardService {
         // Todos os cards devem ter progresso inicializado
         newCard.setTotalUnits(1);
         newCard.setCurrentUnits(0);
+        
+        // Definir o tipo de progresso
+        newCard.setProgressType(progressType != null ? progressType : ProgressType.PERCENTAGE);
 
         // LÓGICA DE NEGÓCIO: Definir as datas no serviço é a prática correta.
         LocalDateTime now = LocalDateTime.now();
@@ -204,6 +213,11 @@ public class CardService {
      */
     @Transactional
     public Card updateCardDetails(Long cardId, String newTitle, String newDescription, Integer totalUnits, Integer currentUnits) {
+        return updateCardDetails(cardId, newTitle, newDescription, totalUnits, currentUnits, null);
+    }
+    
+    @Transactional
+    public Card updateCardDetails(Long cardId, String newTitle, String newDescription, Integer totalUnits, Integer currentUnits, ProgressType progressType) {
         // 1. Encontra o card ou lança uma exceção se não existir.
         Card card = cardRepository.findById(cardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Card com ID " + cardId + " não encontrado para atualização."));
@@ -214,28 +228,45 @@ public class CardService {
         
         // 3. Atualizar campos de progresso se fornecidos
         if (totalUnits != null) {
-            // Garantir que total seja sempre válido (mínimo 1)
-            if (totalUnits <= 0) {
-                throw new IllegalArgumentException("O total deve ser maior que zero.");
+            // Para CHECKLIST, aceitar qualquer valor pois o progresso é calculado automaticamente
+            if (progressType == ProgressType.CHECKLIST) {
+                // Para checklist, usar valor padrão que será calculado automaticamente
+                card.setTotalUnits(1); // Valor mínimo para evitar erros
+            } else {
+                // Para outros tipos, validar normalmente
+                if (totalUnits <= 0) {
+                    throw new IllegalArgumentException("O total deve ser maior que zero.");
+                }
+                card.setTotalUnits(totalUnits);
             }
-            card.setTotalUnits(totalUnits);
         }
         if (currentUnits != null) {
-            // Garantir que current seja sempre válido (mínimo 0)
-            if (currentUnits < 0) {
-                throw new IllegalArgumentException("O valor atual não pode ser negativo.");
+            // Para CHECKLIST, aceitar qualquer valor pois o progresso é calculado automaticamente
+            if (progressType == ProgressType.CHECKLIST) {
+                // Para checklist, usar valor padrão que será calculado automaticamente
+                card.setCurrentUnits(0); // Valor inicial para checklist
+            } else {
+                // Para outros tipos, validar normalmente
+                if (currentUnits < 0) {
+                    throw new IllegalArgumentException("O valor atual não pode ser negativo.");
+                }
+                // Garantir que current não seja maior que total
+                if (totalUnits != null && currentUnits > totalUnits) {
+                    throw new IllegalArgumentException("O valor atual não pode ser maior que o total.");
+                }
+                card.setCurrentUnits(currentUnits);
             }
-            // Garantir que current não seja maior que total
-            if (totalUnits != null && currentUnits > totalUnits) {
-                throw new IllegalArgumentException("O valor atual não pode ser maior que o total.");
-            }
-            card.setCurrentUnits(currentUnits);
+        }
+        
+        // 4. Atualizar tipo de progresso se fornecido
+        if (progressType != null) {
+            card.setProgressType(progressType);
         }
 
-        // 4. REGRA DE NEGÓCIO: Sempre atualiza a data da última modificação.
+        // 5. REGRA DE NEGÓCIO: Sempre atualiza a data da última modificação.
         card.setLastUpdateDate(LocalDateTime.now());
 
-        // 5. Salva e retorna a entidade atualizada.
+        // 6. Salva e retorna a entidade atualizada.
         return cardRepository.save(card);
     }
 

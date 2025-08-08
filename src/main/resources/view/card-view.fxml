@@ -7,6 +7,7 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.Spinner?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
@@ -95,7 +96,22 @@
                         <Label fx:id="statusValueLabel" text="Não iniciado" styleClass="status-value" />
                     </children>
                 </HBox>
+                
+                <!-- Tipo de Progresso (visível apenas em modo de edição) -->
+                <HBox fx:id="progressTypeContainer" alignment="CENTER_LEFT" spacing="10" managed="false" visible="false">
+                    <children>
+                        <Label text="Progresso" styleClass="progress-label" minWidth="100.0" prefWidth="100.0" />
+                        <ComboBox fx:id="progressTypeComboBox" prefWidth="150.0" />
+                    </children>
+                </HBox>
             </children>
+        </VBox>
+        
+        <!-- Container para o componente de checklist -->
+        <VBox fx:id="checklistContainer" managed="false" visible="false" spacing="8">
+            <VBox.margin>
+                <Insets top="5.0" />
+            </VBox.margin>
         </VBox>
 
         <!-- Container para os controles de edição (botões Salvar e Excluir) -->
