@@ -56,6 +56,11 @@ class TaskManagerFacadeIntegrationTest {
         public GoogleTasksApiService googleTasksApiService() {
             return mock(GoogleTasksApiService.class);
         }
+        
+        @Bean
+        public DataMigrationService dataMigrationService() {
+            return mock(DataMigrationService.class);
+        }
     }
 
     @Autowired

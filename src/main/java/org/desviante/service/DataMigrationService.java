@@ -2,11 +2,11 @@ package org.desviante.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.sql.DataSource;
 import java.util.List;
 import java.util.Map;
 
@@ -24,9 +24,9 @@ import java.util.Map;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "spring.profiles.active", havingValue = "default", matchIfMissing = true)
 public class DataMigrationService {
 
-    private final DataSource dataSource;
     private final JdbcTemplate jdbcTemplate;
 
     /**
