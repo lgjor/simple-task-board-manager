@@ -25,12 +25,47 @@ public class ChecklistItemRepository {
     private final JdbcTemplate jdbcTemplate;
     public ChecklistItemRepository(DataSource dataSource) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
-        new SimpleJdbcInsert(dataSource)
-                .withTableName("checklist_items")
-                .usingGeneratedKeyColumns("id")
-                // Deixa created_at usar DEFAULT CURRENT_TIMESTAMP no banco
-                // e completed_at iniciar como NULL
-                .usingColumns("card_id", "text", "completed", "order_index");
+        // Criar tabela checklist_items se não existir
+        createTableIfNotExists();
+    }
+    
+    /**
+     * Cria a tabela checklist_items se ela não existir.
+     */
+    private void createTableIfNotExists() {
+        try {
+            // Verificar se a tabela existe
+            String checkTableSQL = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'CHECKLIST_ITEMS'";
+            Integer count = jdbcTemplate.queryForObject(checkTableSQL, Integer.class);
+            
+            if (count == null || count == 0) {
+                // Criar a tabela
+                String createTableSQL = """
+                    CREATE TABLE checklist_items (
+                        id              BIGINT AUTO_INCREMENT PRIMARY KEY,
+                        card_id         BIGINT NOT NULL,
+                        text            TEXT NOT NULL,
+                        completed       BOOLEAN NOT NULL DEFAULT FALSE,
+                        order_index     INT NOT NULL DEFAULT 0,
+                        created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        completed_at    TIMESTAMP NULL,
+                        
+                        CONSTRAINT fk_checklist_items_cards FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE
+                    )
+                    """;
+                
+                jdbcTemplate.execute(createTableSQL);
+                
+                // Criar índices
+                jdbcTemplate.execute("CREATE INDEX idx_checklist_items_card_id ON checklist_items(card_id)");
+                jdbcTemplate.execute("CREATE INDEX idx_checklist_items_order_index ON checklist_items(order_index)");
+                
+                System.out.println("Tabela checklist_items criada com sucesso");
+            }
+        } catch (Exception e) {
+            System.err.println("Erro ao criar tabela checklist_items: " + e.getMessage());
+            // Não re-lança a exceção para não impedir a inicialização da aplicação
+        }
     }
     
     /**
@@ -63,8 +98,8 @@ public class ChecklistItemRepository {
      * @return item salvo com ID gerado
      */
     public ChecklistItem save(ChecklistItem item) {
-        // Usar INSERT explícito com identificadores entre aspas para compatibilidade com H2 (coluna TEXT)
-        final String sql = "INSERT INTO checklist_items (card_id, \"TEXT\", completed, order_index) VALUES (?, ?, ?, ?)";
+        // Usar INSERT explícito para compatibilidade com H2
+        final String sql = "INSERT INTO checklist_items (card_id, text, completed, order_index) VALUES (?, ?, ?, ?)";
         var keyHolder = new org.springframework.jdbc.support.GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             var ps = connection.prepareStatement(sql, new String[]{"ID"});
@@ -90,7 +125,7 @@ public class ChecklistItemRepository {
     public boolean update(ChecklistItem item) {
         String sql = """
             UPDATE checklist_items 
-            SET \"TEXT\" = ?, completed = ?, order_index = ?, completed_at = ?
+            SET text = ?, completed = ?, order_index = ?, completed_at = ?
             WHERE id = ?
             """;
         

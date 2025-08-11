@@ -35,6 +35,10 @@ public class DatabaseMigrationService {
     
     @Autowired
     private JdbcTemplate jdbcTemplate;
+    
+    // Temporariamente removido para evitar problemas de compatibilidade
+    // @Autowired
+    // private ChecklistMigrationService checklistMigrationService;
 
     /**
      * Executa migrações automáticas após a inicialização do serviço.
@@ -45,7 +49,7 @@ public class DatabaseMigrationService {
         try {
             logger.info("Iniciando verificação de migrações do banco de dados...");
             
-            // Temporariamente desabilitado para usar apenas schema.sql
+            // Temporariamente desabilitado para evitar problemas de compatibilidade
             logger.info("Migrações desabilitadas temporariamente - usando apenas schema.sql");
             
         } catch (Exception e) {

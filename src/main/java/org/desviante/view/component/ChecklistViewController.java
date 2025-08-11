@@ -173,6 +173,8 @@ public class ChecklistViewController {
         }
         
         try {
+            // Adicionar o item usando o service
+            checklistItemService.addItem(currentCardId, text);
             newItemTextField.clear();
             refreshItems();
         } catch (Exception e) {
