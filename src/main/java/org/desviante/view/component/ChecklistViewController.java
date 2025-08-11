@@ -173,7 +173,6 @@ public class ChecklistViewController {
         }
         
         try {
-            ChecklistItemDTO newItem = checklistItemService.addItem(currentCardId, text);
             newItemTextField.clear();
             refreshItems();
         } catch (Exception e) {

@@ -175,7 +175,7 @@ public class ColumnViewController {
                 ProgressType.CHECKLIST,
                 ProgressType.NONE
         );
-        progressTypeComboBox.setValue(ProgressType.PERCENTAGE); // Valor padrão
+        progressTypeComboBox.setValue(ProgressType.NONE); // Valor padrão
         
         progressTypeComboBox.setCellFactory(param -> new ListCell<ProgressType>() {
             @Override

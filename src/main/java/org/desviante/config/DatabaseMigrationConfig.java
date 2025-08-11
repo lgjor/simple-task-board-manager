@@ -162,8 +162,6 @@ public class DatabaseMigrationConfig implements CommandLineRunner {
         try (Connection conn = dataSource.getConnection()) {
             String product = conn.getMetaData().getDatabaseProductName();
             boolean isH2 = product != null && product.toLowerCase().contains("h2");
-            boolean isSqlite = product != null && product.toLowerCase().contains("sqlite");
-
             String createTableSql;
             if (isH2) {
                 // DDL compatível com H2

@@ -71,7 +71,7 @@ public class CardService {
      */
     @Transactional
     public Card createCard(String title, String description, Long parentColumnId, Long cardTypeId) {
-        return createCard(title, description, parentColumnId, cardTypeId, ProgressType.PERCENTAGE);
+        return createCard(title, description, parentColumnId, cardTypeId, ProgressType.NONE);
     }
     
     @Transactional
@@ -100,13 +100,18 @@ public class CardService {
             newCard.setCardType(cardType);
         }
 
-        // Configurar campos de progresso para todos os tipos de card
-        // Todos os cards devem ter progresso inicializado
-        newCard.setTotalUnits(1);
-        newCard.setCurrentUnits(0);
-        
         // Definir o tipo de progresso
-        newCard.setProgressType(progressType != null ? progressType : ProgressType.PERCENTAGE);
+        newCard.setProgressType(progressType != null ? progressType : ProgressType.NONE);
+        
+        // Configurar campos de progresso apenas para cards que suportam progresso
+        if (newCard.getProgressTypeOrDefault().isEnabled()) {
+            newCard.setTotalUnits(1);
+            newCard.setCurrentUnits(0);
+        } else {
+            // Cards sem progresso não devem ter unidades definidas
+            newCard.setTotalUnits(null);
+            newCard.setCurrentUnits(null);
+        }
 
         // LÓGICA DE NEGÓCIO: Definir as datas no serviço é a prática correta.
         LocalDateTime now = LocalDateTime.now();
@@ -116,8 +121,9 @@ public class CardService {
         newCard.setCompletionDate(null);
 
         // Define o order_index como o próximo valor disponível na coluna
-        List<Card> existingCards = cardRepository.findByBoardColumnId(parentColumnId);
-        int nextOrderIndex = existingCards.size() + 1;
+        // Busca o maior order_index existente para evitar race conditions
+        Integer maxOrderIndex = cardRepository.findMaxOrderIndexByColumnId(parentColumnId);
+        int nextOrderIndex = (maxOrderIndex != null ? maxOrderIndex : 0) + 1;
         newCard.setOrderIndex(nextOrderIndex);
 
         Card savedCard = cardRepository.save(newCard);
@@ -157,8 +163,9 @@ public class CardService {
         card.setLastUpdateDate(LocalDateTime.now());
 
         // Define o order_index como o próximo valor disponível na nova coluna
-        List<Card> existingCards = cardRepository.findByBoardColumnId(newColumnId);
-        int nextOrderIndex = existingCards.size() + 1;
+        // Busca o maior order_index existente para evitar race conditions
+        Integer maxOrderIndex = cardRepository.findMaxOrderIndexByColumnId(newColumnId);
+        int nextOrderIndex = (maxOrderIndex != null ? maxOrderIndex : 0) + 1;
         card.setOrderIndex(nextOrderIndex);
 
         // LÓGICA DE CONCLUSÃO REFINADA:

@@ -187,13 +187,12 @@ public class Card {
     /**
      * Obtém o tipo de progresso do card, retornando o padrão se não definido.
      * 
-     * <p>Se o progressType for null, retorna PERCENTAGE para manter
-     * compatibilidade com cards existentes.</p>
+     * <p>Se o progressType for null, retorna NONE como padrão.</p>
      * 
      * @return tipo de progresso do card
      */
     public ProgressType getProgressTypeOrDefault() {
-        return progressType != null ? progressType : ProgressType.PERCENTAGE;
+        return progressType != null ? progressType : ProgressType.NONE;
     }
 
     /**

@@ -257,7 +257,7 @@ class CardServiceTest {
         });
 
         // Act
-        Card result = cardService.createCard(title, description, parentColumnId, customTypeId);
+        Card result = cardService.createCard(title, description, parentColumnId, customTypeId, ProgressType.PERCENTAGE);
 
         // Assert
         assertNotNull(result);
@@ -296,7 +296,7 @@ class CardServiceTest {
         });
 
         // Act
-        Card result = cardService.createCard(title, description, parentColumnId, customTypeId);
+        Card result = cardService.createCard(title, description, parentColumnId, customTypeId, ProgressType.PERCENTAGE);
 
         // Assert
         assertNotNull(result);
@@ -335,7 +335,7 @@ class CardServiceTest {
         });
 
         // Act
-        Card result = cardService.createCard(title, description, parentColumnId, customTypeId);
+        Card result = cardService.createCard(title, description, parentColumnId, customTypeId, ProgressType.PERCENTAGE);
 
         // Assert
         assertNotNull(result);
@@ -348,8 +348,8 @@ class CardServiceTest {
     }
 
     @Test
-    @DisplayName("Deve validar que cards do tipo CARD suportam progresso baseado em unidades")
-    void shouldValidateCardTypeSupportsProgressBasedOnUnits() {
+    @DisplayName("Deve validar que cards do tipo CARD não suportam progresso")
+    void shouldValidateCardTypeDoesNotSupportProgress() {
         // Arrange
         String title = "Test Card";
         String description = "Test Description";
@@ -378,10 +378,11 @@ class CardServiceTest {
 
         // Assert
         assertNotNull(result);
-        // Cards do tipo CARD agora suportam progresso básico (total=1, current=0)
-        assertTrue(result.isProgressable(), "Cards do tipo CARD agora suportam progresso básico");
-        assertEquals(1, result.getTotalUnits());
-        assertEquals(0, result.getCurrentUnits());
+        // Cards do tipo CARD não suportam progresso (ProgressType.NONE por padrão)
+        assertFalse(result.isProgressable(), "Cards do tipo CARD não devem suportar progresso");
+        assertEquals(ProgressType.NONE, result.getProgressTypeOrDefault());
+        assertNull(result.getTotalUnits());
+        assertNull(result.getCurrentUnits());
         verify(cardRepository).save(any(Card.class));
     }
 

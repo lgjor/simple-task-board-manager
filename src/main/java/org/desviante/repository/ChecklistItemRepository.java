@@ -10,7 +10,6 @@ import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -24,11 +23,9 @@ import java.util.Optional;
 public class ChecklistItemRepository {
     
     private final JdbcTemplate jdbcTemplate;
-    private final SimpleJdbcInsert insertChecklistItem;
-    
     public ChecklistItemRepository(DataSource dataSource) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
-        this.insertChecklistItem = new SimpleJdbcInsert(dataSource)
+        new SimpleJdbcInsert(dataSource)
                 .withTableName("checklist_items")
                 .usingGeneratedKeyColumns("id")
                 // Deixa created_at usar DEFAULT CURRENT_TIMESTAMP no banco

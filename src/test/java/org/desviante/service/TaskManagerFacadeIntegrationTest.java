@@ -8,7 +8,6 @@ import org.desviante.model.BoardGroup;
 import org.desviante.model.Card;
 import org.desviante.model.enums.BoardColumnKindEnum;
 import org.desviante.model.enums.ProgressType;
-import org.desviante.model.CardType;
 import org.desviante.service.dto.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

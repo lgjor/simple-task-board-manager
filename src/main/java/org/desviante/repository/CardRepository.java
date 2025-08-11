@@ -51,7 +51,7 @@ public class CardRepository {
         this.jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
         this.jdbcInsert = new SimpleJdbcInsert(dataSource)
                 .withTableName("cards")
-                .usingColumns("title", "description", "card_type_id", "total_units", "current_units", "progress_type", "creation_date", "last_update_date", "completion_date", "board_column_id")
+                .usingColumns("title", "description", "card_type_id", "total_units", "current_units", "progress_type", "creation_date", "last_update_date", "completion_date", "board_column_id", "order_index")
                 .usingGeneratedKeyColumns("id");
     }
 
@@ -86,12 +86,12 @@ public class CardRepository {
             try {
                 card.setProgressType(org.desviante.model.enums.ProgressType.valueOf(progressTypeStr));
             } catch (IllegalArgumentException e) {
-                // Se o valor não for válido, usar PERCENTAGE como padrão
-                card.setProgressType(org.desviante.model.enums.ProgressType.PERCENTAGE);
+                // Se o valor não for válido, usar NONE como padrão
+                card.setProgressType(org.desviante.model.enums.ProgressType.NONE);
             }
         } else {
-            // Se for null, usar PERCENTAGE como padrão para compatibilidade
-            card.setProgressType(org.desviante.model.enums.ProgressType.PERCENTAGE);
+            // Se for null, usar NONE como padrão para compatibilidade
+            card.setProgressType(org.desviante.model.enums.ProgressType.NONE);
         }
         
         card.setCreationDate(rs.getTimestamp("creation_date").toLocalDateTime());
@@ -206,6 +206,23 @@ public class CardRepository {
         String sql = "SELECT * FROM cards WHERE board_column_id = :columnId ORDER BY order_index ASC, creation_date ASC";
         var params = new MapSqlParameterSource("columnId", columnId);
         return jdbcTemplate.query(sql, params, cardRowMapper);
+    }
+
+    /**
+     * Busca o maior order_index de uma coluna específica.
+     * 
+     * @param columnId identificador da coluna
+     * @return o maior order_index encontrado, ou null se a coluna estiver vazia
+     */
+    public Integer findMaxOrderIndexByColumnId(Long columnId) {
+        String sql = "SELECT MAX(order_index) FROM cards WHERE board_column_id = :columnId";
+        var params = new MapSqlParameterSource("columnId", columnId);
+        try {
+            Integer result = jdbcTemplate.queryForObject(sql, params, Integer.class);
+            return result;
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
     }
 
     /**

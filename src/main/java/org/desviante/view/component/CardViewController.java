@@ -17,7 +17,6 @@ import org.desviante.service.dto.CreateTaskRequestDTO;
 import org.desviante.service.dto.UpdateCardDetailsDTO;
 
 import java.util.function.BiConsumer;
-import org.desviante.model.enums.BoardColumnKindEnum;
 import org.desviante.model.enums.ProgressType;
 import org.desviante.service.progress.ProgressContext;
 import org.desviante.service.progress.ProgressUIConfig;
@@ -486,65 +485,6 @@ public class CardViewController {
     }
 
     /**
-     * Mostra/esconde campos de progresso baseado no tipo do card e tipo de progresso
-     */
-    private void showProgressFieldsForType(String typeName, ProgressType progressType) {
-        // Mostrar progresso apenas se o tipo de progresso for PERCENTAGE
-        boolean showProgress = progressType != null && progressType.isEnabled();
-        
-        if (showProgress) {
-            // Mostrar toda a seção de progresso (incluindo status)
-            progressContainer.setVisible(true);
-            progressContainer.setManaged(true);
-            configureProgressFieldsForType(typeName);
-        } else {
-            // Ocultar apenas os campos de progresso, mas manter o status visível
-            hideProgressFieldsButKeepStatus();
-        }
-    }
-
-    private void configureProgressFieldsForType(String typeName) {
-        // Usar labels padrão para todos os tipos
-        totalLabel.setText("Total:");
-        currentLabel.setText("Atual:");
-        
-        // NÃO forçar a visibilidade da seção de progresso aqui
-        // A visibilidade será controlada pelos métodos de modo de edição
-        // progressSection.setVisible(true);
-        // progressSection.setManaged(true);
-    }
-
-
-    
-    private void hideAllProgressFields() {
-        progressSection.setVisible(false);
-        progressSection.setManaged(false);
-    }
-    
-    /**
-     * Oculta apenas os campos de progresso, mas mantém o status visível
-     */
-    private void hideProgressFieldsButKeepStatus() {
-        // Ocultar apenas a seção de progresso (spinners e labels de progresso)
-        progressSection.setVisible(false);
-        progressSection.setManaged(false);
-        
-        // Ocultar o label "Progresso:" quando não há progresso
-        progressLabel.setVisible(false);
-        progressLabel.setManaged(false);
-        
-        // Manter o container de progresso visível para o status
-        progressContainer.setVisible(true);
-        progressContainer.setManaged(true);
-        
-        // Garantir que o status seja sempre visível
-        if (statusValueLabel.getParent() != null) {
-            statusValueLabel.getParent().setVisible(true);
-            statusValueLabel.getParent().setManaged(true);
-        }
-    }
-
-    /**
      * Atualiza o display de progresso baseado nos valores dos spinners
      */
     private void updateProgressDisplay() {
@@ -576,46 +516,6 @@ public class CardViewController {
         progressValueLabel.setText(String.format("%.1f%%", progress));
         
         // NÃO atualizar status aqui - isso é feito separadamente baseado na coluna
-    }
-    
-    /**
-     * Atualiza o status do card baseado na coluna atual.
-     * 
-     * @param columnKind tipo da coluna atual
-     */
-    private void updateCardStatus(BoardColumnKindEnum columnKind) {
-        String status;
-        String cssClass;
-        
-        switch (columnKind) {
-            case INITIAL:
-                status = "Não iniciado";
-                cssClass = "status-not-started";
-                break;
-            case PENDING:
-                status = "Em andamento";
-                cssClass = "status-in-progress";
-                break;
-            case FINAL:
-                status = "Concluído";
-                cssClass = "status-completed";
-                break;
-            default:
-                status = "Desconhecido";
-                cssClass = "status-unknown";
-                break;
-        }
-        
-        // Limpar classes CSS anteriores
-        statusValueLabel.getStyleClass().removeAll(
-            "status-not-started", "status-in-progress", "status-completed", "status-unknown"
-        );
-        
-        // Aplicar nova classe CSS
-        statusValueLabel.getStyleClass().add(cssClass);
-        statusValueLabel.setText(status);
-        
-
     }
     
     /**
@@ -890,7 +790,7 @@ public class CardViewController {
         // Obter o tipo de progresso selecionado
         ProgressType selectedProgressType = progressTypeComboBox.getValue();
         if (selectedProgressType == null) {
-            selectedProgressType = ProgressType.PERCENTAGE; // Valor padrão
+            selectedProgressType = ProgressType.NONE; // Valor padrão
         }
         
         // Para CHECKLIST, não usar valores dos spinners pois o progresso é calculado automaticamente
