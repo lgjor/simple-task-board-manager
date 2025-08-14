@@ -12,16 +12,19 @@ import org.desviante.model.enums.ProgressType;
 import org.desviante.repository.BoardColumnRepository;
 import org.desviante.repository.BoardRepository;
 import org.desviante.repository.CardRepository;
+import org.desviante.repository.CardTypeRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.transaction.annotation.Transactional;
+import javax.sql.DataSource;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -58,10 +61,33 @@ import static org.junit.jupiter.api.Assertions.*;
 class CardTypeServiceIntegrationTest {
 
     @Configuration
-    @Import({TestDataSourceConfig.class, CardTypeService.class, 
-             CardRepository.class, BoardRepository.class, BoardColumnRepository.class})
+    @Import({TestDataSourceConfig.class})
     static class TestConfig {
-        // Configuração específica para este teste de integração
+        
+        @Bean
+        public CardTypeRepository cardTypeRepository(DataSource dataSource) {
+            return new CardTypeRepository(dataSource);
+        }
+        
+        @Bean
+        public CardRepository cardRepository(DataSource dataSource) {
+            return new CardRepository(dataSource);
+        }
+        
+        @Bean
+        public BoardRepository boardRepository(DataSource dataSource) {
+            return new BoardRepository(dataSource);
+        }
+        
+        @Bean
+        public BoardColumnRepository boardColumnRepository(DataSource dataSource) {
+            return new BoardColumnRepository(dataSource);
+        }
+        
+        @Bean
+        public CardTypeService cardTypeService(CardTypeRepository cardTypeRepository, CardRepository cardRepository) {
+            return new CardTypeService(cardTypeRepository, cardRepository);
+        }
     }
 
     @Autowired

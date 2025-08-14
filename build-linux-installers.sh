@@ -8,9 +8,52 @@ echo "Sistema: $(uname -s) $(uname -r)"
 echo "Java: $(java -version 2>&1 | head -n 1)"
 echo ""
 
+# Detectar plataforma
+PLATFORM=$(uname -s)
+IS_WINDOWS=false
+IS_LINUX=false
+
+if [ "$PLATFORM" = "MINGW64_NT" ] || [ "$PLATFORM" = "MSYS_NT" ] || [ "$PLATFORM" = "CYGWIN_NT" ]; then
+    IS_WINDOWS=true
+    echo "🪟 Plataforma detectada: Windows"
+elif [ "$PLATFORM" = "Linux" ]; then
+    IS_LINUX=true
+    echo "🐧 Plataforma detectada: Linux"
+else
+    echo "🖥️  Plataforma detectada: $PLATFORM"
+fi
+
+echo ""
+
 # Verificar argumentos
 GENERATE_WINDOWS=false
 if [ "$1" = "--all" ] || [ "$1" = "-a" ]; then
+    if [ "$IS_LINUX" = true ]; then
+        echo "⚠️  ATENÇÃO: Tentando gerar instaladores Windows no Linux"
+        echo "❌ O jpackage NÃO consegue gerar instaladores Windows (.exe) em Linux"
+        echo "   O jpackage é plataforma-específico e só funciona na plataforma de destino"
+        echo ""
+        echo "🔧 Alternativas disponíveis:"
+        echo ""
+        echo "1) 🐧 Gerar apenas instaladores Linux:"
+        echo "   ./build-linux-installers.sh --linux-only"
+        echo ""
+        echo "2) 🪟 Gerar Windows em máquina Windows:"
+        echo "   - Execute este script em uma máquina Windows"
+        echo "   - Ou use WSL2 com Windows 11"
+        echo ""
+        echo "3) 🐳 Usar Docker com Windows:"
+        echo "   - Docker container Windows"
+        echo "   - GitHub Actions com runner Windows"
+        echo ""
+        echo "4) 📦 Build cross-platform:"
+        echo "   - Use GitHub Actions para builds automáticos"
+        echo "   - Configure CI/CD para múltiplas plataformas"
+        echo ""
+        echo "💡 Recomendação: Use GitHub Actions para builds automáticos de todas as plataformas"
+        echo ""
+        exit 1
+    fi
     GENERATE_WINDOWS=true
     echo "🚀 Modo: Gerando TODOS os instaladores (Linux + Windows)"
 elif [ "$1" = "--linux-only" ] || [ "$1" = "-l" ]; then
