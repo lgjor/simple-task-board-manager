@@ -21,6 +21,22 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+/**
+ * Testes unitários para o TaskService.
+ * 
+ * <p>Testa as operações de negócio relacionadas às tarefas, incluindo
+ * criação de tarefas associadas a cards e integração com a API do Google Tasks.</p>
+ * 
+ * <p>Foca na validação de regras de negócio, tratamento de exceções e
+ * verificação da integração correta com serviços externos.</p>
+ * 
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @version 1.0
+ * @since 1.0
+ * @see TaskService
+ * @see Task
+ * @see Card
+ */
 @ExtendWith(MockitoExtension.class)
 class TaskServiceTest {
 

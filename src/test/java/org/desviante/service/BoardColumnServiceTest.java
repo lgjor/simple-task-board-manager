@@ -20,6 +20,22 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+/**
+ * Testes unitários para o BoardColumnService.
+ * 
+ * <p>Testa as operações de negócio relacionadas às colunas de quadro,
+ * incluindo criação de colunas e validação de relacionamentos com boards.</p>
+ * 
+ * <p>Foca na validação de regras de negócio, tratamento de exceções e
+ * verificação de integridade referencial entre colunas e boards.</p>
+ * 
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @version 1.0
+ * @since 1.0
+ * @see BoardColumnService
+ * @see BoardColumn
+ * @see Board
+ */
 @ExtendWith(MockitoExtension.class)
 class BoardColumnServiceTest {
 
@@ -60,18 +76,18 @@ class BoardColumnServiceTest {
 
     @Test
     @DisplayName("Deve lançar ResourceNotFoundException ao tentar criar coluna para um board inexistente")
-    void shouldThrowExceptionWhenParentBoardNotFound() {
+    void shouldThrowResourceNotFoundExceptionWhenBoardDoesNotExist() {
         // Arrange
-        long nonExistentBoardId = 99L;
-
-        // Mocking: Fingir que o board pai NÃO foi encontrado.
+        long nonExistentBoardId = 999L;
         when(boardRepository.findById(nonExistentBoardId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(ResourceNotFoundException.class,
-                () -> columnService.createColumn("To Do", 0, BoardColumnKindEnum.INITIAL, nonExistentBoardId));
+        assertThrows(ResourceNotFoundException.class, () -> {
+            columnService.createColumn("To Do", 0, BoardColumnKindEnum.INITIAL, nonExistentBoardId);
+        });
 
-        // Verify: Garante que, se a validação falhar, o método de salvar nunca seja chamado.
-        verify(columnRepository, never()).save(any(BoardColumn.class));
+        // Verify
+        verify(boardRepository).findById(nonExistentBoardId); // Verifica se a validação foi chamada.
+        verify(columnRepository, never()).save(any()); // Verifica se o salvamento NÃO foi chamado.
     }
 }

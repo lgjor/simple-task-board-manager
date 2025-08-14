@@ -49,8 +49,14 @@ public class DatabaseMigrationService {
         try {
             logger.info("Iniciando verificação de migrações do banco de dados...");
             
-            // Temporariamente desabilitado para evitar problemas de compatibilidade
-            logger.info("Migrações desabilitadas temporariamente - usando apenas schema.sql");
+            // Verifica se o banco precisa de migração
+            if (needsMigration()) {
+                logger.info("Migração necessária detectada. Executando script de migração...");
+                executeMigrationScript();
+                logger.info("Migração concluída com sucesso");
+            } else {
+                logger.info("Banco de dados está atualizado. Nenhuma migração necessária.");
+            }
             
         } catch (Exception e) {
             logger.severe("Erro durante a migração do banco de dados: " + e.getMessage());

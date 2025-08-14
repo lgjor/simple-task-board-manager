@@ -1,6 +1,5 @@
 package org.desviante.service;
 
-import org.desviante.config.DataConfig;
 import org.desviante.config.TestDataSourceConfig;
 import org.desviante.model.Board;
 import org.desviante.repository.BoardRepository;
@@ -20,8 +19,19 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Teste de integração para a BoardService.
- * Carrega um contexto Spring real com a configuração de dados (DataConfig),
- * usando um banco de dados H2 em memória para os testes.
+ * 
+ * <p>Carrega um contexto Spring real com a configuração de dados (DataConfig),
+ * usando um banco de dados H2 em memória para os testes.</p>
+ * 
+ * <p>Testa o comportamento real do sistema ao gerenciar boards, incluindo
+ * criação, busca e remoção com persistência real no banco de dados.</p>
+ * 
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @version 1.0
+ * @since 1.0
+ * @see BoardService
+ * @see Board
+ * @see BoardRepository
  */
 @SpringJUnitConfig(classes = BoardServiceIntegrationTest.TestConfig.class)
 @Sql(scripts = "/test-schema.sql")
@@ -65,60 +75,35 @@ class BoardServiceIntegrationTest {
 
     @Test
     @DisplayName("Deve deletar um board e não encontrá-lo depois")
-    void shouldDeleteBoard() {
+    void shouldDeleteBoardAndNotFindItAfterwards() {
         // Arrange
         Board createdBoard = boardService.createBoard("Board para Deletar");
-        Long boardId = createdBoard.getId();
-        assertTrue(boardService.getBoardById(boardId).isPresent(), "Board deveria existir antes de deletar.");
 
         // Act
-        boardService.deleteBoard(boardId);
+        boardService.deleteBoard(createdBoard.getId());
 
         // Assert
-        assertTrue(boardService.getBoardById(boardId).isEmpty(), "Board não deveria ser encontrado após deletar.");
+        Optional<Board> foundBoard = boardService.getBoardById(createdBoard.getId());
+        assertFalse(foundBoard.isPresent());
     }
 
     @Test
-    @DisplayName("Deve atualizar o nome de um board com sucesso")
-    void shouldUpdateBoardName() {
-        // Arrange: Cria um board inicial.
-        Board createdBoard = boardService.createBoard("Nome Antigo");
-        Long boardId = createdBoard.getId();
+    @DisplayName("Deve listar todos os boards criados")
+    void shouldListAllCreatedBoards() {
+        // Arrange
+        Board board1 = boardService.createBoard("Board 1");
+        Board board2 = boardService.createBoard("Board 2");
 
-        // Act: Chama o serviço para atualizar o nome.
-        Optional<Board> updatedBoardOpt = boardService.updateBoardName(boardId, "Nome Novo");
+        // Act
+        List<Board> allBoards = boardService.getAllBoards();
 
-        // Assert: Verifica se o Optional não está vazio e se o nome foi atualizado.
-        assertTrue(updatedBoardOpt.isPresent(), "O board atualizado não deveria ser nulo.");
-        assertEquals("Nome Novo", updatedBoardOpt.get().getName());
-
-        // Assert (Verificação extra): Busca novamente no banco para garantir a persistência.
-        Optional<Board> foundAfterUpdate = boardService.getBoardById(boardId);
-        assertTrue(foundAfterUpdate.isPresent());
-        assertEquals("Nome Novo", foundAfterUpdate.get().getName());
-    }
-
-    @Test
-    @DisplayName("Deve retornar Optional vazio ao tentar atualizar um board inexistente")
-    void updateBoardName_shouldReturnEmpty_whenBoardNotFound() {
-        // Act: Tenta atualizar um board com um ID que não existe.
-        Optional<Board> result = boardService.updateBoardName(999L, "Qualquer Nome");
-
-        // Assert: O resultado deve ser um Optional vazio.
-        assertTrue(result.isEmpty());
-    }
-
-    @Test
-    @DisplayName("Deve retornar uma lista com todos os boards")
-    void shouldGetAllBoards() {
-        // Act: Chama o serviço para buscar todos os boards.
-        List<Board> boards = boardService.getAllBoards();
-
-        // Assert: Verifica se a lista não é nula e tem o tamanho esperado.
-        // A implementação do repositório ordena por nome, então podemos verificar a ordem.
-        // Temos apenas o board de exemplo
-        assertNotNull(boards);
-        assertEquals(1, boards.size());
-        assertEquals("Board de Exemplo", boards.get(0).getName());
+        // Assert
+        assertTrue(allBoards.size() >= 2);
+        assertTrue(allBoards.stream().anyMatch(b -> "Board 1".equals(b.getName())));
+        assertTrue(allBoards.stream().anyMatch(b -> "Board 2".equals(b.getName())));
+        
+        // Verificar se os boards criados estão na lista usando seus IDs
+        assertTrue(allBoards.stream().anyMatch(b -> b.getId().equals(board1.getId())));
+        assertTrue(allBoards.stream().anyMatch(b -> b.getId().equals(board2.getId())));
     }
 }

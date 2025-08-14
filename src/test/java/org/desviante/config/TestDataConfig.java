@@ -14,7 +14,25 @@ import javax.sql.DataSource;
 
 /**
  * Configuração de dados específica para testes.
- * Exclui o DatabaseMigrationService para evitar problemas durante os testes.
+ * 
+ * <p>Exclui o DatabaseMigrationService para evitar problemas durante os testes.
+ * Fornece uma fonte de dados H2 configurada com HikariCP para testes que
+ * requerem configuração mais robusta de conexão.</p>
+ * 
+ * <p>Características:</p>
+ * <ul>
+ *   <li>Pool de conexões HikariCP para performance</li>
+ *   <li>Banco de dados H2 em memória para isolamento</li>
+ *   <li>Gerenciamento de transações habilitado</li>
+ *   <li>Configuração otimizada para testes</li>
+ * </ul>
+ * 
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @version 1.0
+ * @since 1.0
+ * @see Configuration
+ * @see DataSource
+ * @see HikariDataSource
  */
 @Configuration
 @ComponentScan(basePackages = "org.desviante.repository",
@@ -23,6 +41,15 @@ import javax.sql.DataSource;
 @EnableTransactionManagement
 public class TestDataConfig {
 
+    /**
+     * Fornece uma fonte de dados H2 configurada com HikariCP para testes.
+     * 
+     * <p>Esta configuração fornece um pool de conexões otimizado para testes,
+     * simulando o comportamento real da aplicação em produção. O banco é
+     * criado em memória e destruído automaticamente após os testes.</p>
+     * 
+     * @return DataSource configurado com HikariCP para testes
+     */
     @Bean(destroyMethod = "close")
     public DataSource dataSource() {
         HikariConfig config = new HikariConfig();
@@ -35,6 +62,16 @@ public class TestDataConfig {
         return new HikariDataSource(config);
     }
 
+    /**
+     * Fornece um gerenciador de transações para testes.
+     * 
+     * <p>Este bean permite que os testes utilizem anotações de transação
+     * como @Transactional, garantindo que as operações de banco sejam
+     * executadas dentro de transações controladas.</p>
+     * 
+     * @param dataSource fonte de dados para gerenciar transações
+     * @return gerenciador de transações configurado
+     */
     @Bean
     public PlatformTransactionManager transactionManager(DataSource dataSource) {
         return new DataSourceTransactionManager(dataSource);

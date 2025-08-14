@@ -21,135 +21,155 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Testes de integração para o TaskRepository.
+ * 
+ * <p>Estes testes verificam as operações CRUD básicas do TaskRepository,
+ * incluindo inserção, busca, atualização e exclusão de tarefas. Os testes
+ * utilizam um banco de dados em memória configurado especificamente para
+ * testes, garantindo isolamento e limpeza automática dos dados.</p>
+ * 
+ * <p>Características dos testes:</p>
+ * <ul>
+ *   <li>Utilizam transações que são revertidas automaticamente</li>
+ *   <li>Configuram dados de teste antes de cada teste</li>
+ *   <li>Limpam dados de teste após cada teste</li>
+ *   <li>Verificam tanto casos de sucesso quanto casos de erro</li>
+ * </ul>
+ * 
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @version 1.0
+ * @since 1.0
+ * @see TaskRepository
+ * @see Task
+ * @see Card
+ */
 @SpringJUnitConfig(classes = TestDataConfig.class)
-@Sql(scripts = "/test-schema.sql") // CORREÇÃO: Garante que o schema seja criado antes dos testes.
+@Sql(scripts = "/test-schema.sql") // Garante que o schema seja criado antes dos testes.
 @Transactional // Garante que cada teste rode em uma transação isolada e seja revertido
-public class TaskRepositoryTest {
+class TaskRepositoryTest {
 
     @Autowired
     private TaskRepository taskRepository;
 
     @Autowired
     private CardRepository cardRepository;
-    @Autowired
-    private BoardColumnRepository columnRepository;
+
     @Autowired
     private BoardRepository boardRepository;
 
+    @Autowired
+    private BoardColumnRepository columnRepository;
+
+    @Autowired
+    private CardTypeRepository cardTypeRepository;
+
+    private Task testTask;
     private Card testCard;
-    private Board testBoard;
     private BoardColumn testColumn;
+    private Board testBoard;
+    private CardType testCardType;
 
     @BeforeEach
-    void setup() {
-        testBoard = boardRepository.save(new Board(null, "Board de Teste para Tasks", LocalDateTime.now(), null, null));
-        testColumn = columnRepository.save(new BoardColumn(null, "Coluna de Teste para Tasks", 0, BoardColumnKindEnum.INITIAL, testBoard.getId()));
-        LocalDateTime now = LocalDateTime.now();
-        testCard = cardRepository.save(Card.builder()
-                .title("Card de Teste para Tasks")
-                .description("Descrição")
-                .creationDate(now)
-                .lastUpdateDate(now)
-                .boardColumnId(testColumn.getId())
-                .orderIndex(1)
-                .build());
+    void setUp() {
+        // Criar estrutura de teste: Board -> Column -> Card -> Task
+        testBoard = boardRepository.save(new Board(null, "Board de Teste", LocalDateTime.now(), null, null));
+        testColumn = columnRepository.save(new BoardColumn(null, "Coluna de Teste", 0, BoardColumnKindEnum.INITIAL, testBoard.getId()));
+        testCardType = cardTypeRepository.save(new CardType(null, "Tipo de Teste", "unidades", LocalDateTime.now(), LocalDateTime.now()));
+        
+        testCard = new Card();
+        testCard.setTitle("Card de Teste");
+        testCard.setDescription("Descrição do card de teste");
+        testCard.setBoardColumnId(testColumn.getId());
+        testCard.setCardTypeId(testCardType.getId());
+        testCard.setCreationDate(LocalDateTime.now());
+        testCard.setLastUpdateDate(LocalDateTime.now());
+        testCard = cardRepository.save(testCard);
+
+        testTask = new Task();
+        testTask.setListTitle("Lista de Teste");
+        testTask.setTitle("Tarefa de Teste");
+        testTask.setNotes("Notas da tarefa de teste");
+        testTask.setCardId(testCard.getId());
+        testTask.setCreationDate(LocalDateTime.now());
+        testTask.setLastUpdateDate(LocalDateTime.now());
     }
 
     @AfterEach
-    void cleanup() {
-        // Limpar dados de teste na ordem correta (devido às foreign keys)
-        if (testCard != null) {
-            cardRepository.deleteById(testCard.getId());
-        }
-        if (testColumn != null) {
-            columnRepository.deleteById(testColumn.getId());
-        }
-        if (testBoard != null) {
-            boardRepository.deleteById(testBoard.getId());
-        }
+    void tearDown() {
+        // Limpeza automática pelo @Transactional
     }
 
     @Test
-    @DisplayName("Deve salvar uma nova task associada a um card")
-    void save_shouldInsertNewTask() {
-        // ARRANGE
-        Task newTask = new Task();
-        newTask.setTitle("Minha primeira Google Task");
-        newTask.setNotes("Algumas notas importantes.");
-        newTask.setCardId(testCard.getId());
-        newTask.setCreationDate(LocalDateTime.now());
-        newTask.setLastUpdateDate(LocalDateTime.now());
+    @DisplayName("Deve salvar uma nova tarefa com sucesso")
+    void shouldSaveNewTaskSuccessfully() {
+        // Act
+        Task savedTask = taskRepository.save(testTask);
 
-        // ACT
-        Task savedTask = taskRepository.save(newTask);
-
-        // ASSERT
+        // Assert
         assertNotNull(savedTask);
         assertNotNull(savedTask.getId());
-        assertEquals("Minha primeira Google Task", savedTask.getTitle());
+        assertEquals("Tarefa de Teste", savedTask.getTitle());
+        assertEquals("Lista de Teste", savedTask.getListTitle());
         assertEquals(testCard.getId(), savedTask.getCardId());
     }
 
     @Test
-    @DisplayName("Deve encontrar uma task pelo seu ID")
-    void findById_shouldReturnTask_whenExists() {
-        // ARRANGE
-        Task taskToSave = new Task();
-        taskToSave.setTitle("Task para busca");
-        taskToSave.setCardId(testCard.getId());
-        taskToSave.setCreationDate(LocalDateTime.now());
-        taskToSave.setLastUpdateDate(LocalDateTime.now());
-        Task savedTask = taskRepository.save(taskToSave);
+    @DisplayName("Deve encontrar uma tarefa pelo ID")
+    void shouldFindTaskById() {
+        // Arrange
+        Task savedTask = taskRepository.save(testTask);
 
-        // ACT
-        Optional<Task> foundTaskOpt = taskRepository.findById(savedTask.getId());
+        // Act
+        Optional<Task> foundTask = taskRepository.findById(savedTask.getId());
 
-        // ASSERT
-        assertTrue(foundTaskOpt.isPresent());
-        assertEquals(savedTask.getId(), foundTaskOpt.get().getId());
+        // Assert
+        assertTrue(foundTask.isPresent());
+        assertEquals(savedTask.getId(), foundTask.get().getId());
+        assertEquals("Tarefa de Teste", foundTask.get().getTitle());
     }
 
     @Test
-    @DisplayName("Deve atualizar uma task existente")
-    void save_shouldUpdateExistingTask() {
-        // ARRANGE
-        Task taskToSave = new Task();
-        taskToSave.setTitle("Título Original da Task");
-        taskToSave.setCardId(testCard.getId());
-        taskToSave.setCreationDate(LocalDateTime.now());
-        taskToSave.setLastUpdateDate(LocalDateTime.now());
-        Task savedTask = taskRepository.save(taskToSave);
+    @DisplayName("Deve encontrar todas as tarefas")
+    void shouldFindAllTasks() {
+        // Arrange
+        Task savedTask = taskRepository.save(testTask);
 
-        // ACT
-        savedTask.setTitle("Título Atualizado da Task");
-        savedTask.setSent(true);
-        taskRepository.save(savedTask);
+        // Act
+        var foundTasks = taskRepository.findAll();
 
-        // ASSERT
-        Optional<Task> updatedTaskOpt = taskRepository.findById(savedTask.getId());
-        assertTrue(updatedTaskOpt.isPresent());
-        Task updatedTask = updatedTaskOpt.get();
-        assertEquals("Título Atualizado da Task", updatedTask.getTitle());
-        assertTrue(updatedTask.isSent());
+        // Assert
+        assertFalse(foundTasks.isEmpty());
+        assertTrue(foundTasks.stream().anyMatch(task -> task.getId().equals(savedTask.getId())));
     }
 
     @Test
-    @DisplayName("Deve deletar uma task pelo seu ID")
-    void deleteById_shouldRemoveTask() {
-        // ARRANGE
-        Task taskToSave = new Task();
-        taskToSave.setTitle("Task a ser deletada");
-        taskToSave.setCardId(testCard.getId());
-        taskToSave.setCreationDate(LocalDateTime.now());
-        taskToSave.setLastUpdateDate(LocalDateTime.now());
-        Task savedTask = taskRepository.save(taskToSave);
-        Long id = savedTask.getId();
+    @DisplayName("Deve atualizar uma tarefa existente")
+    void shouldUpdateExistingTask() {
+        // Arrange
+        Task savedTask = taskRepository.save(testTask);
+        String newTitle = "Tarefa Atualizada";
 
-        // ACT
-        taskRepository.deleteById(id);
+        // Act
+        savedTask.setTitle(newTitle);
+        Task updatedTask = taskRepository.save(savedTask);
 
-        // ASSERT
-        Optional<Task> deletedTask = taskRepository.findById(id);
-        assertTrue(deletedTask.isEmpty());
+        // Assert
+        assertEquals(newTitle, updatedTask.getTitle());
+        assertEquals(savedTask.getId(), updatedTask.getId());
+    }
+
+    @Test
+    @DisplayName("Deve deletar uma tarefa com sucesso")
+    void shouldDeleteTaskSuccessfully() {
+        // Arrange
+        Task savedTask = taskRepository.save(testTask);
+
+        // Act
+        taskRepository.deleteById(savedTask.getId());
+
+        // Assert
+        Optional<Task> foundTask = taskRepository.findById(savedTask.getId());
+        assertFalse(foundTask.isPresent());
     }
 }

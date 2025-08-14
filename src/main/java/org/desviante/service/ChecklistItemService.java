@@ -1,7 +1,7 @@
 package org.desviante.service;
 
-import org.desviante.model.ChecklistItem;
-import org.desviante.repository.ChecklistItemRepository;
+import org.desviante.model.CheckListItem;
+import org.desviante.repository.CheckListItemRepository;
 import org.desviante.service.dto.ChecklistItemDTO;
 import org.springframework.stereotype.Service;
 
@@ -19,9 +19,9 @@ import java.util.stream.Collectors;
 @Service
 public class ChecklistItemService {
     
-    private final ChecklistItemRepository checklistItemRepository;
+    private final CheckListItemRepository checklistItemRepository;
     
-    public ChecklistItemService(ChecklistItemRepository checklistItemRepository) {
+    public ChecklistItemService(CheckListItemRepository checklistItemRepository) {
         this.checklistItemRepository = checklistItemRepository;
     }
     
@@ -41,12 +41,12 @@ public class ChecklistItemService {
         int nextOrderIndex = checklistItemRepository.countByCardId(cardId);
         
         // Criar o item
-        ChecklistItem item = new ChecklistItem(text.trim());
+        CheckListItem item = new CheckListItem(text.trim());
         item.setCardId(cardId);
         item.setOrderIndex(nextOrderIndex);
         
         // Salvar no banco
-        ChecklistItem savedItem = checklistItemRepository.save(item);
+        CheckListItem savedItem = checklistItemRepository.save(item);
         
         return convertToDTO(savedItem);
     }
@@ -73,12 +73,12 @@ public class ChecklistItemService {
             throw new IllegalArgumentException("O texto do item não pode estar vazio.");
         }
         
-        Optional<ChecklistItem> itemOpt = checklistItemRepository.findById(itemId);
+        Optional<CheckListItem> itemOpt = checklistItemRepository.findById(itemId);
         if (itemOpt.isEmpty()) {
             return Optional.empty();
         }
         
-        ChecklistItem item = itemOpt.get();
+        CheckListItem item = itemOpt.get();
         item.setText(newText.trim());
         
         boolean updated = checklistItemRepository.update(item);
@@ -118,7 +118,7 @@ public class ChecklistItemService {
      * @return lista de DTOs dos itens
      */
     public List<ChecklistItemDTO> getItemsByCardId(Long cardId) {
-        List<ChecklistItem> items = checklistItemRepository.findByCardIdOrderByOrderIndex(cardId);
+        List<CheckListItem> items = checklistItemRepository.findByCardIdOrderByOrderIndex(cardId);
         return items.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -187,7 +187,7 @@ public class ChecklistItemService {
      * @param item item a ser convertido
      * @return DTO do item
      */
-    private ChecklistItemDTO convertToDTO(ChecklistItem item) {
+    private ChecklistItemDTO convertToDTO(CheckListItem item) {
         return new ChecklistItemDTO(
             item.getId(),
             item.getCardId(),

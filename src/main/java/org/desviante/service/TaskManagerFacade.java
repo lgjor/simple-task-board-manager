@@ -7,7 +7,7 @@ import org.desviante.model.BoardColumn;
 import org.desviante.model.BoardGroup;
 import org.desviante.model.Card;
 import org.desviante.model.enums.BoardColumnKindEnum;
-import org.desviante.repository.ChecklistItemRepository;
+import org.desviante.repository.CheckListItemRepository;
 
 import org.desviante.service.dto.*;
 import org.springframework.stereotype.Service;
@@ -32,7 +32,7 @@ public class TaskManagerFacade {
     private final TaskService taskService;
     private final BoardGroupService boardGroupService;
     private final CardTypeService cardTypeService;
-    private final ChecklistItemRepository checklistItemRepository;
+    private final CheckListItemRepository checklistItemRepository;
 
     @Transactional(readOnly = true)
     public List<BoardSummaryDTO> getAllBoardSummaries() {
@@ -400,7 +400,7 @@ public class TaskManagerFacade {
         return boardGroupService;
     }
     
-    public ChecklistItemRepository getChecklistItemRepository() {
+    public CheckListItemRepository getChecklistItemRepository() {
         return checklistItemRepository;
     }
 

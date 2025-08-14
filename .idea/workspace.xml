@@ -5,16 +5,23 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b78907ab-aa34-4801-8b43-a5a76adf664c" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/CreateTaskRequestForGoogleAPI.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/BoardColumnDetailDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/BoardColumnDetailDTO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/BoardDetailDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/BoardDetailDTO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/BoardSummaryDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/BoardSummaryDTO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/CardDetailDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/CardDetailDTO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/CreateCardRequestDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/CreateCardRequestDTO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/CreateTaskRequest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/CreateTaskRequestDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/CreateTaskRequestDTO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/UpdateCardDetailsDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/service/dto/UpdateCardDetailsDTO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/config/DataInitializer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/config/DataInitializer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/config/DatabaseIntegrityChecker.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/config/DatabaseIntegrityChecker.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/config/DatabaseMigrationConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/config/DatabaseMigrationConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/model/Book.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/model/ChecklistItem.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/model/ChecklistItem.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/repository/BoardRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/repository/BoardRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/repository/CardRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/repository/CardRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/repository/ChecklistItemRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/repository/ChecklistItemRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/service/CardTypeService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/service/CardTypeService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/service/ChecklistItemService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/service/ChecklistItemService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/desviante/service/TaskManagerFacade.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/desviante/service/TaskManagerFacade.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/org/desviante/repository/TaskRepositoryTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/org/desviante/repository/TaskRepositoryTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/org/desviante/service/BoardColumnServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/org/desviante/service/BoardColumnServiceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/org/desviante/service/BoardServiceIntegrationTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/org/desviante/service/BoardServiceIntegrationTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/org/desviante/service/CustomCardTypeServiceTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/org/desviante/service/TaskServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/org/desviante/service/TaskServiceTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -47,12 +54,12 @@
     &quot;assignee&quot;: &quot;lgjor&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/lgjor/simple-task-board-manager.git",
-    "accountId": "4a9575a9-2586-4010-883b-7fe31fd5b45a"
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/lgjor/simple-task-board-manager.git&quot;,
+    &quot;accountId&quot;: &quot;4a9575a9-2586-4010-883b-7fe31fd5b45a&quot;
   }
-}]]></component>
+}</component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
   &quot;associatedIndex&quot;: 1
@@ -62,19 +69,19 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "main",
-    "last_opened_file_path": "D:/projetos/simple-task-board-manager",
-    "project.structure.last.edited": "Project",
-    "project.structure.proportion": "0.0",
-    "project.structure.side.proportion": "0.0",
-    "settings.editor.selected.configurable": "preferences.pluginManager"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/projetos/simple-task-board-manager&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager">
     <configuration default="true" type="PythonConfigurationType" factoryName="Python">
       <module name="simple-task-board-manager" />

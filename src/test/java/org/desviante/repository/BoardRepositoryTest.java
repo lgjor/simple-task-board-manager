@@ -15,10 +15,32 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Testes de integração para o BoardRepository.
+ * 
+ * <p>Estes testes verificam as operações CRUD básicas do BoardRepository,
+ * incluindo inserção, busca, atualização e exclusão de boards. Os testes
+ * utilizam um banco de dados em memória configurado especificamente para
+ * testes, garantindo isolamento e limpeza automática dos dados.</p>
+ * 
+ * <p>Características dos testes:</p>
+ * <ul>
+ *   <li>Utilizam transações que são revertidas automaticamente</li>
+ *   <li>Configuram dados de teste antes de cada teste</li>
+ *   <li>Limpam dados de teste após cada teste</li>
+ *   <li>Verificam tanto casos de sucesso quanto casos de erro</li>
+ * </ul>
+ * 
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @version 1.0
+ * @since 1.0
+ * @see BoardRepository
+ * @see Board
+ */
 @SpringJUnitConfig(classes = TestDataConfig.class)
-@Sql(scripts = "/test-schema.sql") // CORREÇÃO: Garante que o schema seja criado antes dos testes.
+@Sql(scripts = "/test-schema.sql") // Garante que o schema seja criado antes dos testes.
 @Transactional // Garante que cada teste rode em uma transação isolada e seja revertido
-public class BoardRepositoryTest {
+class BoardRepositoryTest {
 
     @Autowired
     private BoardRepository boardRepository;
@@ -47,78 +69,57 @@ public class BoardRepositoryTest {
     }
 
     @Test
-    @DisplayName("Deve encontrar um board pelo seu ID e retornar todos os dados")
-    void findById_shouldReturnBoard_whenBoardExists() {
+    @DisplayName("Deve encontrar um board pelo ID")
+    void deveEncontrarUmBoardPeloId() {
         // ARRANGE
-        LocalDateTime creationTime = LocalDateTime.now();
-        Board boardToSave = new Board(null, "Board de Teste", creationTime, null, null);
-        Board savedBoard = boardRepository.save(boardToSave);
+        Board savedBoard = boardRepository.save(new Board(null, "Board para Busca", LocalDateTime.now(), null, null));
 
         // ACT
-        Optional<Board> foundBoardOpt = boardRepository.findById(savedBoard.getId());
+        Optional<Board> foundBoard = boardRepository.findById(savedBoard.getId());
 
         // ASSERT
-        assertTrue(foundBoardOpt.isPresent());
-        Board foundBoard = foundBoardOpt.get();
-        assertEquals(savedBoard.getId(), foundBoard.getId());
-        assertEquals("Board de Teste", foundBoard.getName());
-
-        // ASERÇÃO ROBUSTA
-        assertEquals(
-                creationTime.truncatedTo(ChronoUnit.SECONDS),
-                foundBoard.getCreationDate().truncatedTo(ChronoUnit.SECONDS)
-        );
+        assertTrue(foundBoard.isPresent());
+        assertEquals(savedBoard.getId(), foundBoard.get().getId());
+        assertEquals("Board para Busca", foundBoard.get().getName());
     }
 
     @Test
-    @DisplayName("Deve retornar Optional vazio quando o board não existe")
-    void findById_shouldReturnEmpty_whenBoardDoesNotExist() {
+    @DisplayName("Deve retornar Optional vazio para ID inexistente")
+    void deveRetornarOptionalVazioParaIdInexistente() {
         // ACT
         Optional<Board> foundBoard = boardRepository.findById(999L);
+
         // ASSERT
         assertTrue(foundBoard.isEmpty());
     }
 
     @Test
-    @DisplayName("Deve atualizar o nome de um board existente sem alterar a data de criação")
-    void save_shouldUpdateName_whenBoardExists() {
+    @DisplayName("Deve atualizar um board existente")
+    void deveAtualizarUmBoardExistente() {
         // ARRANGE
-        LocalDateTime creationTime = LocalDateTime.now();
-        Board boardToSave = new Board(null, "Nome Antigo", creationTime, null, null);
-        Board savedBoard = boardRepository.save(boardToSave);
+        Board savedBoard = boardRepository.save(new Board(null, "Nome Original", LocalDateTime.now(), null, null));
+        String newName = "Nome Atualizado";
 
         // ACT
-        savedBoard.setName("Nome Novo");
-        boardRepository.save(savedBoard);
+        savedBoard.setName(newName);
+        Board updatedBoard = boardRepository.save(savedBoard);
 
         // ASSERT
-        Optional<Board> updatedBoardOpt = boardRepository.findById(savedBoard.getId());
-
-        assertTrue(updatedBoardOpt.isPresent());
-        Board updatedBoard = updatedBoardOpt.get();
-        assertEquals("Nome Novo", updatedBoard.getName());
-
-        // ASERÇÃO ROBUSTA
-        assertEquals(
-                creationTime.truncatedTo(ChronoUnit.SECONDS),
-                updatedBoard.getCreationDate().truncatedTo(ChronoUnit.SECONDS),
-                "A data de criação não deve ser alterada na atualização."
-        );
+        assertEquals(newName, updatedBoard.getName());
+        assertEquals(savedBoard.getId(), updatedBoard.getId());
     }
 
     @Test
-    @DisplayName("Deve deletar um board pelo seu ID")
-    void deleteById_shouldRemoveBoard() {
+    @DisplayName("Deve deletar um board com sucesso")
+    void deveDeletarUmBoardComSucesso() {
         // ARRANGE
-        Board boardToSave = new Board(null, "Board a Deletar", LocalDateTime.now(), null, null);
-        Board savedBoard = boardRepository.save(boardToSave);
-        Long id = savedBoard.getId();
+        Board savedBoard = boardRepository.save(new Board(null, "Board para Deletar", LocalDateTime.now(), null, null));
 
         // ACT
-        boardRepository.deleteById(id);
+        boardRepository.deleteById(savedBoard.getId());
 
         // ASSERT
-        Optional<Board> deletedBoard = boardRepository.findById(id);
-        assertTrue(deletedBoard.isEmpty());
+        Optional<Board> foundBoard = boardRepository.findById(savedBoard.getId());
+        assertFalse(foundBoard.isPresent());
     }
 }

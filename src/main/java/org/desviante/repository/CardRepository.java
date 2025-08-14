@@ -298,4 +298,83 @@ public class CardRepository {
         var params = new MapSqlParameterSource("id", id);
         jdbcTemplate.update(sql, params);
     }
+
+    /**
+     * Verifica se existem cards usando um tipo específico de card.
+     * 
+     * <p>Esta consulta é utilizada para validar se um tipo de card pode ser
+     * removido com segurança, verificando se há dependências ativas.</p>
+     * 
+     * @param cardTypeId identificador do tipo de card a ser verificado
+     * @return {@code true} se existem cards usando o tipo, {@code false} caso contrário
+     * @throws IllegalArgumentException se o cardTypeId for {@code null}
+     * @throws RuntimeException se houver erro na operação de banco
+     * 
+     * @see JdbcTemplate#queryForObject(String, Class, Object...)
+     */
+    public boolean existsByCardTypeId(Long cardTypeId) {
+        if (cardTypeId == null) {
+            throw new IllegalArgumentException("ID do tipo de card não pode ser null");
+        }
+        
+        String sql = "SELECT COUNT(*) FROM cards WHERE card_type_id = :cardTypeId";
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("cardTypeId", cardTypeId);
+        
+        Integer count = jdbcTemplate.queryForObject(sql, params, Integer.class);
+        return count != null && count > 0;
+    }
+
+    /**
+     * Conta quantos cards estão usando um tipo específico de card.
+     * 
+     * <p>Esta consulta fornece informações detalhadas sobre o uso de um tipo
+     * de card, permitindo que a interface do usuário mostre quantos cards
+     * seriam afetados pela remoção do tipo.</p>
+     * 
+     * @param cardTypeId identificador do tipo de card para contagem
+     * @return número de cards usando o tipo especificado (pode ser zero)
+     * @throws IllegalArgumentException se o cardTypeId for {@code null}
+     * @throws RuntimeException se houver erro na operação de banco
+     * 
+     * @see JdbcTemplate#queryForObject(String, Class, Object...)
+     */
+    public int countByCardTypeId(Long cardTypeId) {
+        if (cardTypeId == null) {
+            throw new IllegalArgumentException("ID do tipo de card não pode ser null");
+        }
+        
+        String sql = "SELECT COUNT(*) FROM cards WHERE card_type_id = :cardTypeId";
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("cardTypeId", cardTypeId);
+        
+        return jdbcTemplate.queryForObject(sql, params, Integer.class);
+    }
+
+    /**
+     * Busca todos os cards que usam um tipo específico de card.
+     * 
+     * <p>Esta consulta retorna uma lista de cards que dependem do tipo
+     * especificado, permitindo que a interface do usuário mostre quais
+     * cards seriam afetados pela remoção do tipo.</p>
+     * 
+     * @param cardTypeId identificador do tipo de card para busca
+     * @return lista de cards usando o tipo especificado (pode estar vazia)
+     * @throws IllegalArgumentException se o cardTypeId for {@code null}
+     * @throws RuntimeException se houver erro na operação de banco
+     * 
+     * @see JdbcTemplate#query(String, RowMapper, MapSqlParameterSource)
+     * @see #cardRowMapper
+     */
+    public List<Card> findByCardTypeId(Long cardTypeId) {
+        if (cardTypeId == null) {
+            throw new IllegalArgumentException("ID do tipo de card não pode ser null");
+        }
+        
+        String sql = "SELECT * FROM cards WHERE card_type_id = :cardTypeId ORDER BY creation_date DESC";
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("cardTypeId", cardTypeId);
+        
+        return jdbcTemplate.query(sql, params, cardRowMapper);
+    }
 }

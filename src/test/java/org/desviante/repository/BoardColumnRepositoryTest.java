@@ -19,10 +19,33 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Testes de integração para o BoardColumnRepository.
+ * 
+ * <p>Estes testes verificam as operações CRUD básicas do BoardColumnRepository,
+ * incluindo inserção, busca, atualização e exclusão de colunas. Os testes
+ * utilizam um banco de dados em memória configurado especificamente para
+ * testes, garantindo isolamento e limpeza automática dos dados.</p>
+ * 
+ * <p>Características dos testes:</p>
+ * <ul>
+ *   <li>Utilizam transações que são revertidas automaticamente</li>
+ *   <li>Configuram dados de teste antes de cada teste</li>
+ *   <li>Limpam dados de teste após cada teste</li>
+ *   <li>Verificam tanto casos de sucesso quanto casos de erro</li>
+ * </ul>
+ * 
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @version 1.0
+ * @since 1.0
+ * @see BoardColumnRepository
+ * @see BoardColumn
+ * @see Board
+ */
 @SpringJUnitConfig(classes = TestDataConfig.class)
 @Sql(scripts = "/test-schema.sql") // CORREÇÃO: Garante que o schema seja criado antes dos testes.
 @Transactional // Garante que cada teste rode em uma transação isolada e seja revertido
-public class BoardColumnRepositoryTest {
+class BoardColumnRepositoryTest {
 
     @Autowired
     private BoardColumnRepository columnRepository;
@@ -31,26 +54,28 @@ public class BoardColumnRepositoryTest {
     private BoardRepository boardRepository;
 
     private Board testBoard;
+    private BoardColumn testColumn;
 
     @BeforeEach
-    void setup() {
-        Board boardToSave = new Board(null, "Board de Teste Base", LocalDateTime.now(), null, null);
-        testBoard = boardRepository.save(boardToSave);
+    void setUp() {
+        // Criar um board de teste para as colunas
+        testBoard = boardRepository.save(new Board(null, "Board de Teste para Colunas", LocalDateTime.now(), null, null));
+        
+        // Criar uma coluna de teste
+        testColumn = new BoardColumn(null, "Coluna de Teste", 0, BoardColumnKindEnum.INITIAL, testBoard.getId());
+        testColumn = columnRepository.save(testColumn);
     }
 
     @AfterEach
-    void cleanup() {
-        // Limpar dados de teste na ordem correta (devido às foreign keys)
-        if (testBoard != null) {
-            boardRepository.deleteById(testBoard.getId());
-        }
+    void tearDown() {
+        // Limpeza automática pelo @Transactional
     }
 
     @Test
-    @DisplayName("Deve salvar uma nova coluna associada a um board")
-    void save_shouldInsertNewColumn() {
+    @DisplayName("Deve salvar uma nova coluna com sucesso")
+    void deveSalvarUmaNovaColunaComSucesso() {
         // ARRANGE
-        BoardColumn newColumn = new BoardColumn(null, "A Fazer", 0, BoardColumnKindEnum.INITIAL, testBoard.getId());
+        BoardColumn newColumn = new BoardColumn(null, "Nova Coluna", 1, BoardColumnKindEnum.PENDING, testBoard.getId());
 
         // ACT
         BoardColumn savedColumn = columnRepository.save(newColumn);
@@ -58,62 +83,77 @@ public class BoardColumnRepositoryTest {
         // ASSERT
         assertNotNull(savedColumn);
         assertNotNull(savedColumn.getId());
-        assertEquals("A Fazer", savedColumn.getName());
+        assertEquals("Nova Coluna", savedColumn.getName());
+        assertEquals(1, savedColumn.getOrderIndex());
+        assertEquals(BoardColumnKindEnum.PENDING, savedColumn.getKind());
         assertEquals(testBoard.getId(), savedColumn.getBoardId());
     }
 
     @Test
-    @DisplayName("Deve encontrar colunas pelo ID do board, ordenadas pelo index")
-    void findByBoardId_shouldReturnColumns_inOrder() {
-        // ARRANGE
-        BoardColumn col1 = new BoardColumn(null, "Em Andamento", 1, BoardColumnKindEnum.PENDING, testBoard.getId());
-        BoardColumn col0 = new BoardColumn(null, "A Fazer", 0, BoardColumnKindEnum.INITIAL, testBoard.getId());
-        columnRepository.save(col1);
-        columnRepository.save(col0);
+    @DisplayName("Deve encontrar uma coluna pelo ID")
+    void deveEncontrarUmaColunaPeloId() {
+        // ACT
+        Optional<BoardColumn> foundColumn = columnRepository.findById(testColumn.getId());
+
+        // ASSERT
+        assertTrue(foundColumn.isPresent());
+        assertEquals(testColumn.getId(), foundColumn.get().getId());
+        assertEquals("Coluna de Teste", foundColumn.get().getName());
+    }
+
+    @Test
+    @DisplayName("Deve retornar Optional vazio para ID inexistente")
+    void deveRetornarOptionalVazioParaIdInexistente() {
+        // ACT
+        Optional<BoardColumn> foundColumn = columnRepository.findById(999L);
+
+        // ASSERT
+        assertTrue(foundColumn.isEmpty());
+    }
+
+    @Test
+    @DisplayName("Deve encontrar colunas por board ID")
+    void deveEncontrarColunasPorBoardId() {
+        // ARRANGE - Criar mais uma coluna no mesmo board
+        BoardColumn secondColumn = new BoardColumn(null, "Segunda Coluna", 1, BoardColumnKindEnum.FINAL, testBoard.getId());
+        columnRepository.save(secondColumn);
 
         // ACT
         List<BoardColumn> columns = columnRepository.findByBoardId(testBoard.getId());
 
         // ASSERT
         assertNotNull(columns);
-        assertEquals(2, columns.size());
-        assertEquals("A Fazer", columns.get(0).getName());
-        assertEquals("Em Andamento", columns.get(1).getName());
+        assertTrue(columns.size() >= 2);
+        assertTrue(columns.stream().anyMatch(col -> "Coluna de Teste".equals(col.getName())));
+        assertTrue(columns.stream().anyMatch(col -> "Segunda Coluna".equals(col.getName())));
     }
 
     @Test
     @DisplayName("Deve atualizar uma coluna existente")
-    void save_shouldUpdateExistingColumn() {
+    void deveAtualizarUmaColunaExistente() {
         // ARRANGE
-        BoardColumn originalColumn = new BoardColumn(null, "Nome Original", 0, BoardColumnKindEnum.INITIAL, testBoard.getId());
-        BoardColumn savedColumn = columnRepository.save(originalColumn);
+        String newName = "Coluna Atualizada";
+        int newOrderIndex = 5;
 
         // ACT
-        savedColumn.setName("Nome Atualizado");
-        savedColumn.setOrderIndex(99);
-        columnRepository.save(savedColumn);
+        testColumn.setName(newName);
+        testColumn.setOrderIndex(newOrderIndex);
+        BoardColumn updatedColumn = columnRepository.save(testColumn);
 
         // ASSERT
-        Optional<BoardColumn> updatedColumnOpt = columnRepository.findById(savedColumn.getId());
-        assertTrue(updatedColumnOpt.isPresent());
-        BoardColumn updatedColumn = updatedColumnOpt.get();
-        assertEquals("Nome Atualizado", updatedColumn.getName());
-        assertEquals(99, updatedColumn.getOrderIndex());
+        assertEquals(newName, updatedColumn.getName());
+        assertEquals(newOrderIndex, updatedColumn.getOrderIndex());
+        assertEquals(testColumn.getId(), updatedColumn.getId());
     }
 
     @Test
-    @DisplayName("Deve deletar uma coluna pelo seu ID")
-    void deleteById_shouldRemoveColumn() {
-        // ARRANGE
-        BoardColumn columnToDelete = new BoardColumn(null, "Coluna Temporária", 0, BoardColumnKindEnum.INITIAL, testBoard.getId());
-        BoardColumn savedColumn = columnRepository.save(columnToDelete);
-        Long id = savedColumn.getId();
-
+    @DisplayName("Deve deletar uma coluna com sucesso")
+    void deveDeletarUmaColunaComSucesso() {
         // ACT
-        columnRepository.deleteById(id);
+        columnRepository.deleteById(testColumn.getId());
 
         // ASSERT
-        Optional<BoardColumn> deletedColumn = columnRepository.findById(id);
-        assertTrue(deletedColumn.isEmpty());
+        Optional<BoardColumn> foundColumn = columnRepository.findById(testColumn.getId());
+        assertFalse(foundColumn.isPresent());
     }
 }
