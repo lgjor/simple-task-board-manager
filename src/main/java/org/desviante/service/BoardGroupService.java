@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.desviante.config.AppMetadataConfig;
 import org.desviante.exception.ResourceNotFoundException;
 import org.desviante.model.Board;
 import org.desviante.model.BoardColumn;
@@ -52,6 +53,7 @@ public class BoardGroupService {
     private final BoardRepository boardRepository;
     private final BoardColumnService columnService;
     private final CardService cardService;
+    private final AppMetadataConfig appMetadataConfig;
 
     /**
      * Busca todos os grupos de quadros disponíveis no sistema.
@@ -162,6 +164,14 @@ public class BoardGroupService {
         // Validação do grupo existente
         BoardGroup existingGroup = boardGroupRepository.findById(groupId)
                 .orElseThrow(() -> new ResourceNotFoundException("Grupo com ID " + groupId + " não encontrado."));
+        
+        // Verificar se o grupo é o padrão configurado
+        Optional<Long> defaultGroupId = appMetadataConfig.getDefaultBoardGroupId();
+        if (defaultGroupId.isPresent() && defaultGroupId.get().equals(groupId)) {
+            throw new IllegalArgumentException("Não é possível deletar o grupo '" + existingGroup.getName() + 
+                    "' pois ele está configurado como grupo padrão no sistema. " +
+                    "Altere a configuração padrão antes de deletar o grupo.");
+        }
         
         // Verificar se existem boards associados ao grupo
         List<Board> boardsInGroup = boardRepository.findByGroupId(groupId);

@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.desviante.config.AppMetadataConfig;
 import org.desviante.model.CardType;
 import org.desviante.model.enums.ProgressType;
+import org.desviante.repository.CardRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -36,6 +37,7 @@ public class DefaultConfigurationService {
     
     private final AppMetadataConfig metadataConfig;
     private final CardTypeService cardTypeService;
+    private final CardRepository cardRepository;
     
     /**
      * Obtém o tipo de card padrão para novos cards.
@@ -134,6 +136,17 @@ public class DefaultConfigurationService {
             throw new IllegalArgumentException("Tipo de progresso não pode ser null");
         }
         
+        // Verificar se o tipo de progresso atual está sendo usado como padrão
+        Optional<ProgressType> currentDefault = metadataConfig.getDefaultProgressType();
+        if (currentDefault.isPresent() && currentDefault.get() != progressType) {
+            // Verificar se o tipo atual está sendo usado em cards
+            if (isProgressTypeInUse(currentDefault.get())) {
+                throw new IllegalArgumentException("Não é possível alterar o tipo de progresso padrão '" + 
+                    currentDefault.get().getDisplayName() + "' pois ele está sendo usado por cards no sistema. " +
+                    "Migre os cards para outro tipo de progresso antes de alterar a configuração padrão.");
+            }
+        }
+        
         // Atualiza os metadados
         metadataConfig.updateMetadata(metadata -> metadata.setDefaultProgressType(progressType));
         log.info("Tipo de progresso padrão definido como: {}", progressType);
@@ -221,5 +234,15 @@ public class DefaultConfigurationService {
         } catch (Exception e) {
             return "Erro ao obter informações das configurações: " + e.getMessage();
         }
+    }
+
+    /**
+     * Verifica se um tipo de progresso está sendo usado por algum card no sistema.
+     * 
+     * @param progressType o tipo de progresso a ser verificado
+     * @return true se estiver sendo usado, false caso contrário
+     */
+    private boolean isProgressTypeInUse(ProgressType progressType) {
+        return cardRepository.existsByProgressType(progressType);
     }
 }

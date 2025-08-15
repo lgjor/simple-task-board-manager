@@ -1,5 +1,6 @@
 package org.desviante.service;
 
+import org.desviante.config.AppMetadataConfig;
 import org.desviante.exception.ResourceNotFoundException;
 import org.desviante.model.Board;
 import org.desviante.model.BoardColumn;
@@ -42,6 +43,9 @@ class BoardGroupServiceTest {
 
     @Mock
     private CardService cardService;
+    
+    @Mock
+    private AppMetadataConfig appMetadataConfig;
 
     @InjectMocks
     private BoardGroupService boardGroupService;
@@ -935,5 +939,101 @@ class BoardGroupServiceTest {
         verify(boardGroupRepository).findById(groupId);
         verify(boardRepository).findByGroupId(groupId);
         verifyNoMoreInteractions(boardGroupRepository, boardRepository);
+    }
+    
+    @Test
+    @DisplayName("Deve impedir exclusão de grupo configurado como padrão")
+    void shouldPreventDeletionOfDefaultGroup() {
+        // Arrange
+        Long groupId = 1L;
+        BoardGroup defaultGroup = new BoardGroup(groupId, "Grupo Padrão", "Descrição", "#FF5733", "📁", LocalDateTime.now());
+        
+        when(boardGroupRepository.findById(groupId)).thenReturn(Optional.of(defaultGroup));
+        when(appMetadataConfig.getDefaultBoardGroupId()).thenReturn(Optional.of(groupId));
+        // Não configuramos boardRepository.findByGroupId porque não deve ser chamado
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> boardGroupService.deleteBoardGroup(groupId));
+        
+        String expectedMessage = "Não é possível deletar o grupo 'Grupo Padrão' pois ele está configurado como grupo padrão no sistema. Altere a configuração padrão antes de deletar o grupo.";
+        assertEquals(expectedMessage, exception.getMessage());
+        
+        // Verify
+        verify(boardGroupRepository).findById(groupId);
+        verify(appMetadataConfig).getDefaultBoardGroupId();
+        verifyNoMoreInteractions(boardGroupRepository);
+        verifyNoInteractions(boardRepository);
+    }
+    
+    @Test
+    @DisplayName("Deve permitir exclusão de grupo quando não é o padrão")
+    void shouldAllowDeletionWhenGroupIsNotDefault() {
+        // Arrange
+        Long groupId = 1L;
+        BoardGroup nonDefaultGroup = new BoardGroup(groupId, "Grupo Normal", "Descrição", "#FF5733", "📁", LocalDateTime.now());
+        
+        when(boardGroupRepository.findById(groupId)).thenReturn(Optional.of(nonDefaultGroup));
+        when(appMetadataConfig.getDefaultBoardGroupId()).thenReturn(Optional.of(999L)); // ID diferente
+        when(boardRepository.findByGroupId(groupId)).thenReturn(Collections.emptyList());
+        doNothing().when(boardGroupRepository).deleteById(groupId);
+
+        // Act
+        boardGroupService.deleteBoardGroup(groupId);
+
+        // Assert & Verify
+        verify(boardGroupRepository).findById(groupId);
+        verify(appMetadataConfig).getDefaultBoardGroupId();
+        verify(boardRepository).findByGroupId(groupId);
+        verify(boardGroupRepository).deleteById(groupId);
+        verifyNoMoreInteractions(boardGroupRepository, boardRepository);
+    }
+    
+    @Test
+    @DisplayName("Deve permitir exclusão quando nenhum grupo padrão está configurado")
+    void shouldAllowDeletionWhenNoDefaultGroupConfigured() {
+        // Arrange
+        Long groupId = 1L;
+        BoardGroup normalGroup = new BoardGroup(groupId, "Grupo Normal", "Descrição", "#FF5733", "📁", LocalDateTime.now());
+        
+        when(boardGroupRepository.findById(groupId)).thenReturn(Optional.of(normalGroup));
+        when(appMetadataConfig.getDefaultBoardGroupId()).thenReturn(Optional.empty()); // Sem grupo padrão
+        when(boardRepository.findByGroupId(groupId)).thenReturn(Collections.emptyList());
+        doNothing().when(boardGroupRepository).deleteById(groupId);
+
+        // Act
+        boardGroupService.deleteBoardGroup(groupId);
+
+        // Assert & Verify
+        verify(boardGroupRepository).findById(groupId);
+        verify(appMetadataConfig).getDefaultBoardGroupId();
+        verify(boardRepository).findByGroupId(groupId);
+        verify(boardGroupRepository).deleteById(groupId);
+        verifyNoMoreInteractions(boardGroupRepository, boardRepository);
+    }
+    
+    @Test
+    @DisplayName("Deve verificar grupo padrão antes de verificar boards associados")
+    void shouldCheckDefaultGroupBeforeCheckingAssociatedBoards() {
+        // Arrange
+        Long groupId = 1L;
+        BoardGroup defaultGroup = new BoardGroup(groupId, "Grupo Padrão", "Descrição", "#FF5733", "📁", LocalDateTime.now());
+        
+        when(boardGroupRepository.findById(groupId)).thenReturn(Optional.of(defaultGroup));
+        when(appMetadataConfig.getDefaultBoardGroupId()).thenReturn(Optional.of(groupId));
+        // Não configuramos boardRepository.findByGroupId porque não deve ser chamado
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> boardGroupService.deleteBoardGroup(groupId));
+        
+        String expectedMessage = "Não é possível deletar o grupo 'Grupo Padrão' pois ele está configurado como grupo padrão no sistema. Altere a configuração padrão antes de deletar o grupo.";
+        assertEquals(expectedMessage, exception.getMessage());
+        
+        // Verify - Deve verificar grupo padrão primeiro, não deve verificar boards
+        verify(boardGroupRepository).findById(groupId);
+        verify(appMetadataConfig).getDefaultBoardGroupId();
+        verifyNoMoreInteractions(boardGroupRepository);
+        verifyNoInteractions(boardRepository);
     }
 } 

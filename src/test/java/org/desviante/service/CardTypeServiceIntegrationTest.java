@@ -30,6 +30,8 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import org.desviante.config.AppMetadataConfig;
 
 /**
  * Teste de integração para o CardTypeService.
@@ -86,7 +88,7 @@ class CardTypeServiceIntegrationTest {
         
         @Bean
         public CardTypeService cardTypeService(CardTypeRepository cardTypeRepository, CardRepository cardRepository) {
-            return new CardTypeService(cardTypeRepository, cardRepository);
+            return new CardTypeService(cardTypeRepository, cardRepository, mock(AppMetadataConfig.class));
         }
     }
 

@@ -1,6 +1,7 @@
 package org.desviante.service;
 
 import lombok.RequiredArgsConstructor;
+import org.desviante.config.AppMetadataConfig;
 import org.desviante.exception.ResourceNotFoundException;
 import org.desviante.exception.CardTypeInUseException;
 import org.desviante.model.CardType;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Gerencia as operações de negócio relacionadas aos tipos de card.
@@ -41,6 +43,7 @@ public class CardTypeService {
 
     private final CardTypeRepository cardTypeRepository;
     private final CardRepository cardRepository;
+    private final AppMetadataConfig appMetadataConfig;
 
     /**
      * Lista todos os tipos de card disponíveis.
@@ -174,6 +177,14 @@ public class CardTypeService {
         // Verificar se o tipo de card existe
         CardType cardType = getCardTypeById(id);
         
+        // Verificar se o tipo de card é o padrão
+        Optional<Long> defaultCardTypeId = appMetadataConfig.getDefaultCardTypeId();
+        if (defaultCardTypeId.isPresent() && defaultCardTypeId.get().equals(id)) {
+            throw new CardTypeInUseException("Não é possível remover o tipo de card '" + cardType.getName() + 
+                    "' pois ele está configurado como tipo padrão no sistema. " +
+                    "Altere a configuração padrão antes de remover este tipo.");
+        }
+
         // Verificar se existem cards usando este tipo antes de remover
         if (cardRepository.existsByCardTypeId(id)) {
             int cardCount = cardRepository.countByCardTypeId(id);
@@ -263,6 +274,18 @@ public class CardTypeService {
         // Verificar se o tipo de card existe
         CardType cardType = getCardTypeById(id);
         
+        // Verificar se o tipo de card é o padrão
+        Optional<Long> defaultCardTypeId = appMetadataConfig.getDefaultCardTypeId();
+        if (defaultCardTypeId.isPresent() && defaultCardTypeId.get().equals(id)) {
+            return CardTypeRemovalCheck.builder()
+                    .canDelete(false)
+                    .cardType(cardType)
+                    .cardCount(0)
+                    .affectedCards(List.of())
+                    .reason("Este tipo de card é o padrão e não pode ser removido.")
+                    .build();
+        }
+
         // Verificar se existem cards usando este tipo
         boolean hasCards = cardRepository.existsByCardTypeId(id);
         

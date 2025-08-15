@@ -1,5 +1,6 @@
 package org.desviante.service;
 
+import org.desviante.config.AppMetadataConfig;
 import org.desviante.exception.CardTypeInUseException;
 import org.desviante.exception.ResourceNotFoundException;
 import org.desviante.model.Card;
@@ -46,6 +47,9 @@ class CardTypeServiceTest {
 
     @Mock
     private CardRepository cardRepository;
+    
+    @Mock
+    private AppMetadataConfig appMetadataConfig;
 
     @InjectMocks
     private CardTypeService cardTypeService;
@@ -210,5 +214,118 @@ class CardTypeServiceTest {
         card.setDescription("Description for " + title);
         card.setCardTypeId(1L);
         return card;
+    }
+    
+    @Test
+    @DisplayName("Deve impedir exclusão de tipo de card configurado como padrão")
+    void shouldPreventDeletionOfDefaultCardType() {
+        // Arrange
+        when(cardTypeRepository.findById(1L)).thenReturn(Optional.of(testCardType));
+        when(appMetadataConfig.getDefaultCardTypeId()).thenReturn(Optional.of(1L));
+        // Não configuramos cardRepository.existsByCardTypeId porque não deve ser chamado
+
+        // Act & Assert
+        CardTypeInUseException exception = assertThrows(CardTypeInUseException.class, () -> {
+            cardTypeService.deleteCardType(1L);
+        });
+        
+        String expectedMessage = "Não é possível remover o tipo de card 'Test Type' pois ele está configurado como tipo padrão no sistema. Altere a configuração padrão antes de remover este tipo.";
+        assertEquals(expectedMessage, exception.getMessage());
+        
+        // Verify
+        verify(cardTypeRepository).findById(1L);
+        verify(appMetadataConfig).getDefaultCardTypeId();
+        verifyNoMoreInteractions(cardTypeRepository);
+        verifyNoInteractions(cardRepository);
+    }
+    
+    @Test
+    @DisplayName("Deve permitir exclusão de tipo quando não é o padrão")
+    void shouldAllowDeletionWhenCardTypeIsNotDefault() {
+        // Arrange
+        when(cardTypeRepository.findById(1L)).thenReturn(Optional.of(testCardType));
+        when(appMetadataConfig.getDefaultCardTypeId()).thenReturn(Optional.of(999L)); // ID diferente
+        when(cardRepository.existsByCardTypeId(1L)).thenReturn(false);
+        when(cardTypeRepository.deleteById(1L)).thenReturn(true);
+
+        // Act
+        boolean result = cardTypeService.deleteCardType(1L);
+
+        // Assert
+        assertTrue(result);
+        verify(cardTypeRepository).findById(1L);
+        verify(appMetadataConfig).getDefaultCardTypeId();
+        verify(cardRepository).existsByCardTypeId(1L);
+        verify(cardTypeRepository).deleteById(1L);
+        verifyNoMoreInteractions(cardTypeRepository, cardRepository);
+    }
+    
+    @Test
+    @DisplayName("Deve permitir exclusão quando nenhum tipo padrão está configurado")
+    void shouldAllowDeletionWhenNoDefaultCardTypeConfigured() {
+        // Arrange
+        when(cardTypeRepository.findById(1L)).thenReturn(Optional.of(testCardType));
+        when(appMetadataConfig.getDefaultCardTypeId()).thenReturn(Optional.empty()); // Sem tipo padrão
+        when(cardRepository.existsByCardTypeId(1L)).thenReturn(false);
+        when(cardTypeRepository.deleteById(1L)).thenReturn(true);
+
+        // Act
+        boolean result = cardTypeService.deleteCardType(1L);
+
+        // Assert
+        assertTrue(result);
+        verify(cardTypeRepository).findById(1L);
+        verify(appMetadataConfig).getDefaultCardTypeId();
+        verify(cardRepository).existsByCardTypeId(1L);
+        verify(cardTypeRepository).deleteById(1L);
+        verifyNoMoreInteractions(cardTypeRepository, cardRepository);
+    }
+    
+    @Test
+    @DisplayName("Deve verificar tipo padrão antes de verificar cards dependentes")
+    void shouldCheckDefaultCardTypeBeforeCheckingDependentCards() {
+        // Arrange
+        when(cardTypeRepository.findById(1L)).thenReturn(Optional.of(testCardType));
+        when(appMetadataConfig.getDefaultCardTypeId()).thenReturn(Optional.of(1L));
+        // Não configuramos cardRepository.existsByCardTypeId porque não deve ser chamado
+
+        // Act & Assert
+        CardTypeInUseException exception = assertThrows(CardTypeInUseException.class, () -> {
+            cardTypeService.deleteCardType(1L);
+        });
+        
+        String expectedMessage = "Não é possível remover o tipo de card 'Test Type' pois ele está configurado como tipo padrão no sistema. Altere a configuração padrão antes de remover este tipo.";
+        assertEquals(expectedMessage, exception.getMessage());
+        
+        // Verify - Deve verificar tipo padrão primeiro, não deve verificar cards
+        verify(cardTypeRepository).findById(1L);
+        verify(appMetadataConfig).getDefaultCardTypeId();
+        verifyNoMoreInteractions(cardTypeRepository);
+        verifyNoInteractions(cardRepository);
+    }
+    
+    @Test
+    @DisplayName("Deve impedir verificação de exclusão de tipo padrão configurado")
+    void shouldPreventDeletionCheckOfDefaultCardType() {
+        // Arrange
+        when(cardTypeRepository.findById(1L)).thenReturn(Optional.of(testCardType));
+        when(appMetadataConfig.getDefaultCardTypeId()).thenReturn(Optional.of(1L));
+        // Não configuramos cardRepository.existsByCardTypeId porque não deve ser chamado
+
+        // Act
+        CardTypeService.CardTypeRemovalCheck result = cardTypeService.canDeleteCardType(1L);
+
+        // Assert
+        assertFalse(result.canDelete());
+        assertEquals(0, result.getCardCount());
+        assertEquals("Este tipo de card é o padrão e não pode ser removido.", result.getReason());
+        assertEquals(testCardType, result.getCardType());
+        assertTrue(result.getAffectedCards().isEmpty());
+        
+        // Verify
+        verify(cardTypeRepository).findById(1L);
+        verify(appMetadataConfig).getDefaultCardTypeId();
+        verifyNoMoreInteractions(cardTypeRepository);
+        verifyNoInteractions(cardRepository);
     }
 }

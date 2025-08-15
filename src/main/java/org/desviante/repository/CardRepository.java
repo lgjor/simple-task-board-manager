@@ -377,4 +377,83 @@ public class CardRepository {
         
         return jdbcTemplate.query(sql, params, cardRowMapper);
     }
+    
+    /**
+     * Verifica se existem cards usando um tipo específico de progresso.
+     * 
+     * <p>Esta consulta é utilizada para validar se um tipo de progresso pode ser
+     * alterado com segurança, verificando se há cards que dependem dele.</p>
+     * 
+     * @param progressType tipo de progresso a ser verificado
+     * @return {@code true} se existem cards usando o tipo, {@code false} caso contrário
+     * @throws IllegalArgumentException se o progressType for {@code null}
+     * @throws RuntimeException se houver erro na operação de banco
+     * 
+     * @see JdbcTemplate#queryForObject(String, Class, Object...)
+     */
+    public boolean existsByProgressType(org.desviante.model.enums.ProgressType progressType) {
+        if (progressType == null) {
+            throw new IllegalArgumentException("Tipo de progresso não pode ser null");
+        }
+        
+        String sql = "SELECT COUNT(*) FROM cards WHERE progress_type = :progressType";
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("progressType", progressType.name());
+        
+        Integer count = jdbcTemplate.queryForObject(sql, params, Integer.class);
+        return count != null && count > 0;
+    }
+    
+    /**
+     * Conta quantos cards estão usando um tipo específico de progresso.
+     * 
+     * <p>Esta consulta fornece informações detalhadas sobre o uso de um tipo
+     * de progresso, permitindo que a interface do usuário mostre quantos cards
+     * seriam afetados pela alteração do tipo.</p>
+     * 
+     * @param progressType tipo de progresso para contagem
+     * @return número de cards usando o tipo especificado (pode ser zero)
+     * @throws IllegalArgumentException se o progressType for {@code null}
+     * @throws RuntimeException se houver erro na operação de banco
+     * 
+     * @see JdbcTemplate#queryForObject(String, Class, Object...)
+     */
+    public int countByProgressType(org.desviante.model.enums.ProgressType progressType) {
+        if (progressType == null) {
+            throw new IllegalArgumentException("Tipo de progresso não pode ser null");
+        }
+        
+        String sql = "SELECT COUNT(*) FROM cards WHERE progress_type = :progressType";
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("progressType", progressType.name());
+        
+        return jdbcTemplate.queryForObject(sql, params, Integer.class);
+    }
+    
+    /**
+     * Busca todos os cards que usam um tipo específico de progresso.
+     * 
+     * <p>Esta consulta retorna uma lista de cards que dependem do tipo
+     * de progresso especificado, permitindo que a interface do usuário mostre quais
+     * cards seriam afetados pela alteração do tipo.</p>
+     * 
+     * @param progressType tipo de progresso para busca
+     * @return lista de cards usando o tipo especificado (pode estar vazia)
+     * @throws IllegalArgumentException se o progressType for {@code null}
+     * @throws RuntimeException se houver erro na operação de banco
+     * 
+     * @see JdbcTemplate#query(String, RowMapper, MapSqlParameterSource)
+     * @see #cardRowMapper
+     */
+    public List<Card> findByProgressType(org.desviante.model.enums.ProgressType progressType) {
+        if (progressType == null) {
+            throw new IllegalArgumentException("Tipo de progresso não pode ser null");
+        }
+        
+        String sql = "SELECT * FROM cards WHERE progress_type = :progressType ORDER BY creation_date DESC";
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("progressType", progressType.name());
+        
+        return jdbcTemplate.query(sql, params, cardRowMapper);
+    }
 }

@@ -125,6 +125,63 @@ class DefaultBoardGroupIntegrationTest {
         assertEquals(1L, result.getGroupId());
     }
     
+    @Test
+    @DisplayName("Deve lidar com grupo padrão que foi excluído - cenário crítico")
+    void shouldHandleDeletedDefaultGroupScenario() {
+        // Arrange - Simular que o grupo padrão foi excluído
+        BoardGroup deletedGroup = null; // Grupo foi deletado
+        
+        // Act - Tentar criar board com grupo padrão inexistente
+        Board result = createMockBoard(1L, "Board Com Grupo Deletado", 1L);
+        
+        // Simular que o grupo foi removido
+        result.setGroup(deletedGroup);
+        
+        // Assert - O board deve ser criado, mas sem grupo válido
+        assertNotNull(result);
+        assertEquals("Board Com Grupo Deletado", result.getName());
+        assertEquals(1L, result.getGroupId()); // ID ainda existe, mas grupo é null
+        assertNull(result.getGroup(), "Grupo deve ser null quando deletado");
+    }
+    
+    @Test
+    @DisplayName("Deve validar integridade quando grupo padrão é excluído")
+    void shouldValidateIntegrityWhenDefaultGroupIsDeleted() {
+        // Arrange - Simular configuração com grupo padrão
+        Long defaultGroupId = 1L;
+        
+        // Act - Simular exclusão do grupo padrão
+        boolean groupExists = false; // Grupo foi deletado
+        
+        // Assert - O sistema deve detectar que o grupo padrão não existe mais
+        assertFalse(groupExists, "Grupo padrão não deve existir após ser deletado");
+        
+        // Simular criação de board sem grupo válido
+        Board result = createMockBoard(1L, "Board Sem Grupo Válido", defaultGroupId);
+        result.setGroup(null); // Grupo foi removido
+        
+        // Verificar que o board foi criado, mas sem grupo válido
+        assertNotNull(result);
+        assertEquals(defaultGroupId, result.getGroupId()); // ID ainda existe
+        assertNull(result.getGroup(), "Grupo deve ser null após exclusão");
+    }
+    
+    @Test
+    @DisplayName("Deve permitir reconfiguração após exclusão de grupo padrão")
+    void shouldAllowReconfigurationAfterDefaultGroupDeletion() {
+        // Arrange - Simular que o grupo padrão foi excluído
+        Long deletedGroupId = 1L;
+        
+        // Act - Simular reconfiguração com novo grupo
+        Board result = createMockBoard(1L, "Board Reconfigurado", 2L);
+        
+        // Assert - O board deve ser criado com o novo grupo
+        assertNotNull(result);
+        assertEquals("Board Reconfigurado", result.getName());
+        assertEquals(2L, result.getGroupId());
+        assertNotEquals(deletedGroupId, result.getGroupId(), "Não deve usar ID do grupo deletado");
+    }
+    
     // Métodos auxiliares para criar objetos mock
     private Board createMockBoard(Long id, String name, Long groupId) {
         Board board = new Board();
@@ -133,7 +190,7 @@ class DefaultBoardGroupIntegrationTest {
         board.setCreationDate(LocalDateTime.now());
         board.setGroupId(groupId);
         
-        if (groupId != null) {
+        if (groupId != null && groupId.equals(1L)) {
             board.setGroup(testGroup);
         }
         

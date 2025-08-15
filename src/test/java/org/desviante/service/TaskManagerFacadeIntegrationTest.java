@@ -110,9 +110,9 @@ class TaskManagerFacadeIntegrationTest {
         }
         
         @Bean
-        public BoardGroupService boardGroupService(BoardGroupRepository boardGroupRepository, BoardRepository boardRepository, 
+        public BoardGroupService boardGroupService(BoardGroupRepository boardGroupRepository, BoardRepository boardRepository,
                                                    BoardColumnService boardColumnService, CardService cardService) {
-            return new BoardGroupService(boardGroupRepository, boardRepository, boardColumnService, cardService);
+            return new BoardGroupService(boardGroupRepository, boardRepository, boardColumnService, cardService, mock(AppMetadataConfig.class));
         }
         
         @Bean
@@ -122,7 +122,7 @@ class TaskManagerFacadeIntegrationTest {
         
         @Bean
         public CardTypeService cardTypeService(CardTypeRepository cardTypeRepository, CardRepository cardRepository) {
-            return new CardTypeService(cardTypeRepository, cardRepository);
+            return new CardTypeService(cardTypeRepository, cardRepository, mock(AppMetadataConfig.class));
         }
         
         @Bean
