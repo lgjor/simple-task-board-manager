@@ -3,7 +3,6 @@ package org.desviante.view;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.Button;
 import javafx.stage.Stage;
 import org.desviante.config.AppMetadataConfig;
@@ -15,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.Optional;
-import javafx.scene.control.ButtonBar;
 
 /**
  * Controller para a tela de preferências da aplicação.

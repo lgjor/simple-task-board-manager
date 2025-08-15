@@ -1,5 +1,7 @@
 package org.desviante.service;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.desviante.config.TestDataSourceConfig;
 import org.desviante.exception.ResourceNotFoundException;
 import org.desviante.model.Board;
@@ -8,6 +10,7 @@ import org.desviante.model.BoardGroup;
 import org.desviante.model.Card;
 import org.desviante.model.enums.BoardColumnKindEnum;
 import org.desviante.model.enums.ProgressType;
+import org.desviante.repository.*;
 import org.desviante.service.dto.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,10 +20,13 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.sql.DataSource;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,19 +45,102 @@ class TaskManagerFacadeIntegrationTest {
 
     /**
      * Configuração de contexto para este teste.
-     * 1. Importa a configuração de dados real (DataConfig).
-     * 2. Escaneia e carrega todos os serviços do pacote 'org.desviante.service'.
-     * 3. EXCLUI o GoogleTasksApiService real para evitar chamadas de rede.
-     * 4. Fornece um bean MOCK do GoogleTasksApiService para satisfazer a dependência do TaskService.
+     * Configuração completamente isolada para evitar conflitos de dependência.
      */
     @Configuration
-    @Import(TestDataSourceConfig.class)
-    @ComponentScan(basePackages = {"org.desviante.service", "org.desviante.repository"},
-            excludeFilters = {
-                @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = GoogleTasksApiService.class),
-                @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = DatabaseMigrationService.class)
-            })
     static class TestConfig {
+        
+        @Bean
+        public DataSource dataSource() {
+            HikariConfig config = new HikariConfig();
+            config.setJdbcUrl("jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=LEGACY");
+            config.setUsername("sa");
+            config.setPassword("");
+            config.addDataSourceProperty("cachePrepStmts", "true");
+            config.addDataSourceProperty("prepStmtCacheSize", "250");
+            config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+            return new HikariDataSource(config);
+        }
+        
+        @Bean
+        public PlatformTransactionManager transactionManager(DataSource dataSource) {
+            return new DataSourceTransactionManager(dataSource);
+        }
+        
+        @Bean
+        public BoardRepository boardRepository(DataSource dataSource) {
+            return new BoardRepository(dataSource);
+        }
+        
+        @Bean
+        public BoardColumnRepository boardColumnRepository(DataSource dataSource) {
+            return new BoardColumnRepository(dataSource);
+        }
+        
+        @Bean
+        public BoardGroupRepository boardGroupRepository(DataSource dataSource) {
+            return new BoardGroupRepository(dataSource);
+        }
+        
+        @Bean
+        public CardRepository cardRepository(DataSource dataSource) {
+            return new CardRepository(dataSource);
+        }
+        
+        @Bean
+        public CardTypeRepository cardTypeRepository(DataSource dataSource) {
+            return new CardTypeRepository(dataSource);
+        }
+        
+        @Bean
+        public TaskRepository taskRepository(DataSource dataSource) {
+            return new TaskRepository(dataSource);
+        }
+        
+        @Bean
+        public CheckListItemRepository checkListItemRepository(DataSource dataSource) {
+            return new CheckListItemRepository(dataSource);
+        }
+        
+        @Bean
+        public BoardService boardService(BoardRepository boardRepository) {
+            return new BoardService(boardRepository);
+        }
+        
+        @Bean
+        public BoardColumnService boardColumnService(BoardColumnRepository boardColumnRepository, BoardRepository boardRepository) {
+            return new BoardColumnService(boardColumnRepository, boardRepository);
+        }
+        
+        @Bean
+        public BoardGroupService boardGroupService(BoardGroupRepository boardGroupRepository, BoardRepository boardRepository, 
+                                                   BoardColumnService boardColumnService, CardService cardService) {
+            return new BoardGroupService(boardGroupRepository, boardRepository, boardColumnService, cardService);
+        }
+        
+        @Bean
+        public CardService cardService(CardRepository cardRepository, BoardColumnRepository boardColumnRepository, CardTypeService cardTypeService) {
+            return new CardService(cardRepository, boardColumnRepository, cardTypeService);
+        }
+        
+        @Bean
+        public CardTypeService cardTypeService(CardTypeRepository cardTypeRepository, CardRepository cardRepository) {
+            return new CardTypeService(cardTypeRepository, cardRepository);
+        }
+        
+        @Bean
+        public TaskService taskService(TaskRepository taskRepository, CardRepository cardRepository, GoogleTasksApiService googleTasksApiService) {
+            return new TaskService(taskRepository, cardRepository, googleTasksApiService);
+        }
+        
+        @Bean
+        public TaskManagerFacade taskManagerFacade(BoardService boardService, BoardColumnService boardColumnService, 
+                                                   CardService cardService, TaskService taskService, 
+                                                   BoardGroupService boardGroupService, CardTypeService cardTypeService,
+                                                   CheckListItemRepository checkListItemRepository) {
+            return new TaskManagerFacade(boardService, boardColumnService, cardService, taskService, boardGroupService, cardTypeService, checkListItemRepository);
+        }
+        
         @Bean
         public GoogleTasksApiService googleTasksApiService() {
             return mock(GoogleTasksApiService.class);

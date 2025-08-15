@@ -36,8 +36,18 @@ import javax.sql.DataSource;
  */
 @Configuration
 @ComponentScan(basePackages = "org.desviante.repository",
-        excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, 
-                value = org.desviante.service.DatabaseMigrationService.class))
+        excludeFilters = {
+            @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, 
+                    value = org.desviante.service.DatabaseMigrationService.class),
+            @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, 
+                    value = org.desviante.config.AppMetadataConfig.class),
+            @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, 
+                    value = org.desviante.config.FileWatcherService.class),
+            @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, 
+                    value = org.desviante.config.AppConfig.class),
+            @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, 
+                    value = org.desviante.config.GoogleApiConfig.class)
+        })
 @EnableTransactionManagement
 public class TestDataConfig {
 
