@@ -1,0 +1,176 @@
+/* Estilos para a tela de preferências */
+
+.preferences-container {
+    -fx-background-color: #f8f9fa;
+    -fx-font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+.preferences-title {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c3e50;
+    -fx-padding: 0;
+}
+
+.preferences-section {
+    -fx-background-color: white;
+    -fx-background-radius: 8px;
+    -fx-padding: 20px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);
+}
+
+.section-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #34495e;
+    -fx-padding: 0 0 15 0;
+}
+
+.info-section {
+    -fx-background-color: #e8f4fd;
+    -fx-background-radius: 8px;
+    -fx-padding: 15px;
+    -fx-border-color: #3498db;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+}
+
+.info-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2980b9;
+    -fx-padding: 0 0 10 0;
+}
+
+.info-text {
+    -fx-font-size: 13px;
+    -fx-text-fill: #2c3e50;
+    -fx-padding: 2 0;
+}
+
+.warning-section {
+    -fx-background-color: #fff3cd;
+    -fx-background-radius: 8px;
+    -fx-padding: 15px;
+    -fx-border-color: #ffc107;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+}
+
+.warning-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #856404;
+    -fx-padding: 0 0 10 0;
+}
+
+.warning-text {
+    -fx-font-size: 13px;
+    -fx-text-fill: #856404;
+    -fx-padding: 2 0;
+}
+
+.button-container {
+    -fx-padding: 20 0 0 0;
+}
+
+.save-button {
+    -fx-background-color: #27ae60;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 10 20;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+    -fx-min-width: 140px;
+}
+
+.save-button:hover {
+    -fx-background-color: #229954;
+}
+
+.save-button:pressed {
+    -fx-background-color: #1e8449;
+}
+
+.cancel-button {
+    -fx-background-color: #95a5a6;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 10 20;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+    -fx-min-width: 100px;
+}
+
+.cancel-button:hover {
+    -fx-background-color: #7f8c8d;
+}
+
+.cancel-button:pressed {
+    -fx-background-color: #6c7b7d;
+}
+
+/* Estilos para ComboBoxes */
+.combo-box {
+    -fx-background-color: white;
+    -fx-border-color: #bdc3c7;
+    -fx-border-radius: 4px;
+    -fx-padding: 5px;
+}
+
+.combo-box:hover {
+    -fx-border-color: #3498db;
+}
+
+.combo-box:focused {
+    -fx-border-color: #3498db;
+    -fx-border-width: 2px;
+}
+
+.combo-box .list-cell {
+    -fx-text-fill: #2c3e50;
+    -fx-padding: 5px;
+}
+
+.combo-box .arrow-button {
+    -fx-background-color: #ecf0f1;
+    -fx-background-radius: 0 4px 4px 0;
+}
+
+.combo-box .arrow {
+    -fx-background-color: #7f8c8d;
+}
+
+/* Estilos para Labels */
+.label {
+    -fx-text-fill: #2c3e50;
+    -fx-font-size: 14px;
+}
+
+/* Estilos para GridPane */
+.grid-pane {
+    -fx-hgap: 15px;
+    -fx-vgap: 10px;
+}
+
+/* Estilos para VBox e HBox */
+.vbox, .hbox {
+    -fx-spacing: 10px;
+}
+
+/* Estilos para ícones dos botões */
+.button-icon {
+    -fx-font-size: 16px;
+    -fx-min-width: 16px;
+    -fx-alignment: center;
+}
+
+/* Estilos para os elementos gráficos dos botões */
+.save-button .label, .cancel-button .label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.save-button .image-view, .cancel-button .image-view {
+    -fx-opacity: 0.9;
+}

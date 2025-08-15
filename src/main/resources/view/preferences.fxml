@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
+      fx:controller="org.desviante.view.PreferencesController" 
+      spacing="20" styleClass="preferences-container"
+      stylesheets="@../css/preferences.css">
+    
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20" />
+    </padding>
+    
+    <children>
+        <!-- Título da tela -->
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <ImageView fitWidth="24" fitHeight="24">
+                <Image url="@../icons/emoji/2699.png" />
+            </ImageView>
+            <Label text="Preferências da Aplicação" styleClass="preferences-title" />
+        </HBox>
+        
+        <!-- Seção de configurações padrão -->
+        <VBox spacing="15" styleClass="preferences-section">
+            <VBox spacing="10">
+                <Label text="Configurações Padrão para Novos Cards" styleClass="section-title" />
+                
+                <!-- Tipo de card padrão -->
+                <GridPane hgap="15" vgap="10" styleClass="grid-pane">
+                    <columnConstraints>
+                        <ColumnConstraints hgrow="NEVER" minWidth="180" prefWidth="200" />
+                        <ColumnConstraints hgrow="ALWAYS" minWidth="250" prefWidth="350" />
+                    </columnConstraints>
+                    
+                    <Label text="Tipo de Card Padrão:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                    <ComboBox fx:id="defaultCardTypeComboBox" promptText="Selecione o tipo padrão" 
+                             GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                    
+                    <Label text="Tipo de Progresso Padrão:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                    <ComboBox fx:id="defaultProgressTypeComboBox" promptText="Selecione o tipo de progresso padrão" 
+                             GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                </GridPane>
+            </VBox>
+        </VBox>
+        
+        <!-- Seção de informações -->
+        <VBox spacing="12" styleClass="info-section">
+            <VBox spacing="10">
+                <Label text="Como Funcionam as Preferências" styleClass="info-title" />
+                <Label text="• Define o tipo de card que será sugerido por padrão ao criar novos cards" 
+                       styleClass="info-text" wrapText="true" />
+                <Label text="• Define o tipo de progresso que será sugerido ao por padrão ao criar novos cards" 
+                       styleClass="info-text" wrapText="true" />
+                <Label text="• As alterações são salvas automaticamente no arquivo de configuração" 
+                       styleClass="info-text" wrapText="true" />
+            </VBox>
+        </VBox>
+        
+        <!-- Seção de aviso sobre reinicialização -->
+        <VBox spacing="12" styleClass="warning-section">
+            <VBox spacing="10">
+                <Label text="Importante: Reinicialização Necessária" styleClass="warning-title" />
+                <Label text="Após salvar as preferências, a aplicação deve ser reiniciada para aplicar completamente as mudanças. Você pode escolher reiniciar imediatamente ou mais tarde." 
+                       styleClass="warning-text" wrapText="true" />
+            </VBox>
+        </VBox>
+        
+        <!-- Botões de ação -->
+        <HBox spacing="15" alignment="CENTER_RIGHT" styleClass="button-container">
+            <Button fx:id="saveButton" onAction="#handleSave" styleClass="save-button">
+                <graphic>
+                    <HBox spacing="8" alignment="CENTER">
+                        <Label text="💾" styleClass="button-icon" />
+                        <Label text="Salvar Preferências" />
+                    </HBox>
+                </graphic>
+            </Button>
+            <Button fx:id="cancelButton" onAction="#handleCancel" styleClass="cancel-button">
+                <graphic>
+                    <HBox spacing="8" alignment="CENTER">
+                        <Label text="❌" styleClass="button-icon" />
+                        <Label text="Cancelar" />
+                    </HBox>
+                </graphic>
+            </Button>
+        </HBox>
+    </children>
+</VBox>

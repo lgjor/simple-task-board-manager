@@ -1,0 +1,37 @@
+{
+  "metadataVersion": "1.0",
+  "defaultCardTypeId": null,
+  "defaultProgressType": null,
+  "installationDirectory": "${user.dir}",
+  "userDataDirectory": "${user.home}/myboards",
+  "logDirectory": "${user.home}/myboards/logs",
+  "defaultLogLevel": "INFO",
+  "maxLogFileSizeMB": 10,
+  "maxLogFiles": 5,
+  "updateCheckIntervalHours": 24,
+  "autoCheckUpdates": true,
+  "showSystemNotifications": true,
+  "databaseTimeoutSeconds": 30,
+  "autoBackupDatabase": true,
+  "autoBackupIntervalHours": 24,
+  "autoBackupDirectory": "${user.home}/myboards/backups",
+  "uiConfig": {
+    "theme": "system",
+    "language": "pt-BR",
+    "fontSize": 12,
+    "showTooltips": true,
+    "confirmDestructiveActions": true,
+    "showProgressBars": true
+  },
+  "performanceConfig": {
+    "maxCardsPerPage": 100,
+    "enableCaching": true,
+    "maxCacheSizeMB": 50,
+    "cacheTimeToLiveMinutes": 30
+  },
+  "securityConfig": {
+    "validateInput": true,
+    "logSensitiveOperations": false,
+    "maxSessionTimeMinutes": 480
+  }
+}

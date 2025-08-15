@@ -29,7 +29,7 @@ import org.springframework.context.annotation.Import;
  */
 @Configuration
 @ComponentScan(basePackages = {"org.desviante.service", "org.desviante.view"}) // Scan
-@Import({DataConfig.class, GoogleApiConfig.class}) // Import the other configs
+@Import({DataConfig.class, GoogleApiConfig.class, AppMetadataConfig.class}) // Import the other configs
 public class AppConfig {
     // This class is now much cleaner and composes the other configurations.
 }

@@ -35,12 +35,17 @@ import java.awt.Desktop;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Component
 public class BoardViewController {
 
     // Declarado como 'final' para garantir a imutabilidade após a construção.
     private final TaskManagerFacade facade;
+    
+    // Injetar o AppMetadataConfig para acessar as configurações
+    @Autowired
+    private org.desviante.config.AppMetadataConfig appMetadataConfig;
 
     // --- Componentes da Tabela de Boards ---
     @FXML
@@ -93,9 +98,12 @@ public class BoardViewController {
     private Button refreshButton;
     @FXML
     private Button cardTypesButton;
-    // O botão linkGoogleButton foi removido
+    @FXML
+    private Button customTypesButton;
     @FXML
     private Button googleTaskButton;
+    @FXML
+    private Button preferencesButton;
 
     // Mapa para rastrear o nó visual de cada card pelo seu ID.
     private final Map<Long, Node> cardNodeMap = new HashMap<>();
@@ -1101,5 +1109,41 @@ public class BoardViewController {
             return imageView;
         }
         return null;
+    }
+
+    /**
+     * Abre a janela de preferências para configurar tipos padrão.
+     */
+    @FXML
+    private void handlePreferences() {
+        try {
+            // Carregar a tela de preferências
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/preferences.fxml"));
+            Parent root = loader.load();
+            
+            // Obter o controlador
+            PreferencesController controller = loader.getController();
+            
+            // Configurar os serviços necessários
+            controller.setCardTypeService(facade.getCardTypeService());
+            controller.setAppMetadataConfig(appMetadataConfig);
+            
+            // Criar uma nova janela
+            javafx.stage.Stage stage = new javafx.stage.Stage();
+            stage.setTitle("Preferências");
+            stage.setScene(new javafx.scene.Scene(root));
+            stage.setMinWidth(600);
+            stage.setMinHeight(400);
+            stage.setResizable(true);
+            
+            // Centralizar a janela
+            stage.centerOnScreen();
+            
+            // Mostrar a janela
+            stage.show();
+            
+        } catch (IOException e) {
+            showError("Erro", "Não foi possível abrir a tela de preferências: " + e.getMessage());
+        }
     }
 }

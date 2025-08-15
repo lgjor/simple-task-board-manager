@@ -43,6 +43,8 @@
                         <Separator orientation="VERTICAL" />
                         <Button fx:id="customTypesButton" onAction="#handleCardTypes" text="Tipos de Card" />
                         <Separator orientation="VERTICAL" />
+                        <Button fx:id="preferencesButton" onAction="#handlePreferences" text="Preferências" />
+                        <Separator orientation="VERTICAL" />
                         <Button fx:id="googleTaskButton" onAction="#handleGoogleTask" text="Google Task" />
                     </items>
                 </ToolBar>
