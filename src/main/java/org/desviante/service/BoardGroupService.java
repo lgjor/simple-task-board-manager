@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Gerencia as operações de negócio relacionadas aos grupos de quadros.
@@ -47,6 +48,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BoardGroupService {
 
     private final BoardGroupRepository boardGroupRepository;
@@ -353,5 +355,111 @@ public class BoardGroupService {
         // Selecionar uma cor aleatória do array
         int randomIndex = (int) (Math.random() * predefinedColors.length);
         return predefinedColors[randomIndex];
+    }
+
+    /**
+     * Sugere um ID de grupo padrão baseado na configuração da aplicação.
+     * 
+     * <p>Este método verifica primeiro se há um grupo padrão configurado no AppMetadataConfig.
+     * Se houver um grupo válido configurado, ele é sempre respeitado.
+     * Se for explicitamente configurado como "Sem Grupo" (null), retorna null.
+     * Só usa fallback quando não há configuração ou o grupo configurado não existe.</p>
+     *
+     * @return ID do grupo sugerido como padrão, ou null se não houver grupos ou se "Sem Grupo" for configurado
+     */
+    @Transactional(readOnly = true)
+    public Long suggestDefaultBoardGroupId() {
+        log.debug("Iniciando sugestão de grupo padrão...");
+        
+        // Primeiro, verificar se há um grupo padrão configurado
+        Optional<Long> configuredDefaultId = appMetadataConfig.getDefaultBoardGroupId();
+        
+        // ⭐ CORREÇÃO: Verificar se o Optional está vazio (indicando null) ou se contém um valor
+        if (configuredDefaultId.isPresent()) {
+            Long groupId = configuredDefaultId.get();
+            
+            if (groupId == null) {
+                // ⭐ CONFIGURAÇÃO EXPLÍCITA PARA "SEM GRUPO" - RETORNAR NULL
+                log.debug("Configuração explícita para 'Sem Grupo' - retornando null");
+                return null; // ⭐ IMPORTANTE: retornar null para "Sem Grupo"
+            } else {
+                // Verificar se o grupo configurado ainda existe
+                try {
+                    BoardGroup configuredGroup = boardGroupRepository.findById(groupId)
+                            .orElse(null);
+                    if (configuredGroup != null) {
+                        log.debug("Usando grupo padrão configurado: {} (ID: {})", 
+                                 configuredGroup.getName(), configuredGroup.getId());
+                        return configuredGroup.getId(); // ⭐ SEMPRE retornar o grupo configurado se existir
+                    } else {
+                        log.warn("Grupo padrão configurado com ID {} não encontrado no banco, usando fallback", groupId);
+                    }
+                } catch (Exception e) {
+                    log.warn("Erro ao buscar grupo padrão configurado (ID: {}): {}, usando fallback", 
+                            groupId, e.getMessage());
+                }
+            }
+        } else {
+            // ⭐ IMPORTANTE: Optional.empty() significa que o campo é null (explicitamente configurado como "Sem Grupo")
+            log.debug("Configuração explícita para 'Sem Grupo' (Optional.empty) - retornando null");
+            return null; // ⭐ RETORNAR NULL para "Sem Grupo"
+        }
+        
+        // ⭐ FALLBACK: só usar quando não há grupo configurado ou o grupo configurado não existe
+        log.debug("Usando fallback inteligente para encontrar grupo apropriado");
+        List<BoardGroup> allGroups = getAllBoardGroups();
+        if (!allGroups.isEmpty()) {
+            // Tentar encontrar um grupo com nome específico como fallback
+            Optional<BoardGroup> fallbackGroup = allGroups.stream()
+                    .filter(group -> "Trabalho".equalsIgnoreCase(group.getName()) ||
+                                   "Livros".equalsIgnoreCase(group.getName()) ||
+                                   "Pessoal".equalsIgnoreCase(group.getName()))
+                    .findFirst();
+            
+            if (fallbackGroup.isPresent()) {
+                BoardGroup selectedFallback = fallbackGroup.get();
+                log.debug("Usando grupo específico como fallback: {} (ID: {})", 
+                         selectedFallback.getName(), selectedFallback.getId());
+                return selectedFallback.getId();
+            } else {
+                // Se não encontrar grupo específico, usar o primeiro disponível
+                BoardGroup firstGroup = allGroups.get(0);
+                log.debug("Usando primeiro grupo disponível como fallback: {} (ID: {})", 
+                         firstGroup.getName(), firstGroup.getId());
+                return firstGroup.getId();
+            }
+        }
+        
+        // Nenhum grupo disponível
+        log.warn("Nenhum grupo disponível para sugestão");
+        return null;
+    }
+
+    /**
+     * Obtém o grupo padrão sugerido como objeto completo.
+     * 
+     * <p>Este método retorna o objeto BoardGroup completo do grupo padrão sugerido,
+     * útil para interfaces que precisam de informações completas do grupo.</p>
+     *
+     * @return grupo padrão sugerido, ou null se não houver grupos
+     */
+    @Transactional(readOnly = true)
+    public BoardGroup suggestDefaultBoardGroup() {
+        log.debug("Obtendo grupo padrão sugerido como objeto completo...");
+        
+        Long suggestedGroupId = suggestDefaultBoardGroupId();
+        if (suggestedGroupId != null) {
+            BoardGroup suggestedGroup = boardGroupRepository.findById(suggestedGroupId).orElse(null);
+            if (suggestedGroup != null) {
+                log.debug("Grupo padrão sugerido: {} (ID: {})", 
+                         suggestedGroup.getName(), suggestedGroup.getId());
+            } else {
+                log.warn("Grupo sugerido com ID {} não encontrado no banco", suggestedGroupId);
+            }
+            return suggestedGroup;
+        }
+        
+        log.debug("Nenhum grupo padrão sugerido (ID é null)");
+        return null;
     }
 }

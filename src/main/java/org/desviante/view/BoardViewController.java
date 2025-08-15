@@ -36,6 +36,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.desviante.util.WindowManager;
 
 @Component
 public class BoardViewController {
@@ -46,6 +47,10 @@ public class BoardViewController {
     // Injetar o AppMetadataConfig para acessar as configurações
     @Autowired
     private org.desviante.config.AppMetadataConfig appMetadataConfig;
+    
+    // Injetar o WindowManager para gerenciar janelas secundárias
+    @Autowired
+    private WindowManager windowManager;
 
     // --- Componentes da Tabela de Boards ---
     @FXML
@@ -685,7 +690,19 @@ public class BoardViewController {
             List<BoardGroup> groups = facade.getAllBoardGroups();
             groupComboBox.getItems().add(null); // Opção "Sem Grupo"
             groupComboBox.getItems().addAll(groups);
-            groupComboBox.setValue(null); // Selecionar "Sem Grupo" por padrão
+            
+            // Definir valor padrão baseado nas configurações do sistema
+            BoardGroup suggestedGroup = facade.suggestDefaultBoardGroup();
+            System.out.println("Grupo sugerido pelo sistema: " + (suggestedGroup != null ? suggestedGroup.getName() + " (ID: " + suggestedGroup.getId() + ")" : "null"));
+            
+            if (suggestedGroup != null) {
+                groupComboBox.setValue(suggestedGroup);
+                System.out.println("Grupo padrão definido: " + suggestedGroup.getName());
+            } else {
+                // Nenhum grupo sugerido - selecionar "Sem Grupo" (null)
+                groupComboBox.setValue(null);
+                System.out.println("Usando 'Sem Grupo' como padrão (nenhum grupo sugerido pelo sistema)");
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -993,6 +1010,9 @@ public class BoardViewController {
             // Centralizar a janela
             stage.centerOnScreen();
             
+            // Registrar a janela no WindowManager para fechamento automático
+            windowManager.registerWindow(stage, "Gerenciamento de Tipos de Card");
+            
             // Mostrar a janela
             stage.show();
             
@@ -1025,6 +1045,9 @@ public class BoardViewController {
             // Centralizar a janela
             stage.centerOnScreen();
             
+            // Registrar a janela no WindowManager para fechamento automático
+            windowManager.registerWindow(stage, "Gerenciamento de Grupos de Board");
+            
             // Mostrar a janela
             stage.show();
             
@@ -1056,6 +1079,9 @@ public class BoardViewController {
             
             // Centralizar a janela
             stage.centerOnScreen();
+            
+            // Registrar a janela no WindowManager para fechamento automático
+            windowManager.registerWindow(stage, "Gerenciamento de Grupos de Board");
             
             // Mostrar a janela
             stage.show();
@@ -1139,6 +1165,9 @@ public class BoardViewController {
             
             // Centralizar a janela
             stage.centerOnScreen();
+            
+            // Registrar a janela no WindowManager para fechamento automático
+            windowManager.registerWindow(stage, "Preferências");
             
             // Mostrar a janela
             stage.show();

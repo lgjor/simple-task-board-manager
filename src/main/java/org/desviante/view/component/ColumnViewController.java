@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.function.BiConsumer;
 // CORREÇÃO: A linha 'import java.util.function.Runnable;' foi removida.
 // A interface Runnable está em java.lang e é importada automaticamente.
+import java.util.Optional;
 
 public class ColumnViewController {
 
@@ -150,9 +151,30 @@ public class ColumnViewController {
         List<CardTypeOptionDTO> typeOptions = facade.getAllCardTypeOptions();
         typeComboBox.getItems().addAll(typeOptions);
         
-        // Definir valor padrão (primeiro tipo disponível)
+        // Definir valor padrão baseado nas configurações do sistema
         if (!typeOptions.isEmpty()) {
-            typeComboBox.setValue(typeOptions.get(0));
+            // Tentar usar o tipo padrão configurado
+            Long suggestedTypeId = facade.suggestDefaultCardTypeId();
+            System.out.println("Tipo de card sugerido: " + suggestedTypeId);
+            
+            if (suggestedTypeId != null) {
+                // Encontrar o tipo sugerido na lista
+                Optional<CardTypeOptionDTO> suggestedType = typeOptions.stream()
+                        .filter(type -> type.cardTypeId().equals(suggestedTypeId))
+                        .findFirst();
+                if (suggestedType.isPresent()) {
+                    System.out.println("Tipo sugerido encontrado: " + suggestedType.get().getDisplayName());
+                    typeComboBox.setValue(suggestedType.get());
+                } else {
+                    // Se o tipo sugerido não for encontrado, usar o primeiro disponível
+                    System.out.println("Tipo sugerido não encontrado, usando primeiro disponível: " + typeOptions.get(0).getDisplayName());
+                    typeComboBox.setValue(typeOptions.get(0));
+                }
+            } else {
+                // Se não há tipo sugerido, usar o primeiro disponível
+                System.out.println("Nenhum tipo sugerido, usando primeiro disponível: " + typeOptions.get(0).getDisplayName());
+                typeComboBox.setValue(typeOptions.get(0));
+            }
         }
         
         typeComboBox.setCellFactory(param -> new ListCell<CardTypeOptionDTO>() {
@@ -175,7 +197,18 @@ public class ColumnViewController {
                 ProgressType.CHECKLIST,
                 ProgressType.NONE
         );
-        progressTypeComboBox.setValue(ProgressType.NONE); // Valor padrão
+        
+        // Definir valor padrão baseado nas configurações do sistema
+        org.desviante.model.enums.ProgressType suggestedProgressType = facade.suggestDefaultProgressType();
+        System.out.println("Tipo de progresso sugerido: " + suggestedProgressType);
+        
+        if (suggestedProgressType != null) {
+            progressTypeComboBox.setValue(suggestedProgressType);
+            System.out.println("Tipo de progresso definido: " + suggestedProgressType);
+        } else {
+            progressTypeComboBox.setValue(ProgressType.NONE); // Fallback
+            System.out.println("Usando tipo de progresso padrão: NONE");
+        }
         
         progressTypeComboBox.setCellFactory(param -> new ListCell<ProgressType>() {
             @Override

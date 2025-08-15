@@ -417,22 +417,55 @@ public class TaskManagerFacade {
 
     /**
      * Obtém todas as opções de tipos de card disponíveis.
-     * 
-     * <p>Retorna uma lista de todos os tipos de card disponíveis,
-     * incluindo os tipos padrão que foram migrados para a tabela.</p>
      *
      * @return lista de opções de tipos de card
      */
     @Transactional(readOnly = true)
     public List<CardTypeOptionDTO> getAllCardTypeOptions() {
-        List<org.desviante.model.CardType> allTypes = cardTypeService.getAllCardTypes();
-        
-        return allTypes.stream()
-                .map(cardType -> {
-                    CardTypeDTO cardTypeDTO = CardTypeDTO.from(cardType);
-                    return CardTypeOptionDTO.fromCardType(cardTypeDTO);
-                })
-                .toList();
+        return cardTypeService.getAllCardTypes().stream()
+                .map(CardTypeDTO::from)
+                .map(CardTypeOptionDTO::fromCardType)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Sugere o tipo de card padrão baseado nas configurações do sistema.
+     *
+     * @return ID do tipo de card sugerido como padrão
+     */
+    @Transactional(readOnly = true)
+    public Long suggestDefaultCardTypeId() {
+        return cardTypeService.suggestDefaultCardTypeId();
+    }
+
+    /**
+     * Sugere o tipo de progresso padrão baseado nas configurações do sistema.
+     *
+     * @return tipo de progresso sugerido como padrão
+     */
+    @Transactional(readOnly = true)
+    public org.desviante.model.enums.ProgressType suggestDefaultProgressType() {
+        return cardTypeService.suggestDefaultProgressType();
+    }
+
+    /**
+     * Sugere o grupo padrão baseado nas configurações do sistema.
+     *
+     * @return ID do grupo sugerido como padrão, ou null se não houver grupos
+     */
+    @Transactional(readOnly = true)
+    public Long suggestDefaultBoardGroupId() {
+        return boardGroupService.suggestDefaultBoardGroupId();
+    }
+
+    /**
+     * Sugere o grupo padrão como objeto completo.
+     *
+     * @return grupo padrão sugerido, ou null se não houver grupos
+     */
+    @Transactional(readOnly = true)
+    public BoardGroup suggestDefaultBoardGroup() {
+        return boardGroupService.suggestDefaultBoardGroup();
     }
 
     /**

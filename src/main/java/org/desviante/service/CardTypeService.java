@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Gerencia as operações de negócio relacionadas aos tipos de card.
@@ -40,6 +42,8 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class CardTypeService {
+
+    private static final Logger log = LoggerFactory.getLogger(CardTypeService.class);
 
     private final CardTypeRepository cardTypeRepository;
     private final CardRepository cardRepository;
@@ -243,6 +247,70 @@ public class CardTypeService {
         return cardTypeRepository.findByName("Card")
                 .map(CardType::getId)
                 .orElse(null);
+    }
+
+    /**
+     * Sugere o tipo de card padrão baseado nas configurações do sistema.
+     * 
+     * <p>Este método verifica primeiro se há um tipo padrão configurado no AppMetadataConfig.
+     * Se não houver, retorna o primeiro tipo disponível como fallback.</p>
+     *
+     * @return ID do tipo de card sugerido como padrão
+     */
+    @Transactional(readOnly = true)
+    public Long suggestDefaultCardTypeId() {
+        // Primeiro, verificar se há um tipo padrão configurado
+        Optional<Long> configuredDefaultId = appMetadataConfig.getDefaultCardTypeId();
+        if (configuredDefaultId.isPresent() && configuredDefaultId.get() != null) {
+            // Verificar se o tipo configurado ainda existe
+            try {
+                CardType configuredType = getCardTypeById(configuredDefaultId.get());
+                log.debug("Usando tipo de card padrão configurado: {} (ID: {})", 
+                         configuredType.getName(), configuredType.getId());
+                return configuredType.getId();
+            } catch (ResourceNotFoundException e) {
+                log.warn("Tipo de card padrão configurado (ID: {}) não encontrado, usando fallback", 
+                        configuredDefaultId.get());
+            }
+        }
+        
+        // Fallback: usar o primeiro tipo disponível
+        List<CardType> allTypes = getAllCardTypes();
+        if (!allTypes.isEmpty()) {
+            CardType firstType = allTypes.get(0);
+            log.debug("Usando primeiro tipo disponível como padrão: {} (ID: {})", 
+                     firstType.getName(), firstType.getId());
+            return firstType.getId();
+        }
+        
+        // Último fallback: tipo "Card" padrão
+        Long defaultCardId = getDefaultCardTypeId();
+        if (defaultCardId != null) {
+            log.debug("Usando tipo 'Card' padrão como fallback (ID: {})", defaultCardId);
+        } else {
+            log.warn("Nenhum tipo de card disponível para sugestão");
+        }
+        return defaultCardId;
+    }
+
+    /**
+     * Sugere o tipo de progresso padrão baseado nas configurações do sistema.
+     * 
+     * <p>Este método verifica primeiro se há um tipo de progresso padrão configurado no AppMetadataConfig.
+     * Se não houver, retorna ProgressType.NONE como fallback.</p>
+     *
+     * @return tipo de progresso sugerido como padrão
+     */
+    @Transactional(readOnly = true)
+    public org.desviante.model.enums.ProgressType suggestDefaultProgressType() {
+        Optional<org.desviante.model.enums.ProgressType> configuredDefault = appMetadataConfig.getDefaultProgressType();
+        if (configuredDefault.isPresent() && configuredDefault.get() != null) {
+            log.debug("Usando tipo de progresso padrão configurado: {}", configuredDefault.get());
+            return configuredDefault.get();
+        }
+        
+        log.debug("Usando tipo de progresso padrão: NONE (fallback)");
+        return org.desviante.model.enums.ProgressType.NONE;
     }
 
     /**

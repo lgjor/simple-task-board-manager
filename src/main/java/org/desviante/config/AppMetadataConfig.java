@@ -64,11 +64,20 @@ public class AppMetadataConfig {
     private final ObjectMapper objectMapper;
     
     /**
-     * Construtor que inicializa o ObjectMapper para JSON.
+     * Construtor que inicializa a configuração de metadados.
      */
     public AppMetadataConfig() {
+        // ⭐ NOVO: Logs para verificar diretório de trabalho da aplicação reiniciada
+        log.info("🔄 CONSTRUTOR AppMetadataConfig() CHAMADO!");
+        log.info("🔄 Diretório de trabalho atual: {}", System.getProperty("user.dir"));
+        log.info("🔄 Diretório home do usuário: {}", System.getProperty("user.home"));
+        log.info("🔄 Diretório temporário: {}", System.getProperty("java.io.tmpdir"));
+        
+        // Inicializar ObjectMapper
         this.objectMapper = new ObjectMapper();
         this.objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+        
+        log.info("✅ Construtor AppMetadataConfig() concluído com sucesso");
     }
     
     /**
@@ -77,12 +86,23 @@ public class AppMetadataConfig {
     @PostConstruct
     public void init() {
         try {
+            log.info("🔄 MÉTODO init() CHAMADO!");
+            log.info("🔄 metadataDirectoryPath: {}", metadataDirectoryPath);
+            
+            // ⭐ CORREÇÃO: Verificar se metadataDirectoryPath foi injetado
+            if (metadataDirectoryPath == null || metadataDirectoryPath.isEmpty()) {
+                log.warn("⚠️ metadataDirectoryPath não foi injetado, usando valor padrão");
+                metadataDirectoryPath = System.getProperty("user.home") + "/myboards/config";
+            }
+            
+            log.info("🔄 Diretório de configuração final: {}", metadataDirectoryPath);
+            
             initializeMetadataFiles();
             loadMetadata();
             startFileMonitoring();
-            log.info("Configuração de metadados inicializada com sucesso");
+            log.info("✅ Configuração de metadados inicializada com sucesso");
         } catch (Exception e) {
-            log.error("Erro ao inicializar configuração de metadados", e);
+            log.error("❌ Erro ao inicializar configuração de metadados", e);
             // Usar configurações padrão em caso de erro
             useDefaultMetadata();
         }
@@ -137,9 +157,9 @@ public class AppMetadataConfig {
     private AppMetadata createDefaultMetadata() {
         return AppMetadata.builder()
                 .metadataVersion("1.0")
-                .defaultCardTypeId(null) // Será definido pelo sistema
-                .defaultProgressType(null) // Será definido pelo sistema
-                .defaultBoardGroupId(null) // Será definido pelo sistema
+                .defaultCardTypeId(1L) // Tipo "Card" como padrão
+                .defaultProgressType(org.desviante.model.enums.ProgressType.PERCENTAGE) // Progresso percentual como padrão
+                .defaultBoardGroupId(null) // Sem grupo padrão - usuário deve configurar explicitamente
                 .installationDirectory(System.getProperty("user.dir"))
                 .userDataDirectory(System.getProperty("user.home") + "/myboards")
                 .logDirectory(System.getProperty("user.home") + "/myboards/logs")
@@ -176,29 +196,132 @@ public class AppMetadataConfig {
     }
     
     /**
-     * Carrega os metadados do arquivo.
+     * Carrega os metadados da aplicação do arquivo JSON.
      */
     private void loadMetadata() {
+        log.info("🔄 Iniciando carregamento de metadados...");
+        log.info("📁 Caminho do arquivo: {}", metadataFilePath);
+        log.info("📁 Arquivo existe: {}", Files.exists(metadataFilePath));
+        
+        if (!Files.exists(metadataFilePath)) {
+            log.warn("❌ Arquivo de metadados não encontrado, usando configurações padrão");
+            useDefaultMetadata();
+            return;
+        }
+        
         try {
-            if (Files.exists(metadataFilePath)) {
-                this.currentMetadata = objectMapper.readValue(metadataFilePath.toFile(), AppMetadata.class);
-                log.info("Metadados carregados de: {}", metadataFilePath);
-            } else {
-                log.warn("Arquivo de metadados não encontrado, usando configurações padrão");
+            long fileSize = Files.size(metadataFilePath);
+            log.info("📏 Tamanho do arquivo: {} bytes", fileSize);
+            
+            if (fileSize == 0) {
+                log.warn("❌ Arquivo de metadados está vazio, usando configurações padrão");
                 useDefaultMetadata();
+                return;
             }
+            
+            log.info("📖 Tentando ler arquivo de metadados...");
+            String content = Files.readString(metadataFilePath);
+            log.info("📄 Conteúdo do arquivo lido: {} caracteres", content.length());
+            log.info("📄 Primeiros 200 caracteres: {}", content.substring(0, Math.min(200, content.length())));
+            
+            AppMetadata loadedMetadata = objectMapper.readValue(content, AppMetadata.class);
+            log.info("✅ Metadados carregados com sucesso de: {}", metadataFilePath);
+            
+            if (loadedMetadata != null) {
+                this.currentMetadata = loadedMetadata;
+                log.info("📊 Dados carregados:");
+                log.info("   - Versão: {}", this.currentMetadata.getMetadataVersion());
+                log.info("   - defaultCardTypeId: {}", this.currentMetadata.getDefaultCardTypeId());
+                log.info("   - defaultProgressType: {}", this.currentMetadata.getDefaultProgressType());
+                log.info("   - defaultBoardGroupId: {}", this.currentMetadata.getDefaultBoardGroupId());
+                
+                // ⭐ NOVO: Validação adicional dos dados carregados
+                if (this.currentMetadata.getDefaultBoardGroupId() == null) {
+                    log.warn("⚠️ ATENÇÃO: defaultBoardGroupId é null após carregamento!");
+                    log.warn("⚠️ Isso pode indicar um problema no arquivo ou na deserialização");
+                } else {
+                    log.info("✅ defaultBoardGroupId carregado corretamente: {}", this.currentMetadata.getDefaultBoardGroupId());
+                }
+            } else {
+                log.warn("⚠️ Metadados carregados são null, usando configurações padrão");
+                useDefaultMetadata();
+                return;
+            }
+            
+            // Validação dos metadados carregados
+            if (this.currentMetadata.getMetadataVersion() == null || this.currentMetadata.getMetadataVersion().isEmpty()) {
+                log.warn("❌ Versão dos metadados inválida, usando configurações padrão");
+                useDefaultMetadata();
+                return;
+            }
+            
+            log.info("✅ Validação de metadados concluída com sucesso");
+            
         } catch (IOException e) {
-            log.error("Erro ao carregar metadados, usando configurações padrão", e);
+            log.error("❌ Erro ao ler arquivo de metadados: {}", e.getMessage());
+            log.error("❌ Stack trace completo:", e);
+            
+            // Tentar restaurar do backup
+            Path backupPath = metadataFilePath.resolveSibling(metadataFilePath.getFileName() + ".backup");
+            if (Files.exists(backupPath)) {
+                log.info("🔄 Tentando restaurar do backup: {}", backupPath);
+                try {
+                    log.info("📖 Tentando restaurar do backup...");
+                    String backupContent = Files.readString(backupPath);
+                    AppMetadata backupMetadata = objectMapper.readValue(backupContent, AppMetadata.class);
+                    this.currentMetadata = backupMetadata;
+                    log.info("✅ Backup restaurado com sucesso");
+                    return;
+                } catch (Exception backupException) {
+                    log.error("❌ Erro ao restaurar backup: {}", backupException.getMessage());
+                }
+            } else {
+                log.warn("⚠️ Arquivo de backup não encontrado: {}", backupPath);
+            }
+            
+            log.warn("🔄 Usando metadados padrão devido a falha no carregamento");
+            useDefaultMetadata();
+            
+        } catch (Exception e) {
+            log.error("❌ Erro inesperado ao carregar metadados: {}", e.getMessage());
+            log.error("❌ Stack trace completo:", e);
+            log.warn("🔄 Usando metadados padrão devido a erro inesperado");
             useDefaultMetadata();
         }
     }
     
     /**
-     * Usa metadados padrão em caso de erro.
+     * Cria e aplica metadados padrão quando não é possível carregar do arquivo.
      */
     private void useDefaultMetadata() {
+        log.warn("🔄 MÉTODO useDefaultMetadata() CHAMADO!");
+        log.warn("🔄 Stack trace da chamada:");
+        for (StackTraceElement element : Thread.currentThread().getStackTrace()) {
+            if (element.getClassName().contains("org.desviante")) {
+                log.warn("   - {}:{}({})", element.getClassName(), element.getMethodName(), element.getLineNumber());
+            }
+        }
+        
+        // ⭐ NOVO: Log adicional para identificar o contexto
+        log.warn("🔄 Contexto da chamada:");
+        log.warn("   - Thread: {}", Thread.currentThread().getName());
+        log.warn("   - Stack trace completo:");
+        for (StackTraceElement element : Thread.currentThread().getStackTrace()) {
+            log.warn("     {}:{}({})", element.getClassName(), element.getMethodName(), element.getLineNumber());
+        }
+        
         this.currentMetadata = createDefaultMetadata();
-        log.info("Usando metadados padrão devido a erro no carregamento");
+        log.info("✅ Metadados padrão criados e aplicados");
+        log.info("📊 Dados padrão aplicados:");
+        log.info("   - defaultCardTypeId: {}", this.currentMetadata.getDefaultCardTypeId());
+        log.info("   - defaultProgressType: {}", this.currentMetadata.getDefaultProgressType());
+        log.info("   - defaultBoardGroupId: {}", this.currentMetadata.getDefaultBoardGroupId());
+        
+        // ⭐ NOVO: Log adicional para confirmar que defaultBoardGroupId é null
+        if (this.currentMetadata.getDefaultBoardGroupId() == null) {
+            log.warn("⚠️ CONFIRMADO: defaultBoardGroupId definido como null nos metadados padrão");
+            log.warn("⚠️ Este é o motivo pelo qual o sistema sugere 'Sem Grupo'");
+        }
     }
     
     /**
@@ -215,89 +338,137 @@ public class AppMetadataConfig {
      */
     private void handleMetadataFileChange(Path changedFile) {
         log.warn("Arquivo de metadados alterado: {}", changedFile);
-        log.warn("⚠️  ALTERAÇÃO DETECTADA! A aplicação deve ser reiniciada para aplicar as mudanças.");
         
-        // Verificar se já existe um alerta aberto para evitar múltiplas janelas
-        if (isRestartAlertAlreadyOpen()) {
-            log.info("Alerta de reinicialização já está aberto, ignorando nova notificação");
-            return;
-        }
-        
-        // Verificar se houve uma notificação recente para evitar spam
-        if (isRecentNotification()) {
-            log.info("Notificação recente detectada, ignorando para evitar spam");
-            return;
-        }
-        
-        // Recarrega os metadados
+        // Aguardar um pouco para evitar conflitos com operações de salvamento
         try {
-            loadMetadata();
-            log.info("Metadados recarregados com sucesso");
-        } catch (Exception e) {
-            log.error("Erro ao recarregar metadados", e);
+            Thread.sleep(100); // Aguardar 100ms
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return;
         }
         
-        // Notificar o usuário sobre a necessidade de reiniciar
-        notifyUserAboutRestart();
+        // Verificar se o arquivo ainda existe e não está vazio
+        try {
+            if (!Files.exists(metadataFilePath) || Files.size(metadataFilePath) == 0) {
+                log.warn("Arquivo de metadados não existe ou está vazio após alteração, aguardando...");
+                return;
+            }
+        } catch (IOException e) {
+            log.warn("Erro ao verificar tamanho do arquivo de metadados: {}, aguardando...", e.getMessage());
+            return;
+        }
+        
+        log.info("🔄 ALTERAÇÃO DETECTADA! Recarregando configurações em tempo real...");
+        
+        // ⭐ NOVA ESTRATÉGIA: Recarregar configurações sem reiniciar
+        try {
+            // Recarregar metadados do arquivo
+            loadMetadata();
+            
+            log.info("✅ Configurações atualizadas com sucesso em tempo real!");
+            log.info("📊 Novos valores carregados:");
+            log.info("   - defaultCardTypeId: {}", this.currentMetadata.getDefaultCardTypeId());
+            log.info("   - defaultProgressType: {}", this.currentMetadata.getDefaultProgressType());
+            log.info("   - defaultBoardGroupId: {}", this.currentMetadata.getDefaultBoardGroupId());
+            
+            // Mostrar notificação de sucesso para o usuário
+            showSuccessNotification();
+            
+        } catch (Exception e) {
+            log.error("❌ Erro ao recarregar configurações: {}", e.getMessage());
+            
+            // Mostrar notificação de erro para o usuário
+            showErrorNotification();
+        }
+    }
+    
+    /**
+     * Mostra notificação de sucesso para o usuário.
+     */
+    private void showSuccessNotification() {
+        Platform.runLater(() -> {
+            try {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("✅ Configurações Atualizadas");
+                alert.setHeaderText("Configurações Atualizadas com Sucesso!");
+                alert.setContentText(
+                    "As preferências foram atualizadas em tempo real!\n\n" +
+                    "• Novos cards e boards usarão as novas configurações padrão\n" +
+                    "• Não é necessário reiniciar a aplicação\n" +
+                    "• Todas as mudanças estão ativas agora"
+                );
+                
+                ButtonType okButton = new ButtonType("OK", ButtonBar.ButtonData.OK_DONE);
+                alert.getButtonTypes().setAll(okButton);
+                
+                alert.showAndWait();
+                
+            } catch (Exception e) {
+                log.error("❌ Erro ao mostrar notificação de sucesso: {}", e.getMessage());
+            }
+        });
+    }
+    
+    /**
+     * Mostra notificação de erro para o usuário.
+     */
+    private void showErrorNotification() {
+        Platform.runLater(() -> {
+            try {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("❌ Erro na Atualização");
+                alert.setHeaderText("Erro ao Atualizar Configurações");
+                alert.setContentText(
+                    "Ocorreu um erro ao atualizar as configurações.\n\n" +
+                    "• As configurações antigas continuam ativas\n" +
+                    "• Tente salvar novamente ou reiniciar a aplicação\n" +
+                    "• Verifique os logs para mais detalhes"
+                );
+                
+                ButtonType okButton = new ButtonType("OK", ButtonBar.ButtonData.OK_DONE);
+                alert.getButtonTypes().setAll(okButton);
+                
+                alert.showAndWait();
+                
+            } catch (Exception e) {
+                log.error("❌ Erro ao mostrar notificação de erro: {}", e.getMessage());
+            }
+        });
     }
     
     /**
      * Notifica o usuário sobre a necessidade de reiniciar.
      */
     private void notifyUserAboutRestart() {
+        // ⭐ NOVA ESTRATÉGIA: Não é mais necessário reiniciar!
+        // As configurações são atualizadas em tempo real
+        log.info("✅ Configurações atualizadas com sucesso");
+        
         // Executa na thread da UI do JavaFX
         Platform.runLater(() -> {
             try {
-                // Verificar se já existe um alerta aberto para evitar múltiplas janelas
-                if (isRestartAlertAlreadyOpen()) {
-                    log.info("Alerta de reinicialização já está aberto, ignorando nova notificação");
-                    return;
-                }
-                
-                Alert alert = new Alert(Alert.AlertType.WARNING);
-                alert.setTitle("Configuração Alterada");
-                alert.setHeaderText("✅ Configurações Atualizadas com Sucesso!");
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("✅ Configurações Atualizadas");
+                alert.setHeaderText("Configurações Atualizadas com Sucesso!");
                 alert.setContentText(
-                    "As preferências foram salvas com sucesso!\n\n" +
-                    "IMPORTANTE: Para visualizar as mudanças, reinicie a aplicação.\n\n" +
-                    "• Novos cards criados usarão as novas configurações padrão\n" +
-                    "• Cards existentes não serão afetados\n" +
-                    "• Recomendamos reiniciar a aplicação agora"
+                    "As preferências foram salvas e aplicadas com sucesso!\n\n" +
+                    "✅ NÃO é necessário reiniciar a aplicação!\n\n" +
+                    "• Novos cards e boards usarão as novas configurações padrão\n" +
+                    "• Todas as mudanças estão ativas agora\n" +
+                    "• Continue usando a aplicação normalmente"
                 );
                 
-                // Botões personalizados
-                ButtonType restartButton = new ButtonType("Reiniciar Agora", ButtonBar.ButtonData.OK_DONE);
-                ButtonType laterButton = new ButtonType("Mais Tarde", ButtonBar.ButtonData.CANCEL_CLOSE);
-                
-                alert.getButtonTypes().setAll(restartButton, laterButton);
-                
-                // Marcar que o alerta está aberto
-                setRestartAlertOpen(true);
-                
-                // Configurar ação do botão de reiniciar
-                alert.setResultConverter(dialogButton -> {
-                    if (dialogButton == restartButton) {
-                        // Reiniciar a aplicação
-                        restartApplication();
-                    }
-                    // Marcar que o alerta foi fechado
-                    setRestartAlertOpen(false);
-                    return null;
-                });
-                
-                // Configurar ação quando o alerta for fechado
-                alert.setOnCloseRequest(event -> {
-                    setRestartAlertOpen(false);
-                });
+                // Botão simples de OK
+                ButtonType okButton = new ButtonType("OK", ButtonBar.ButtonData.OK_DONE);
+                alert.getButtonTypes().setAll(okButton);
                 
                 // Mostrar o alerta
                 alert.showAndWait();
                 
             } catch (Exception e) {
                 // Fallback para log se houver erro na UI
-                log.error("Erro ao mostrar notificação de reinicialização", e);
-                log.warn("NOTIFICAÇÃO: A aplicação deve ser reiniciada para aplicar as mudanças de configuração!");
-                setRestartAlertOpen(false);
+                log.error("Erro ao mostrar notificação de sucesso", e);
+                log.info("✅ CONFIGURAÇÕES ATUALIZADAS EM TEMPO REAL - NÃO É NECESSÁRIO REINICIAR!");
             }
         });
     }
@@ -506,15 +677,21 @@ public class AppMetadataConfig {
             List<String> command = new ArrayList<>();
             
             if (osName.contains("win")) {
-                // Windows: usar start para executar o executável
+                // ⭐ CORREÇÃO: Comando mais robusto para Windows
+                // Windows: usar start com diretório de trabalho correto e aguardar
                 command.add("cmd");
                 command.add("/c");
+                command.add("cd");
+                command.add("/d");
+                command.add(System.getProperty("user.dir")); // ⭐ Usar diretório atual
+                command.add("&&");
                 command.add("start");
+                command.add("/wait"); // ⭐ Aguardar processo iniciar
                 command.add("\"SimpleTaskBoardManager\"");
                 command.add("\"" + appPath + "\"");
                 
             } else if (osName.contains("linux") || osName.contains("mac")) {
-                // Linux/Mac: executar diretamente
+                // Linux/Mac: executar diretamente com diretório correto
                 command.add(appPath);
                 
             } else {
@@ -524,18 +701,34 @@ public class AppMetadataConfig {
             
             log.info("Comando de reinicialização via aplicação instalada: {}", String.join(" ", command));
             
+            // ⭐ NOVO: Log adicional para verificar diretório de trabalho
+            log.info("🔄 Diretório de trabalho atual: {}", System.getProperty("user.dir"));
+            log.info("🔄 Diretório de trabalho da aplicação instalada: {}", new File(appPath).getParent());
+            log.info("🔄 Caminho do arquivo de configuração: {}", metadataFilePath);
+            
             ProcessBuilder processBuilder = new ProcessBuilder(command);
             
-            // Configurar diretório de trabalho para o diretório da aplicação
-            File appFile = new File(appPath);
-            if (appFile.exists()) {
-                processBuilder.directory(appFile.getParentFile());
-            }
+            // ⭐ CORREÇÃO: Sempre usar o diretório atual da aplicação
+            processBuilder.directory(new File(System.getProperty("user.dir")));
+            
+            // ⭐ CORREÇÃO: Configurar variáveis de ambiente para garantir compatibilidade
+            Map<String, String> env = processBuilder.environment();
+            env.put("JAVA_HOME", System.getProperty("java.home"));
+            env.put("PATH", System.getenv("PATH"));
+            
+            // ⭐ NOVO: Configurar variáveis de ambiente específicas para a aplicação reiniciada
+            env.put("APP_CONFIG_DIR", System.getProperty("user.home") + "/myboards/config");
+            env.put("APP_WORKING_DIR", System.getProperty("user.dir"));
+            
+            log.info("🔄 Variáveis de ambiente configuradas:");
+            log.info("   - JAVA_HOME: {}", env.get("JAVA_HOME"));
+            log.info("   - APP_CONFIG_DIR: {}", env.get("APP_CONFIG_DIR"));
+            log.info("   - APP_WORKING_DIR: {}", env.get("APP_WORKING_DIR"));
             
             Process process = processBuilder.start();
             
-            // Aguardar para verificar se o processo foi iniciado
-            Thread.sleep(1000);
+            // ⭐ CORREÇÃO: Aguardar mais tempo para verificar se o processo foi iniciado
+            Thread.sleep(3000); // Aguardar 3 segundos
             
             if (process.isAlive()) {
                 log.info("Processo de reinicialização iniciado com PID: {}", process.pid());
@@ -543,11 +736,40 @@ public class AppMetadataConfig {
             } else {
                 int exitCode = process.exitValue();
                 log.warn("Processo de reinicialização falhou com código de saída: {}", exitCode);
-                return false;
+                
+                // ⭐ CORREÇÃO: Tentar método alternativo se o primeiro falhar
+                log.info("Tentando método alternativo de reinicialização...");
+                return restartUsingAlternativeMethod(osName, appPath);
             }
             
         } catch (Exception e) {
             log.error("Erro ao reiniciar via aplicação instalada: {}", e.getMessage());
+            
+            // ⭐ CORREÇÃO: Tentar método alternativo em caso de erro
+            log.info("Tentando método alternativo de reinicialização...");
+            return restartUsingAlternativeMethod(osName, appPath);
+        }
+    }
+    
+    /**
+     * Método alternativo de reinicialização usando Java diretamente.
+     * 
+     * @param osName nome do sistema operacional
+     * @param appPath caminho da aplicação instalada
+     * @return true se o comando foi executado com sucesso
+     */
+    private boolean restartUsingAlternativeMethod(String osName, String appPath) {
+        try {
+            log.info("Usando método alternativo de reinicialização via Java...");
+            
+            String javaHome = System.getProperty("java.home");
+            String classpath = System.getProperty("java.class.path");
+            String mainClass = "org.desviante.SimpleTaskBoardManagerApplication";
+            
+            return restartUsingJavaCommand(osName, javaHome, classpath, mainClass);
+            
+        } catch (Exception e) {
+            log.error("Erro no método alternativo de reinicialização: {}", e.getMessage());
             return false;
         }
     }
@@ -657,9 +879,14 @@ public class AppMetadataConfig {
             List<String> command = new ArrayList<>();
             
             if (osName.contains("win")) {
-                // Windows: usar cmd /c para executar o comando
+                // ⭐ CORREÇÃO: Garantir que use o diretório de configuração correto
+                // Windows: usar cmd /c com diretório de trabalho correto
                 command.add("cmd");
                 command.add("/c");
+                command.add("cd");
+                command.add("/d");
+                command.add(System.getProperty("user.dir")); // ⭐ Usar diretório atual
+                command.add("&&");
                 command.add("start");
                 command.add("\"SimpleTaskBoardManager\"");
                 command.add("\"" + javaHome + "\\bin\\java.exe\"");
@@ -668,12 +895,14 @@ public class AppMetadataConfig {
                 command.add(mainClass);
                 
             } else if (osName.contains("linux") || osName.contains("mac")) {
-                // Linux/Mac: usar bash para executar o comando
+                // Linux/Mac: usar bash com diretório correto
                 command.add("bash");
                 command.add("-c");
                 
                 StringBuilder bashCommand = new StringBuilder();
-                bashCommand.append("\"");
+                bashCommand.append("\"cd ");
+                bashCommand.append(System.getProperty("user.dir")); // ⭐ Usar diretório atual
+                bashCommand.append(" && ");
                 bashCommand.append(javaHome).append("/bin/java");
                 bashCommand.append(" -cp ").append(classpath);
                 bashCommand.append(" ").append(mainClass);
@@ -860,8 +1089,66 @@ public class AppMetadataConfig {
      * @throws IOException se houver erro ao salvar
      */
     public void saveMetadata() throws IOException {
-        objectMapper.writeValue(metadataFilePath.toFile(), currentMetadata);
-        log.info("Metadados salvos em: {}", metadataFilePath);
+        // Criar backup do arquivo atual se existir
+        if (Files.exists(metadataFilePath)) {
+            Path backupPath = metadataFilePath.resolveSibling(metadataFilePath.getFileName() + ".backup");
+            try {
+                Files.copy(metadataFilePath, backupPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                log.debug("Backup criado: {}", backupPath);
+            } catch (IOException e) {
+                log.warn("Não foi possível criar backup: {}", e.getMessage());
+            }
+        }
+        
+        // Salvar em arquivo temporário primeiro
+        Path tempFile = metadataFilePath.resolveSibling(metadataFilePath.getFileName() + ".tmp");
+        try {
+            // Salvar no arquivo temporário
+            objectMapper.writeValue(tempFile.toFile(), currentMetadata);
+            log.debug("Metadados salvos em arquivo temporário: {}", tempFile);
+            
+            // Mover arquivo temporário para localização final
+            Files.move(tempFile, metadataFilePath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            log.info("Metadados salvos com sucesso em: {}", metadataFilePath);
+            
+            // Verificar se o arquivo foi salvo corretamente
+            try {
+                if (!Files.exists(metadataFilePath) || Files.size(metadataFilePath) == 0) {
+                    throw new IOException("Arquivo salvo está vazio ou não existe");
+                }
+            } catch (IOException e) {
+                throw new IOException("Erro ao verificar arquivo salvo: " + e.getMessage(), e);
+            }
+            
+            // Verificar se o arquivo pode ser lido novamente
+            try {
+                AppMetadata testRead = objectMapper.readValue(metadataFilePath.toFile(), AppMetadata.class);
+                log.debug("Verificação de leitura bem-sucedida - arquivo válido");
+            } catch (Exception e) {
+                throw new IOException("Arquivo salvo não pode ser lido: " + e.getMessage());
+            }
+            
+        } catch (Exception e) {
+            // Se algo deu errado, tentar restaurar do backup
+            if (Files.exists(metadataFilePath.resolveSibling(metadataFilePath.getFileName() + ".backup"))) {
+                try {
+                    Path backupPath = metadataFilePath.resolveSibling(metadataFilePath.getFileName() + ".backup");
+                    Files.copy(backupPath, metadataFilePath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                    log.warn("Arquivo restaurado do backup devido a erro no salvamento");
+                } catch (IOException restoreError) {
+                    log.error("Falha ao restaurar arquivo do backup: {}", restoreError.getMessage());
+                }
+            }
+            
+            // Limpar arquivo temporário se existir
+            try {
+                Files.deleteIfExists(tempFile);
+            } catch (IOException deleteError) {
+                log.warn("Não foi possível deletar arquivo temporário: {}", deleteError.getMessage());
+            }
+            
+            throw new IOException("Erro ao salvar metadados: " + e.getMessage(), e);
+        }
     }
     
     /**

@@ -1,11 +1,11 @@
 package org.desviante;
 
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import org.desviante.util.WindowManager;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 public class MainApp extends Application {
 
     private ConfigurableApplicationContext springContext;
+    private WindowManager windowManager;
 
     /**
      * O método init() agora simplesmente obtém o contexto Spring
@@ -25,6 +26,7 @@ public class MainApp extends Application {
     @Override
     public void init() {
         this.springContext = SimpleTaskBoardManagerApplication.getSpringContext();
+        this.windowManager = springContext.getBean(WindowManager.class);
     }
 
     /**
@@ -43,6 +45,14 @@ public class MainApp extends Application {
         // Iniciar a aplicação maximizada
         primaryStage.setMaximized(true);
         
+        // Configurar listener para fechar todas as janelas secundárias quando a principal for fechada
+        primaryStage.setOnCloseRequest(event -> {
+            // Fechar todas as janelas secundárias antes de sair
+            if (windowManager != null) {
+                windowManager.closeAllSecondaryWindows();
+            }
+        });
+        
         primaryStage.show();
     }
 
@@ -52,7 +62,11 @@ public class MainApp extends Application {
      */
     @Override
     public void stop() {
+        // Fechar todas as janelas secundárias antes de encerrar
+        if (windowManager != null) {
+            windowManager.closeAllSecondaryWindows();
+        }
+        
         springContext.close();
-        Platform.exit();
     }
 }

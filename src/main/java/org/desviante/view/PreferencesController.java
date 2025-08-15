@@ -99,13 +99,15 @@ public class PreferencesController {
      * Atualiza o estado do botão de salvar baseado nas mudanças.
      */
     private void updateSaveButtonState() {
-        if (defaultCardTypeComboBox.getValue() != null && 
-            defaultProgressTypeComboBox.getValue() != null &&
-            defaultBoardGroupComboBox.getValue() != null) {
-            saveButton.setDisable(false);
-        } else {
-            saveButton.setDisable(true);
-        }
+        // Tipo de card e progresso são obrigatórios
+        boolean cardTypeValid = defaultCardTypeComboBox.getValue() != null;
+        boolean progressTypeValid = defaultProgressTypeComboBox.getValue() != null;
+        
+        // Grupo pode ser null (Sem Grupo) ou um grupo válido
+        boolean boardGroupValid = defaultBoardGroupComboBox.getValue() != null;
+        
+        // Habilitar botão apenas se todos os campos obrigatórios estiverem preenchidos
+        saveButton.setDisable(!(cardTypeValid && progressTypeValid && boardGroupValid));
     }
     
     /**
@@ -113,20 +115,28 @@ public class PreferencesController {
      */
     private void loadCurrentPreferences() {
         if (cardTypeService != null && boardGroupService != null && appMetadataConfig != null) {
+            log.debug("Carregando preferências atuais...");
+            
             // Carregar tipos de card disponíveis
             List<CardType> availableCardTypes = cardTypeService.getAllCardTypes();
             defaultCardTypeComboBox.getItems().addAll(availableCardTypes);
+            log.debug("Carregados {} tipos de card", availableCardTypes.size());
             
             // Selecionar o tipo padrão atual ou o primeiro disponível
             Optional<Long> currentDefaultCardTypeId = appMetadataConfig.getDefaultCardTypeId();
-            if (currentDefaultCardTypeId.isPresent()) {
+            if (currentDefaultCardTypeId.isPresent() && currentDefaultCardTypeId.get() != null) {
                 availableCardTypes.stream()
                     .filter(type -> type.getId().equals(currentDefaultCardTypeId.get()))
                     .findFirst()
-                    .ifPresent(defaultCardTypeComboBox::setValue);
+                    .ifPresent(type -> {
+                        defaultCardTypeComboBox.setValue(type);
+                        log.debug("Tipo de card padrão selecionado: {} (ID: {})", type.getName(), type.getId());
+                    });
             } else if (!availableCardTypes.isEmpty()) {
                 // Se não há configuração, usar o primeiro tipo disponível
-                defaultCardTypeComboBox.setValue(availableCardTypes.get(0));
+                CardType firstType = availableCardTypes.get(0);
+                defaultCardTypeComboBox.setValue(firstType);
+                log.debug("Usando primeiro tipo disponível como padrão: {} (ID: {})", firstType.getName(), firstType.getId());
             }
             
             // Carregar tipos de progresso disponíveis
@@ -134,34 +144,66 @@ public class PreferencesController {
             
             // Selecionar o tipo de progresso padrão atual ou NONE como padrão
             Optional<ProgressType> currentDefaultProgressType = appMetadataConfig.getDefaultProgressType();
-            if (currentDefaultProgressType.isPresent()) {
+            if (currentDefaultProgressType.isPresent() && currentDefaultProgressType.get() != null) {
                 defaultProgressTypeComboBox.setValue(currentDefaultProgressType.get());
+                log.debug("Tipo de progresso padrão selecionado: {}", currentDefaultProgressType.get());
             } else {
                 // Se não há configuração, usar NONE como padrão
                 defaultProgressTypeComboBox.setValue(ProgressType.NONE);
+                log.debug("Usando ProgressType.NONE como padrão");
             }
 
             // Carregar grupos de tabuleiro disponíveis
             List<BoardGroup> availableBoardGroups = boardGroupService.getAllBoardGroups();
-            defaultBoardGroupComboBox.getItems().addAll(availableBoardGroups);
+            log.info("DEBUG: Grupos disponíveis carregados: {} grupos", availableBoardGroups.size());
+            availableBoardGroups.forEach(group -> log.debug("DEBUG: - {} (ID: {})", group.getName(), group.getId()));
+            
+            // Limpar e popular o ComboBox
+            defaultBoardGroupComboBox.getItems().clear();
             
             // Adicionar opção "Sem Grupo" no início da lista
-            defaultBoardGroupComboBox.getItems().add(0, createNoGroupOption());
+            BoardGroup noGroupOption = createNoGroupOption();
+            defaultBoardGroupComboBox.getItems().add(noGroupOption);
+            log.debug("DEBUG: Opção 'Sem Grupo' adicionada ao ComboBox");
+            
+            // Adicionar grupos disponíveis
+            defaultBoardGroupComboBox.getItems().addAll(availableBoardGroups);
+            log.debug("DEBUG: ComboBox populado com {} itens", defaultBoardGroupComboBox.getItems().size());
             
             // Selecionar o grupo padrão atual ou "Sem Grupo" como padrão
             Optional<Long> currentDefaultBoardGroupId = appMetadataConfig.getDefaultBoardGroupId();
-            if (currentDefaultBoardGroupId.isPresent()) {
+            log.info("DEBUG: currentDefaultBoardGroupId = {}", currentDefaultBoardGroupId);
+            
+            if (currentDefaultBoardGroupId.isPresent() && currentDefaultBoardGroupId.get() != null) {
+                log.info("DEBUG: Grupo padrão configurado encontrado: ID = {}", currentDefaultBoardGroupId.get());
+                
+                // Buscar o grupo configurado na lista
                 defaultBoardGroupComboBox.getItems().stream()
                     .filter(group -> group.getId() != null && group.getId().equals(currentDefaultBoardGroupId.get()))
                     .findFirst()
-                    .ifPresent(defaultBoardGroupComboBox::setValue);
+                    .ifPresent(group -> {
+                        defaultBoardGroupComboBox.setValue(group);
+                        log.info("DEBUG: Grupo padrão selecionado no ComboBox: {} (ID: {})", group.getName(), group.getId());
+                    });
+                
+                // Verificar se o grupo foi encontrado
+                if (defaultBoardGroupComboBox.getValue() == null || 
+                    !defaultBoardGroupComboBox.getValue().getId().equals(currentDefaultBoardGroupId.get())) {
+                    log.warn("DEBUG: Grupo configurado não foi encontrado na lista! ID esperado: {}", currentDefaultBoardGroupId.get());
+                    log.warn("DEBUG: Itens disponíveis no ComboBox:");
+                    defaultBoardGroupComboBox.getItems().forEach(item -> 
+                        log.warn("DEBUG: - {} (ID: {})", item.getName(), item.getId()));
+                }
             } else {
-                // Se não há configuração, usar "Sem Grupo" como padrão
-                defaultBoardGroupComboBox.setValue(defaultBoardGroupComboBox.getItems().get(0));
+                log.info("DEBUG: Nenhum grupo padrão configurado ou é null");
+                // Se não há configuração ou é null, usar "Sem Grupo" como padrão
+                defaultBoardGroupComboBox.setValue(noGroupOption); // "Sem Grupo" está na posição 0
+                log.debug("Usando 'Sem Grupo' como padrão (nenhuma configuração anterior)");
             }
             
             // Atualizar estado do botão de salvar
             updateSaveButtonState();
+            log.debug("Preferências carregadas com sucesso");
         }
     }
     
@@ -171,6 +213,8 @@ public class PreferencesController {
     @FXML
     private void handleSave() {
         try {
+            log.info("Iniciando salvamento das preferências...");
+            
             // Validar se as seleções foram feitas
             if (defaultCardTypeComboBox.getValue() == null) {
                 showAlert("Aviso", "Selecione um tipo de card padrão.");
@@ -187,22 +231,54 @@ public class PreferencesController {
                 return;
             }
             
+            // Log das seleções para debug
+            BoardGroup selectedGroup = defaultBoardGroupComboBox.getValue();
+            log.info("Preferências selecionadas - Tipo de Card: {}, Progresso: {}, Grupo: {} (ID: {})", 
+                    defaultCardTypeComboBox.getValue().getName(),
+                    defaultProgressTypeComboBox.getValue(),
+                    selectedGroup.getName(),
+                    selectedGroup.getId());
+            
             // Verificar se houve mudanças reais
             boolean hasChanges = false;
             Optional<Long> currentCardTypeId = appMetadataConfig.getDefaultCardTypeId();
             Optional<ProgressType> currentProgressType = appMetadataConfig.getDefaultProgressType();
             Optional<Long> currentBoardGroupId = appMetadataConfig.getDefaultBoardGroupId();
             
+            // Verificar mudanças no tipo de card
             if (!currentCardTypeId.equals(Optional.of(defaultCardTypeComboBox.getValue().getId()))) {
                 hasChanges = true;
+                log.debug("Mudança detectada no tipo de card padrão");
             }
             
+            // Verificar mudanças no tipo de progresso
             if (!currentProgressType.equals(Optional.of(defaultProgressTypeComboBox.getValue()))) {
                 hasChanges = true;
+                log.debug("Mudança detectada no tipo de progresso padrão");
             }
 
-            if (!currentBoardGroupId.equals(Optional.ofNullable(defaultBoardGroupComboBox.getValue().getId()))) {
+            // Verificar mudanças no grupo padrão
+            Long newGroupId = null;
+            
+            // Se "Sem Grupo" for selecionado, definir como null
+            if (selectedGroup != null && selectedGroup.getId() == null) {
+                // "Sem Grupo" selecionado - manter como null
+                newGroupId = null;
+                log.debug("'Sem Grupo' selecionado - configuração será null");
+            } else if (selectedGroup != null) {
+                // Grupo válido selecionado - usar o ID do grupo
+                newGroupId = selectedGroup.getId();
+                log.debug("Grupo válido selecionado: {} (ID: {})", selectedGroup.getName(), newGroupId);
+            } else {
+                // Nenhum grupo selecionado - manter como null
+                newGroupId = null;
+                log.debug("Nenhum grupo selecionado - configuração será null");
+            }
+            
+            if (!currentBoardGroupId.equals(Optional.ofNullable(newGroupId))) {
                 hasChanges = true;
+                log.debug("Mudança detectada no grupo padrão: {} -> {}", 
+                        currentBoardGroupId.orElse(null), newGroupId);
             }
             
             if (!hasChanges) {
@@ -210,24 +286,37 @@ public class PreferencesController {
                 return;
             }
             
+            log.info("Salvando alterações nas preferências...");
+            
+            // Capturar valores finais para uso no lambda
+            final Long finalNewGroupId = newGroupId;
+            final BoardGroup finalSelectedGroup = selectedGroup;
+            
             // Atualizar as preferências
             appMetadataConfig.updateMetadata(metadata -> {
                 metadata.setDefaultCardTypeId(defaultCardTypeComboBox.getValue().getId());
                 metadata.setDefaultProgressType(defaultProgressTypeComboBox.getValue());
                 
-                // Se "Sem Grupo" for selecionado, definir como null
-                BoardGroup selectedGroup = defaultBoardGroupComboBox.getValue();
-                if (selectedGroup != null && selectedGroup.getId() == null) {
+                // Aplicar o grupo padrão baseado na seleção
+                if (finalNewGroupId == null) {
+                    // "Sem Grupo" ou nenhum grupo selecionado - definir como null
                     metadata.setDefaultBoardGroupId(null);
-                } else if (selectedGroup != null) {
-                    metadata.setDefaultBoardGroupId(selectedGroup.getId());
+                    log.debug("Definindo grupo padrão como null (Sem Grupo)");
+                } else {
+                    // Grupo válido selecionado - usar o ID do grupo
+                    metadata.setDefaultBoardGroupId(finalNewGroupId);
+                    log.debug("Definindo grupo padrão como: {} (ID: {})", 
+                             finalSelectedGroup.getName(), finalNewGroupId);
                 }
             });
+            
+            log.info("Preferências salvas com sucesso");
             
             // Fechar a janela - o AppMetadataConfig irá mostrar o alerta de reinicialização
             closeWindow();
             
         } catch (Exception e) {
+            log.error("Erro ao salvar preferências", e);
             showAlert("Erro", "Erro ao salvar preferências: " + e.getMessage());
         }
     }
@@ -332,18 +421,27 @@ public class PreferencesController {
             if (empty || item == null) {
                 setText(null);
             } else {
-                setText(item.getName());
+                // Se o ID for null, é a opção "Sem Grupo"
+                if (item.getId() == null) {
+                    setText("Sem Grupo");
+                    setStyle("-fx-text-fill: #adb5bd; -fx-font-style: italic;");
+                } else {
+                    setText(item.getName());
+                    setStyle(""); // Resetar estilo
+                }
             }
         }
     }
 
     /**
      * Cria a opção "Sem Grupo" para o ComboBox de grupos de tabuleiro.
+     * Esta opção permite que novos boards sejam criados sem grupo específico.
      */
     private BoardGroup createNoGroupOption() {
         BoardGroup noGroup = new BoardGroup();
         noGroup.setId(null); // Indica que é a opção "Sem Grupo"
         noGroup.setName("Sem Grupo");
+        noGroup.setDescription("Novos boards serão criados sem grupo específico");
         return noGroup;
     }
 }

@@ -1,252 +1,71 @@
-# Scripts de Instalação e Desinstalação
+# Scripts de Configuração
 
-Este diretório contém scripts para automatizar o processo de instalação e desinstalação do SimpleTaskBoardManager.
+Este diretório contém scripts para facilitar a configuração do Simple Task Board Manager.
 
 ## Scripts Disponíveis
 
-### 🚀 Instalação Automatizada
+### Windows
+- **`create-config.bat`** - Script para Windows que cria automaticamente o arquivo de configuração
 
-#### `install-new-version.bat` (Windows)
-Script completo que automatiza todo o processo de atualização:
-- Backup automático do banco de dados
-- Desinstalação da versão anterior
-- Instalação da nova versão
-- Verificação de integridade
+### Linux/Mac
+- **`create-config.sh`** - Script para Linux/Mac que cria automaticamente o arquivo de configuração
 
-**Uso:**
-```cmd
-scripts\install-new-version.bat
-```
-
-#### `install-new-version.sh` (Linux/Mac)
-Versão Linux/Mac do script de instalação automatizada.
-
-**Uso:**
-```bash
-./scripts/install-new-version.sh
-```
-
-### 🗑️ Desinstalação
-
-#### `uninstall-previous-version.bat` (Windows)
-Remove versões anteriores do sistema:
-- Para a aplicação se estiver rodando
-- Remove instalações do Program Files
-- Remove atalhos do menu Iniciar
-- Remove atalhos da área de trabalho
-- Remove entradas do registro
-- Remove arquivos temporários
-
-**Uso:**
-```cmd
-scripts\uninstall-previous-version.bat
-```
-
-#### `uninstall-previous-version.sh` (Linux/Mac)
-Versão Linux/Mac do script de desinstalação.
-
-**Uso:**
-```bash
-./scripts/uninstall-previous-version.sh
-```
-
-### 💾 Backup e Restauração
-
-#### `backup-database.bat` (Windows)
-Faz backup do banco de dados H2:
-- Cria backup com timestamp
-- Para a aplicação automaticamente
-- Salva metadados do backup
-
-**Uso:**
-```cmd
-scripts\backup-database.bat
-```
-
-#### `backup-database.sh` (Linux/Mac)
-Versão Linux/Mac do script de backup.
-
-**Uso:**
-```bash
-./scripts/backup-database.sh
-```
-
-#### `restore-database.bat` (Windows)
-Restaura backup do banco de dados:
-- Lista backups disponíveis
-- Permite seleção do backup
-- Cria backup do estado atual antes da restauração
-
-**Uso:**
-```cmd
-scripts\restore-database.bat
-```
-
-#### `restore-database.sh` (Linux/Mac)
-Versão Linux/Mac do script de restauração.
-
-**Uso:**
-```bash
-./scripts/restore-database.sh
-```
-
-### 🔍 Verificação
-
-#### `check-database.bat` (Windows)
-Verifica a integridade do banco de dados:
-- Testa conexão com o banco
-- Verifica estrutura das tabelas
-- Valida dados existentes
-
-**Uso:**
-```cmd
-scripts\check-database.bat
-```
-
-#### `check-database.sh` (Linux/Mac)
-Versão Linux/Mac do script de verificação.
-
-**Uso:**
-```bash
-./scripts/check-database.sh
-```
-
-## Processo de Atualização Recomendado
-
-### Para Usuários Finais
-
-1. **Instalação Automatizada (Recomendada):**
-   ```cmd
-   # Windows
-   scripts\install-new-version.bat
-   
-   # Linux/Mac
-   ./scripts/install-new-version.sh
-   ```
-
-2. **Processo Manual (Se necessário):**
-   ```cmd
-   # 1. Backup
-   scripts\backup-database.bat
-   
-   # 2. Desinstalar anterior
-   scripts\uninstall-previous-version.bat
-   
-   # 3. Instalar nova versão manualmente
-   # 4. Verificar
-   scripts\check-database.bat
-   ```
-
-### Para Desenvolvedores
-
-1. **Compilar nova versão:**
-   ```cmd
-   # Windows
-   gradlew jpackage
-   
-   # Linux
-   ./gradlew jpackageLinux
-   ```
-
-2. **Testar instalação automatizada:**
-   ```cmd
-   scripts\install-new-version.bat
-   ```
-
-## Configuração do JPackage
+## Como Usar
 
 ### Windows
-O instalador Windows agora inclui:
-- `--win-per-user-install`: Instalação por usuário
-- `--win-upgrade-uuid`: UUID para upgrade automático
-- `--win-dir-chooser`: Permite escolher diretório
-- `--win-menu`: Cria atalho no menu Iniciar
-- `--win-shortcut`: Cria atalho na área de trabalho
+1. **Execute o script**: Clique duas vezes em `create-config.bat`
+2. **Siga as instruções** na tela
+3. **Reinicie a aplicação** para aplicar as configurações
 
-### Linux
-O instalador Linux inclui:
-- AppImage para distribuição fácil
-- Desktop files para integração com menu
-- Ícones em múltiplos tamanhos
-- Instalação em `/opt/` ou `/usr/local/`
+### Linux/Mac
+1. **Torne o script executável**: `chmod +x create-config.sh`
+2. **Execute o script**: `./create-config.sh`
+3. **Siga as instruções** na tela
+4. **Reinicie a aplicação** para aplicar as configurações
 
-## Locais de Instalação
+## O que os Scripts Fazem
 
-### Windows
-- **Program Files (64-bit):** `C:\Program Files\SimpleTaskBoardManager\`
-- **Program Files (32-bit):** `C:\Program Files (x86)\SimpleTaskBoardManager\`
-- **Menu Iniciar:** `%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\`
-- **Área de Trabalho:** `%USERPROFILE%\Desktop\`
+1. **Criam o diretório** `~/myboards/config` se não existir
+2. **Criam o arquivo** `app-metadata.json` com configurações padrão
+3. **Configuram automaticamente**:
+   - Tipo de card padrão: Card (ID: 1)
+   - Tipo de progresso padrão: PERCENTAGE
+   - Sem grupo padrão
 
-### Linux
-- **Sistema:** `/opt/SimpleTaskBoardManager/`
-- **Usuário:** `$HOME/.local/share/SimpleTaskBoardManager/`
-- **Menu:** `/usr/share/applications/` ou `$HOME/.local/share/applications/`
+## Configurações Aplicadas
 
-## Banco de Dados
+Após executar os scripts, ao criar novos cards:
+- **Tipo de card**: Será automaticamente selecionado como "Card"
+- **Tipo de progresso**: Será automaticamente selecionado como "PERCENTAGE"
+- **Grupo**: Sem grupo (pode ser alterado manualmente)
 
-### Localização
-- **Windows:** `%USERPROFILE%\myboards\board_h2_db.*`
-- **Linux/Mac:** `~/myboards/board_h2_db.*`
+## Solução de Problemas
 
-### Arquivos
-- `board_h2_db.mv.db`: Arquivo principal do banco
-- `board_h2_db.lock.db`: Arquivo de lock (temporário)
-- `board_h2_db.trace.db`: Arquivo de log (opcional)
+### Script não executa (Windows)
+- Verifique se o arquivo tem extensão `.bat`
+- Execute como administrador se necessário
 
-## Troubleshooting
+### Script não executa (Linux/Mac)
+- Torne executável: `chmod +x create-config.sh`
+- Execute: `./create-config.sh`
 
-### Problemas Comuns
+### Arquivo não é criado
+- Verifique permissões do diretório home
+- Execute como usuário correto
+- Verifique se há espaço em disco
 
-#### "Instalador não encontrado"
-**Solução:** Compile o projeto primeiro:
-```cmd
-gradlew jpackage
-```
+## Configuração Manual
 
-#### "Permissão negada"
-**Solução:** Execute como administrador ou use:
-```cmd
-sudo ./scripts/install-new-version.sh
-```
+Se preferir configurar manualmente:
 
-#### "Aplicação não inicia"
-**Solução:** Verifique logs e restaure backup:
-```cmd
-scripts\restore-database.bat
-```
+1. **Crie o diretório**: `~/myboards/config`
+2. **Crie o arquivo**: `app-metadata.json`
+3. **Adicione o conteúdo** conforme exemplo em `EXEMPLO_CONFIGURACAO_CARDS.md`
+4. **Reinicie a aplicação**
 
-#### "Múltiplas versões instaladas"
-**Solução:** Execute desinstalação manual:
-```cmd
-scripts\uninstall-previous-version.bat
-```
+## Reinicialização
 
-### Logs Importantes
-
-#### Windows
-- **Logs da aplicação:** `%USERPROFILE%\myboards\logs\`
-- **Logs de instalação:** `%TEMP%\SimpleTaskBoardManager*`
-
-#### Linux
-- **Logs da aplicação:** `~/.local/share/SimpleTaskBoardManager/logs/`
-- **Logs do sistema:** `/var/log/`
-
-## Suporte
-
-Para problemas com instalação:
-
-1. **Colete informações:**
-   - Versão do sistema operacional
-   - Logs de instalação
-   - Logs da aplicação
-   - Backup do banco (se disponível)
-
-2. **Documente o problema:**
-   - Passos para reproduzir
-   - Comportamento esperado vs atual
-   - Mensagens de erro completas
-
-3. **Contate o suporte:**
-   - Forneça todas as informações coletadas
-   - Inclua screenshots se necessário 
+**IMPORTANTE**: Após criar ou modificar o arquivo de configuração:
+1. **Feche completamente** a aplicação Simple Task Board Manager
+2. **Reinicie** a aplicação
+3. **As novas configurações** serão aplicadas automaticamente 
