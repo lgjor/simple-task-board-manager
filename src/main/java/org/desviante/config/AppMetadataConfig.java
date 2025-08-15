@@ -13,6 +13,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.io.File;
 
 // Importações JavaFX para notificações
 import javafx.application.Platform;
@@ -298,7 +302,7 @@ public class AppMetadataConfig {
     }
     
     /**
-     * Reinicia a aplicação de forma robusta.
+     * Reinicia a aplicação de forma robusta e cross-platform.
      */
     private void restartApplication() {
         try {
@@ -336,16 +340,37 @@ public class AppMetadataConfig {
                                 log.warn("Erro ao fechar janelas: {}", e.getMessage());
                             }
                             
-                            // Aguardar um pouco mais e sair
+                            // Aguardar um pouco mais e tentar reiniciar
                             new Thread(() -> {
                                 try {
                                     Thread.sleep(500);
-                                    log.info("Saindo da aplicação...");
-                                    Platform.exit();
-                                    System.exit(0);
+                                    log.info("Tentando reiniciar a aplicação...");
+                                    
+                                    // Tentar reiniciar usando o mecanismo do sistema operacional
+                                    if (restartUsingSystemCommand()) {
+                                        log.info("Comando de reinicialização executado com sucesso");
+                                        
+                                        // Verificar se a reinicialização foi bem-sucedida
+                                        if (verifyRestartSuccess()) {
+                                            log.info("Reinicialização confirmada com sucesso");
+                                        } else {
+                                            log.warn("Reinicialização pode ter falhado - verificando novamente...");
+                                            // Aguardar mais um pouco e verificar novamente
+                                            Thread.sleep(3000);
+                                            if (!verifyRestartSuccess()) {
+                                                log.error("Falha na reinicialização - aplicação não foi iniciada");
+                                            }
+                                        }
+                                    } else {
+                                        log.warn("Falha ao executar comando de reinicialização, saindo da aplicação");
+                                        Platform.exit();
+                                        System.exit(0);
+                                    }
+                                    
                                 } catch (InterruptedException e) {
                                     Thread.currentThread().interrupt();
                                     log.warn("Thread de reinicialização interrompida");
+                                    Platform.exit();
                                     System.exit(1);
                                 }
                             }).start();
@@ -374,6 +399,325 @@ public class AppMetadataConfig {
             // Fallback final: sair diretamente
             Platform.exit();
             System.exit(0);
+        }
+    }
+    
+    /**
+     * Tenta reiniciar a aplicação usando comandos do sistema operacional.
+     * 
+     * @return true se o comando foi executado com sucesso, false caso contrário
+     */
+    private boolean restartUsingSystemCommand() {
+        try {
+            String osName = System.getProperty("os.name").toLowerCase();
+            String javaHome = System.getProperty("java.home");
+            String classpath = System.getProperty("java.class.path");
+            String mainClass = "org.desviante.SimpleTaskBoardManagerApplication";
+            
+            // Detectar se estamos rodando como uma aplicação instalada
+            String appPath = detectInstalledApplicationPath();
+            
+            if (appPath != null) {
+                // Se encontramos o caminho da aplicação instalada, usar ela
+                log.info("Aplicação instalada detectada em: {}", appPath);
+                return restartUsingInstalledApplication(osName, appPath);
+            } else {
+                // Caso contrário, tentar reiniciar usando Java diretamente
+                log.info("Aplicação instalada não detectada, tentando reiniciar via Java");
+                return restartUsingJavaCommand(osName, javaHome, classpath, mainClass);
+            }
+            
+        } catch (Exception e) {
+            log.error("Erro ao executar comando de reinicialização: {}", e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Detecta o caminho da aplicação instalada no sistema.
+     * 
+     * @return caminho da aplicação instalada ou null se não encontrada
+     */
+    private String detectInstalledApplicationPath() {
+        try {
+            String osName = System.getProperty("os.name").toLowerCase();
+            String appName = "SimpleTaskBoardManager";
+            
+            if (osName.contains("win")) {
+                // Windows: verificar locais padrão de instalação
+                String[] possiblePaths = {
+                    System.getenv("PROGRAMFILES") + "\\" + appName + "\\" + appName + ".exe",
+                    System.getenv("PROGRAMFILES(X86)") + "\\" + appName + "\\" + appName + ".exe",
+                    System.getProperty("user.home") + "\\AppData\\Local\\" + appName + "\\" + appName + ".exe"
+                };
+                
+                for (String path : possiblePaths) {
+                    if (path != null && new File(path).exists()) {
+                        return path;
+                    }
+                }
+                
+            } else if (osName.contains("linux")) {
+                // Linux: verificar locais padrão
+                String[] possiblePaths = {
+                    "/usr/bin/" + appName,
+                    "/usr/local/bin/" + appName,
+                    System.getProperty("user.home") + "/.local/bin/" + appName,
+                    "/opt/" + appName + "/bin/" + appName
+                };
+                
+                for (String path : possiblePaths) {
+                    if (new File(path).exists()) {
+                        return path;
+                    }
+                }
+                
+            } else if (osName.contains("mac")) {
+                // macOS: verificar locais padrão
+                String[] possiblePaths = {
+                    "/Applications/" + appName + ".app/Contents/MacOS/" + appName,
+                    System.getProperty("user.home") + "/Applications/" + appName + ".app/Contents/MacOS/" + appName
+                };
+                
+                for (String path : possiblePaths) {
+                    if (new File(path).exists()) {
+                        return path;
+                    }
+                }
+            }
+            
+        } catch (Exception e) {
+            log.warn("Erro ao detectar aplicação instalada: {}", e.getMessage());
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Reinicia a aplicação usando o executável instalado.
+     * 
+     * @param osName nome do sistema operacional
+     * @param appPath caminho da aplicação instalada
+     * @return true se o comando foi executado com sucesso
+     */
+    private boolean restartUsingInstalledApplication(String osName, String appPath) {
+        try {
+            List<String> command = new ArrayList<>();
+            
+            if (osName.contains("win")) {
+                // Windows: usar start para executar o executável
+                command.add("cmd");
+                command.add("/c");
+                command.add("start");
+                command.add("\"SimpleTaskBoardManager\"");
+                command.add("\"" + appPath + "\"");
+                
+            } else if (osName.contains("linux") || osName.contains("mac")) {
+                // Linux/Mac: executar diretamente
+                command.add(appPath);
+                
+            } else {
+                log.warn("Sistema operacional não suportado: {}", osName);
+                return false;
+            }
+            
+            log.info("Comando de reinicialização via aplicação instalada: {}", String.join(" ", command));
+            
+            ProcessBuilder processBuilder = new ProcessBuilder(command);
+            
+            // Configurar diretório de trabalho para o diretório da aplicação
+            File appFile = new File(appPath);
+            if (appFile.exists()) {
+                processBuilder.directory(appFile.getParentFile());
+            }
+            
+            Process process = processBuilder.start();
+            
+            // Aguardar para verificar se o processo foi iniciado
+            Thread.sleep(1000);
+            
+            if (process.isAlive()) {
+                log.info("Processo de reinicialização iniciado com PID: {}", process.pid());
+                return true;
+            } else {
+                int exitCode = process.exitValue();
+                log.warn("Processo de reinicialização falhou com código de saída: {}", exitCode);
+                return false;
+            }
+            
+        } catch (Exception e) {
+            log.error("Erro ao reiniciar via aplicação instalada: {}", e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Verifica se a reinicialização foi bem-sucedida aguardando um tempo
+     * e verificando se novos processos foram criados.
+     * 
+     * @return true se a reinicialização parece ter sido bem-sucedida
+     */
+    private boolean verifyRestartSuccess() {
+        try {
+            // Aguardar um pouco mais para que a nova instância seja iniciada
+            Thread.sleep(2000);
+            
+            // Verificar se há processos Java rodando com nossa classe principal
+            String osName = System.getProperty("os.name").toLowerCase();
+            
+            if (osName.contains("win")) {
+                return checkWindowsProcesses();
+            } else {
+                return checkUnixProcesses();
+            }
+            
+        } catch (Exception e) {
+            log.warn("Erro ao verificar sucesso da reinicialização: {}", e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Verifica processos no Windows para confirmar reinicialização.
+     */
+    private boolean checkWindowsProcesses() {
+        try {
+            ProcessBuilder pb = new ProcessBuilder("tasklist", "/FI", "IMAGENAME eq java.exe");
+            Process process = pb.start();
+            
+            // Aguardar o comando terminar
+            process.waitFor();
+            
+            // Ler a saída
+            try (java.io.BufferedReader reader = new java.io.BufferedReader(
+                    new java.io.InputStreamReader(process.getInputStream()))) {
+                String line;
+                int javaProcesses = 0;
+                while ((line = reader.readLine()) != null) {
+                    if (line.toLowerCase().contains("java.exe")) {
+                        javaProcesses++;
+                    }
+                }
+                
+                // Se há pelo menos um processo Java rodando, consideramos sucesso
+                return javaProcesses > 0;
+            }
+            
+        } catch (Exception e) {
+            log.warn("Erro ao verificar processos Windows: {}", e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Verifica processos no Unix/Linux para confirmar reinicialização.
+     */
+    private boolean checkUnixProcesses() {
+        try {
+            ProcessBuilder pb = new ProcessBuilder("ps", "aux");
+            Process process = pb.start();
+            
+            // Aguardar o comando terminar
+            process.waitFor();
+            
+            // Ler a saída
+            try (java.io.BufferedReader reader = new java.io.BufferedReader(
+                    new java.io.InputStreamReader(process.getInputStream()))) {
+                String line;
+                int javaProcesses = 0;
+                while ((line = reader.readLine()) != null) {
+                    if (line.toLowerCase().contains("java") && 
+                        line.toLowerCase().contains("simpletaskboardmanager")) {
+                        javaProcesses++;
+                    }
+                }
+                
+                // Se há pelo menos um processo Java rodando, consideramos sucesso
+                return javaProcesses > 0;
+            }
+            
+        } catch (Exception e) {
+            log.warn("Erro ao verificar processos Unix: {}", e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Reinicia a aplicação usando o comando Java diretamente.
+     * 
+     * @param osName nome do sistema operacional
+     * @param javaHome caminho do Java
+     * @param classpath classpath da aplicação
+     * @param mainClass classe principal
+     * @return true se o comando foi executado com sucesso
+     */
+    private boolean restartUsingJavaCommand(String osName, String javaHome, String classpath, String mainClass) {
+        try {
+            List<String> command = new ArrayList<>();
+            
+            if (osName.contains("win")) {
+                // Windows: usar cmd /c para executar o comando
+                command.add("cmd");
+                command.add("/c");
+                command.add("start");
+                command.add("\"SimpleTaskBoardManager\"");
+                command.add("\"" + javaHome + "\\bin\\java.exe\"");
+                command.add("-cp");
+                command.add(classpath);
+                command.add(mainClass);
+                
+            } else if (osName.contains("linux") || osName.contains("mac")) {
+                // Linux/Mac: usar bash para executar o comando
+                command.add("bash");
+                command.add("-c");
+                
+                StringBuilder bashCommand = new StringBuilder();
+                bashCommand.append("\"");
+                bashCommand.append(javaHome).append("/bin/java");
+                bashCommand.append(" -cp ").append(classpath);
+                bashCommand.append(" ").append(mainClass);
+                bashCommand.append(" &\"");
+                
+                command.add(bashCommand.toString());
+                
+            } else {
+                log.warn("Sistema operacional não suportado para reinicialização: {}", osName);
+                return false;
+            }
+            
+            log.info("Comando Java de reinicialização: {}", String.join(" ", command));
+            
+            // Executar o comando
+            ProcessBuilder processBuilder = new ProcessBuilder(command);
+            
+            // Configurar diretório de trabalho
+            String workingDir = System.getProperty("user.dir");
+            if (workingDir != null) {
+                processBuilder.directory(new File(workingDir));
+            }
+            
+            // Configurar variáveis de ambiente
+            Map<String, String> env = processBuilder.environment();
+            env.put("JAVA_HOME", javaHome);
+            
+            // Executar o processo
+            Process process = processBuilder.start();
+            
+            // Aguardar um pouco para verificar se o processo foi iniciado
+            Thread.sleep(1000);
+            
+            if (process.isAlive()) {
+                log.info("Processo de reinicialização iniciado com PID: {}", process.pid());
+                return true;
+            } else {
+                int exitCode = process.exitValue();
+                log.warn("Processo de reinicialização falhou com código de saída: {}", exitCode);
+                return false;
+            }
+            
+        } catch (Exception e) {
+            log.error("Erro ao executar comando Java de reinicialização: {}", e.getMessage());
+            return false;
         }
     }
     
