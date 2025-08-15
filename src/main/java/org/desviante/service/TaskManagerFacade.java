@@ -10,6 +10,7 @@ import org.desviante.model.enums.BoardColumnKindEnum;
 import org.desviante.repository.CheckListItemRepository;
 
 import org.desviante.service.dto.*;
+import org.desviante.config.AppMetadataConfig;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +34,7 @@ public class TaskManagerFacade {
     private final BoardGroupService boardGroupService;
     private final CardTypeService cardTypeService;
     private final CheckListItemRepository checklistItemRepository;
+    private final AppMetadataConfig appMetadataConfig;
 
     @Transactional(readOnly = true)
     public List<BoardSummaryDTO> getAllBoardSummaries() {
@@ -144,6 +146,15 @@ public class TaskManagerFacade {
     @Transactional
     public BoardSummaryDTO createNewBoard(String name) {
         var newBoard = boardService.createBoard(name);
+        
+        // Aplicar grupo padrão se configurado
+        Optional<Long> defaultGroupId = appMetadataConfig.getDefaultBoardGroupId();
+        if (defaultGroupId.isPresent() && defaultGroupId.get() != null) {
+            newBoard.setGroupId(defaultGroupId.get());
+            boardService.updateBoard(newBoard);
+        }
+        // Se não há grupo padrão configurado, o board será criado sem grupo (group_id = null)
+        
         columnService.createColumn("A Fazer", 0, BoardColumnKindEnum.INITIAL, newBoard.getId());
         columnService.createColumn("Em Andamento", 1, BoardColumnKindEnum.PENDING, newBoard.getId());
         columnService.createColumn("Concluído", 2, BoardColumnKindEnum.FINAL, newBoard.getId());

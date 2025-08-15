@@ -2,6 +2,7 @@
   "metadataVersion": "1.0",
   "defaultCardTypeId": null,
   "defaultProgressType": null,
+  "defaultBoardGroupId": null,
   "installationDirectory": "${user.dir}",
   "userDataDirectory": "${user.home}/myboards",
   "logDirectory": "${user.home}/myboards/logs",

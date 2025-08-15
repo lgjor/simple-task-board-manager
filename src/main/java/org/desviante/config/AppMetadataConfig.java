@@ -139,6 +139,7 @@ public class AppMetadataConfig {
                 .metadataVersion("1.0")
                 .defaultCardTypeId(null) // Será definido pelo sistema
                 .defaultProgressType(null) // Será definido pelo sistema
+                .defaultBoardGroupId(null) // Será definido pelo sistema
                 .installationDirectory(System.getProperty("user.dir"))
                 .userDataDirectory(System.getProperty("user.home") + "/myboards")
                 .logDirectory(System.getProperty("user.home") + "/myboards/logs")
@@ -779,6 +780,15 @@ public class AppMetadataConfig {
      */
     public Optional<org.desviante.model.enums.ProgressType> getDefaultProgressType() {
         return Optional.ofNullable(currentMetadata.getDefaultProgressType());
+    }
+    
+    /**
+     * Obtém o ID do grupo de quadro padrão.
+     * 
+     * @return ID do grupo de quadro padrão ou null se não definido
+     */
+    public Optional<Long> getDefaultBoardGroupId() {
+        return Optional.ofNullable(currentMetadata.getDefaultBoardGroupId());
     }
     
     /**

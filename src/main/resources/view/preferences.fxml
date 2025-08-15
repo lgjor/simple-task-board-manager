@@ -43,6 +43,10 @@
                     <Label text="Tipo de Progresso Padrão:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
                     <ComboBox fx:id="defaultProgressTypeComboBox" promptText="Selecione o tipo de progresso padrão" 
                              GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                    
+                    <Label text="Grupo de Board Padrão:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                    <ComboBox fx:id="defaultBoardGroupComboBox" promptText="Selecione o grupo padrão para novos boards" 
+                             GridPane.columnIndex="1" GridPane.rowIndex="2" />
                 </GridPane>
             </VBox>
         </VBox>
@@ -54,6 +58,8 @@
                 <Label text="• Define o tipo de card que será sugerido por padrão ao criar novos cards" 
                        styleClass="info-text" wrapText="true" />
                 <Label text="• Define o tipo de progresso que será sugerido ao por padrão ao criar novos cards" 
+                       styleClass="info-text" wrapText="true" />
+                <Label text="• Define o grupo que será atribuído por padrão aos novos boards criados" 
                        styleClass="info-text" wrapText="true" />
                 <Label text="• As alterações são salvas automaticamente no arquivo de configuração" 
                        styleClass="info-text" wrapText="true" />

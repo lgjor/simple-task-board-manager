@@ -29,6 +29,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.assertj.core.api.Assertions.assertThat;
+import org.desviante.config.AppMetadataConfig;
 
 /**
  * Teste de integração para a TaskManagerFacade.
@@ -134,7 +135,7 @@ class TaskManagerFacadeIntegrationTest {
                                                    CardService cardService, TaskService taskService, 
                                                    BoardGroupService boardGroupService, CardTypeService cardTypeService,
                                                    CheckListItemRepository checkListItemRepository) {
-            return new TaskManagerFacade(boardService, boardColumnService, cardService, taskService, boardGroupService, cardTypeService, checkListItemRepository);
+            return new TaskManagerFacade(boardService, boardColumnService, cardService, taskService, boardGroupService, cardTypeService, checkListItemRepository, mock(AppMetadataConfig.class));
         }
         
         @Bean

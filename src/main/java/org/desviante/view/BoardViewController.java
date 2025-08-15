@@ -1126,6 +1126,7 @@ public class BoardViewController {
             
             // Configurar os serviços necessários
             controller.setCardTypeService(facade.getCardTypeService());
+            controller.setBoardGroupService(facade.getBoardGroupService());
             controller.setAppMetadataConfig(appMetadataConfig);
             
             // Criar uma nova janela

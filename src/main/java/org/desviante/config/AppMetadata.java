@@ -42,6 +42,12 @@ public class AppMetadata {
     private ProgressType defaultProgressType;
     
     /**
+     * ID do grupo de board padrão sugerido ao criar novos boards.
+     * Se null, o sistema criará boards sem grupo específico.
+     */
+    private Long defaultBoardGroupId;
+    
+    /**
      * Diretório de instalação da aplicação.
      * Usado para localizar recursos e arquivos de configuração.
      */

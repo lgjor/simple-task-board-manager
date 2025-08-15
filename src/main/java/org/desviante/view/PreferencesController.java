@@ -7,8 +7,10 @@ import javafx.scene.control.Button;
 import javafx.stage.Stage;
 import org.desviante.config.AppMetadataConfig;
 import org.desviante.model.CardType;
+import org.desviante.model.BoardGroup;
 import org.desviante.model.enums.ProgressType;
 import org.desviante.service.CardTypeService;
+import org.desviante.service.BoardGroupService;
 import org.springframework.stereotype.Component;
 import lombok.extern.slf4j.Slf4j;
 
@@ -36,12 +38,16 @@ public class PreferencesController {
     private ComboBox<ProgressType> defaultProgressTypeComboBox;
     
     @FXML
+    private ComboBox<BoardGroup> defaultBoardGroupComboBox;
+    
+    @FXML
     private Button saveButton;
     
     @FXML
     private Button cancelButton;
     
     private CardTypeService cardTypeService;
+    private BoardGroupService boardGroupService;
     private AppMetadataConfig appMetadataConfig;
     
     /**
@@ -65,6 +71,10 @@ public class PreferencesController {
         defaultProgressTypeComboBox.setCellFactory(param -> new ProgressTypeListCell());
         defaultProgressTypeComboBox.setButtonCell(new ProgressTypeListCell());
         
+        // Configurar ComboBox de grupos de tabuleiro
+        defaultBoardGroupComboBox.setCellFactory(param -> new BoardGroupListCell());
+        defaultBoardGroupComboBox.setButtonCell(new BoardGroupListCell());
+        
         // Adicionar listeners para detectar mudanças
         defaultCardTypeComboBox.valueProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
@@ -77,6 +87,12 @@ public class PreferencesController {
                 updateSaveButtonState();
             }
         });
+
+        defaultBoardGroupComboBox.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                updateSaveButtonState();
+            }
+        });
     }
     
     /**
@@ -84,7 +100,8 @@ public class PreferencesController {
      */
     private void updateSaveButtonState() {
         if (defaultCardTypeComboBox.getValue() != null && 
-            defaultProgressTypeComboBox.getValue() != null) {
+            defaultProgressTypeComboBox.getValue() != null &&
+            defaultBoardGroupComboBox.getValue() != null) {
             saveButton.setDisable(false);
         } else {
             saveButton.setDisable(true);
@@ -95,7 +112,7 @@ public class PreferencesController {
      * Carrega as preferências atuais da aplicação.
      */
     private void loadCurrentPreferences() {
-        if (cardTypeService != null && appMetadataConfig != null) {
+        if (cardTypeService != null && boardGroupService != null && appMetadataConfig != null) {
             // Carregar tipos de card disponíveis
             List<CardType> availableCardTypes = cardTypeService.getAllCardTypes();
             defaultCardTypeComboBox.getItems().addAll(availableCardTypes);
@@ -123,6 +140,25 @@ public class PreferencesController {
                 // Se não há configuração, usar NONE como padrão
                 defaultProgressTypeComboBox.setValue(ProgressType.NONE);
             }
+
+            // Carregar grupos de tabuleiro disponíveis
+            List<BoardGroup> availableBoardGroups = boardGroupService.getAllBoardGroups();
+            defaultBoardGroupComboBox.getItems().addAll(availableBoardGroups);
+            
+            // Adicionar opção "Sem Grupo" no início da lista
+            defaultBoardGroupComboBox.getItems().add(0, createNoGroupOption());
+            
+            // Selecionar o grupo padrão atual ou "Sem Grupo" como padrão
+            Optional<Long> currentDefaultBoardGroupId = appMetadataConfig.getDefaultBoardGroupId();
+            if (currentDefaultBoardGroupId.isPresent()) {
+                defaultBoardGroupComboBox.getItems().stream()
+                    .filter(group -> group.getId() != null && group.getId().equals(currentDefaultBoardGroupId.get()))
+                    .findFirst()
+                    .ifPresent(defaultBoardGroupComboBox::setValue);
+            } else {
+                // Se não há configuração, usar "Sem Grupo" como padrão
+                defaultBoardGroupComboBox.setValue(defaultBoardGroupComboBox.getItems().get(0));
+            }
             
             // Atualizar estado do botão de salvar
             updateSaveButtonState();
@@ -145,17 +181,27 @@ public class PreferencesController {
                 showAlert("Aviso", "Selecione um tipo de progresso padrão.");
                 return;
             }
+
+            if (defaultBoardGroupComboBox.getValue() == null) {
+                showAlert("Aviso", "Selecione um grupo de tabuleiro padrão.");
+                return;
+            }
             
             // Verificar se houve mudanças reais
             boolean hasChanges = false;
             Optional<Long> currentCardTypeId = appMetadataConfig.getDefaultCardTypeId();
             Optional<ProgressType> currentProgressType = appMetadataConfig.getDefaultProgressType();
+            Optional<Long> currentBoardGroupId = appMetadataConfig.getDefaultBoardGroupId();
             
             if (!currentCardTypeId.equals(Optional.of(defaultCardTypeComboBox.getValue().getId()))) {
                 hasChanges = true;
             }
             
             if (!currentProgressType.equals(Optional.of(defaultProgressTypeComboBox.getValue()))) {
+                hasChanges = true;
+            }
+
+            if (!currentBoardGroupId.equals(Optional.ofNullable(defaultBoardGroupComboBox.getValue().getId()))) {
                 hasChanges = true;
             }
             
@@ -168,6 +214,14 @@ public class PreferencesController {
             appMetadataConfig.updateMetadata(metadata -> {
                 metadata.setDefaultCardTypeId(defaultCardTypeComboBox.getValue().getId());
                 metadata.setDefaultProgressType(defaultProgressTypeComboBox.getValue());
+                
+                // Se "Sem Grupo" for selecionado, definir como null
+                BoardGroup selectedGroup = defaultBoardGroupComboBox.getValue();
+                if (selectedGroup != null && selectedGroup.getId() == null) {
+                    metadata.setDefaultBoardGroupId(null);
+                } else if (selectedGroup != null) {
+                    metadata.setDefaultBoardGroupId(selectedGroup.getId());
+                }
             });
             
             // Fechar a janela - o AppMetadataConfig irá mostrar o alerta de reinicialização
@@ -215,6 +269,17 @@ public class PreferencesController {
             loadCurrentPreferences();
         }
     }
+
+    /**
+     * Define o serviço de grupos de tabuleiro.
+     */
+    public void setBoardGroupService(BoardGroupService boardGroupService) {
+        this.boardGroupService = boardGroupService;
+        // Recarregar preferências se já estiver inicializado
+        if (defaultBoardGroupComboBox != null) {
+            loadCurrentPreferences();
+        }
+    }
     
     /**
      * Define a configuração de metadados da aplicação.
@@ -255,5 +320,30 @@ public class PreferencesController {
                 setText(item.getDisplayName());
             }
         }
+    }
+
+    /**
+     * Célula personalizada para exibir grupos de tabuleiro no ComboBox.
+     */
+    private static class BoardGroupListCell extends javafx.scene.control.ListCell<BoardGroup> {
+        @Override
+        protected void updateItem(BoardGroup item, boolean empty) {
+            super.updateItem(item, empty);
+            if (empty || item == null) {
+                setText(null);
+            } else {
+                setText(item.getName());
+            }
+        }
+    }
+
+    /**
+     * Cria a opção "Sem Grupo" para o ComboBox de grupos de tabuleiro.
+     */
+    private BoardGroup createNoGroupOption() {
+        BoardGroup noGroup = new BoardGroup();
+        noGroup.setId(null); // Indica que é a opção "Sem Grupo"
+        noGroup.setName("Sem Grupo");
+        return noGroup;
     }
 }
