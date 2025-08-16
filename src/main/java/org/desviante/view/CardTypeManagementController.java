@@ -19,10 +19,12 @@ import java.util.List;
 import java.util.ResourceBundle;
 
 /**
- * Controlador para a tela de gerenciamento de tipos de card.
+ * Controlador para gerenciamento de tipos de card.
  * 
- * <p>Permite que os usuários criem, editem e excluam tipos de card personalizados
- * com seus próprios labels de unidade (ex: "páginas", "minutos", "aulas").</p>
+ * <p>Responsável por gerenciar a interface de usuário para criação, edição,
+ * visualização e remoção de tipos de card. Permite que os usuários criem
+ * tipos personalizados com seus próprios labels de unidade (ex: "páginas", 
+ * "minutos", "aulas").</p>
  * 
  * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
  * @version 1.0
@@ -43,6 +45,16 @@ public class CardTypeManagementController implements Initializable {
 
     private CardTypeService cardTypeService;
     private ObservableList<CardTypeDTO> typesList;
+
+    /**
+     * Construtor padrão do controlador.
+     * 
+     * <p>Este construtor é chamado automaticamente pelo JavaFX
+     * durante a inicialização da interface.</p>
+     */
+    public CardTypeManagementController() {
+        // Inicialização automática via JavaFX
+    }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -308,7 +320,9 @@ public class CardTypeManagementController implements Initializable {
     }
 
     /**
-     * Define o serviço de tipos de card
+     * Define o serviço de tipos de card.
+     * 
+     * @param service serviço de tipos de card a ser utilizado
      */
     public void setCardTypeService(CardTypeService service) {
         this.cardTypeService = service;

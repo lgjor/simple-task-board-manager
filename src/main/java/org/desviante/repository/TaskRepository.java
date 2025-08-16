@@ -100,6 +100,12 @@ public class TaskRepository {
         return jdbcTemplate.query(sql, taskRowMapper);
     }
 
+    /**
+     * Busca uma tarefa pelo ID.
+     * 
+     * @param id ID da tarefa a ser buscada
+     * @return Optional contendo a tarefa se encontrada, ou vazio caso contrário
+     */
     public Optional<Task> findById(Long id) {
         String sql = "SELECT * FROM tasks WHERE id = :id";
         var params = new MapSqlParameterSource("id", id);
@@ -110,6 +116,15 @@ public class TaskRepository {
         }
     }
 
+    /**
+     * Salva ou atualiza uma tarefa no banco de dados.
+     * 
+     * <p>Se a tarefa não tiver ID, ela será inserida como nova.
+     * Se já tiver ID, será atualizada.</p>
+     * 
+     * @param task tarefa a ser salva ou atualizada
+     * @return tarefa com ID definido (se for nova)
+     */
     @Transactional
     public Task save(Task task) {
 
@@ -146,6 +161,11 @@ public class TaskRepository {
         return task;
     }
 
+    /**
+     * Remove uma tarefa pelo ID.
+     * 
+     * @param id ID da tarefa a ser removida
+     */
     @Transactional
     public void deleteById(Long id) {
         String sql = "DELETE FROM tasks WHERE id = :id";

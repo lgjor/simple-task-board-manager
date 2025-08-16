@@ -3,16 +3,35 @@ package org.desviante.service.progress;
 import org.desviante.model.enums.ProgressType;
 
 /**
- * Estratégia para progresso baseado em checklist.
- * Exemplo de como implementar um novo tipo de progresso.
+ * Estratégia de progresso baseada em checklist.
  * 
- * Esta implementação seria expandida para incluir:
- * - Lista de itens do checklist
- * - Estado de cada item (concluído/pendente)
- * - Cálculo de progresso baseado em itens concluídos
- * - Interface específica para gerenciar itens
+ * <p>Implementa o cálculo de progresso baseado em itens de checklist,
+ * onde cada item pode estar marcado como concluído ou pendente.
+ * O progresso é calculado automaticamente como a porcentagem de
+ * itens concluídos em relação ao total.</p>
+ * 
+ * <p>Características principais:</p>
+ * <ul>
+ *   <li>Lista de itens do checklist</li>
+ *   <li>Estado de cada item (concluído/pendente)</li>
+ *   <li>Cálculo de progresso baseado em itens concluídos</li>
+ *   <li>Interface específica para gerenciar itens</li>
+ * </ul>
+ * 
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @version 1.0
+ * @since 1.0
  */
 public class ChecklistProgressStrategy implements ProgressStrategy {
+    
+    /**
+     * Construtor padrão da estratégia de progresso de checklist.
+     * 
+     * <p>Esta estratégia não requer inicialização especial.</p>
+     */
+    public ChecklistProgressStrategy() {
+        // Estratégia padrão para checklist
+    }
     
     @Override
     public boolean isEnabled() {
@@ -126,18 +145,47 @@ public class ChecklistProgressStrategy implements ProgressStrategy {
     
     /**
      * Classe interna para representar um item do checklist.
+     * 
+     * <p>Representa um item individual do checklist com seu texto
+     * e estado de conclusão.</p>
+     * 
+     * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+     * @version 1.0
+     * @since 1.0
      */
     public static class ChecklistItem {
         private final String text;
         private boolean completed;
         
+        /**
+         * Construtor para criar um novo item de checklist.
+         * 
+         * @param text texto descritivo do item
+         */
         public ChecklistItem(String text) {
             this.text = text;
             this.completed = false;
         }
         
+        /**
+         * Obtém o texto do item.
+         * 
+         * @return texto descritivo do item
+         */
         public String getText() { return text; }
+        
+        /**
+         * Verifica se o item está concluído.
+         * 
+         * @return true se o item está concluído, false caso contrário
+         */
         public boolean isCompleted() { return completed; }
+        
+        /**
+         * Define o estado de conclusão do item.
+         * 
+         * @param completed true para marcar como concluído, false para marcar como pendente
+         */
         public void setCompleted(boolean completed) { this.completed = completed; }
     }
 }

@@ -13,12 +13,21 @@ import java.time.LocalDateTime;
  * <p>Contém todos os dados necessários para criar uma tarefa no Google
  * Tasks, além do identificador do card local para estabelecer o
  * relacionamento entre a tarefa externa e o card interno.</p>
+ * 
+ * @param listTitle título da lista no Google Tasks
+ * @param title título da tarefa a ser criada
+ * @param notes notas detalhadas da tarefa
+ * @param due data e horário de vencimento
+ * @param cardId ID do card associado (para relacionamento local)
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @version 1.0
+ * @since 1.0
  */
 public record CreateTaskRequestDTO(
-        String listTitle,       // Título da lista no Google Tasks
-        String title,               // Título da tarefa a ser criada
-        String notes,               // Notas detalhadas da tarefa
-        LocalDateTime due,          // Data e horário de vencimento
-        Long cardId                 // ID do card associado (para relacionamento local)
+        String listTitle,
+        String title,
+        String notes,
+        LocalDateTime due,
+        Long cardId
 ) {
 }

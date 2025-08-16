@@ -42,6 +42,13 @@ public class TaskService {
     private final CardRepository cardRepository;
     private final GoogleTasksApiService googleApiService;
 
+    /**
+     * Construtor que inicializa o serviço com as dependências necessárias.
+     * 
+     * @param taskRepository repositório para operações de tarefas
+     * @param cardRepository repositório para operações de cards
+     * @param googleApiService serviço da API do Google Tasks (opcional)
+     */
     public TaskService(TaskRepository taskRepository, CardRepository cardRepository, 
                       @Autowired(required = false) GoogleTasksApiService googleApiService) {
         this.taskRepository = taskRepository;

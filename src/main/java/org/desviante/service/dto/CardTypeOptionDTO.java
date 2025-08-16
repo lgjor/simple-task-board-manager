@@ -7,15 +7,19 @@ package org.desviante.service.dto;
  * pelo usuário na interface.
  * incluindo os tipos padrão pré-cadastrados pelo data initializer.</p>
  * 
+ * @param id ID único do tipo de card
+ * @param name nome do tipo
+ * @param unitLabel label da unidade
+ * @param cardTypeId ID do tipo de card no banco
  * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
  * @version 1.0
  * @since 1.0
  */
 public record CardTypeOptionDTO(
-    String id,           // ID único do tipo de card
-    String name,         // Nome do tipo
-    String unitLabel,    // Label da unidade
-    Long cardTypeId    // ID do tipo de card no banco
+    String id,
+    String name,
+    String unitLabel,
+    Long cardTypeId
 ) {
     
     /**

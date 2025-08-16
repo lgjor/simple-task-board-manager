@@ -41,6 +41,9 @@ public class Card {
      * Identificador único do card.
      * <p>Usado como chave primária na persistência e para operações
      * de igualdade e hash code.</p>
+     * 
+     * @return identificador único do card
+     * @param id novo identificador único do card
      */
     private Long id;
 
@@ -48,6 +51,9 @@ public class Card {
      * Título da tarefa.
      * <p>Representa o nome ou título descritivo da tarefa que será
      * exibido no card na interface do usuário.</p>
+     * 
+     * @return título da tarefa
+     * @param title novo título da tarefa
      */
     private String title;
 
@@ -55,12 +61,17 @@ public class Card {
      * Descrição detalhada da tarefa.
      * <p>Contém informações adicionais sobre a tarefa, como requisitos,
      * instruções, observações ou qualquer detalhe relevante para o trabalho.</p>
+     * 
+     * @return descrição detalhada da tarefa
+     * @param description nova descrição detalhada da tarefa
      */
     private String description;
 
     /**
-     * Tipo de card que permite criar cards personalizados com seus próprios labels de unidade.</p>
+     * Tipo de card que permite criar cards personalizados com seus próprios labels de unidade.
      * 
+     * @return tipo de card associado
+     * @param cardType novo tipo de card associado
      * @see CardType
      */
     private CardType cardType;
@@ -70,6 +81,9 @@ public class Card {
      * <p>Representa o valor total para calcular o percentual de progresso.
      * Exemplos: total de páginas (BOOK), duração em minutos (VIDEO),
      * número de aulas (COURSE). Null para cards do tipo CARD.</p>
+     * 
+     * @return total de unidades para acompanhamento de progresso
+     * @param totalUnits novo total de unidades para acompanhamento de progresso
      */
     private Integer totalUnits;
 
@@ -78,6 +92,9 @@ public class Card {
      * <p>Representa o valor atual para calcular o percentual de progresso.
      * Exemplos: página atual (BOOK), minuto atual (VIDEO), aula atual (COURSE).
      * Null para cards do tipo CARD ou quando não há progresso.</p>
+     * 
+     * @return unidades atuais para acompanhamento de progresso
+     * @param currentUnits novas unidades atuais para acompanhamento de progresso
      */
     private Integer currentUnits;
 
@@ -85,6 +102,9 @@ public class Card {
      * Índice de ordem do card.
      * <p>Representa a posição do card na coluna do quadro.
      * Útil para ordenação e exibição em interfaces.</p>
+     * 
+     * @return índice de ordem do card
+     * @param orderIndex novo índice de ordem do card
      */
     private Integer orderIndex;
 
@@ -115,6 +135,9 @@ public class Card {
      * Data e hora de criação do card.
      * <p>Este campo é automaticamente preenchido quando um novo card é criado
      * e não deve ser modificado posteriormente. Útil para auditoria e histórico.</p>
+     * 
+     * @return data e hora de criação do card
+     * @param creationDate nova data e hora de criação do card
      */
     private LocalDateTime creationDate;
 
@@ -122,6 +145,9 @@ public class Card {
      * Data e hora da última atualização do card.
      * <p>Este campo é atualizado automaticamente sempre que o card é modificado,
      * permitindo acompanhar quando foi a última alteração realizada.</p>
+     * 
+     * @return data e hora da última atualização do card
+     * @param lastUpdateDate nova data e hora da última atualização do card
      */
     private LocalDateTime lastUpdateDate;
 
@@ -129,6 +155,9 @@ public class Card {
      * Data e hora de conclusão da tarefa.
      * <p>Este campo é preenchido quando a tarefa é marcada como concluída,
      * geralmente quando o card é movido para uma coluna final do quadro.</p>
+     * 
+     * @return data e hora de conclusão da tarefa
+     * @param completionDate nova data e hora de conclusão da tarefa
      */
     private LocalDateTime completionDate;
 
@@ -138,6 +167,8 @@ public class Card {
      * Em uma abordagem com JDBC, os relacionamentos são representados
      * diretamente pelos IDs, em vez de referências a objetos.</p>
      * 
+     * @return identificador da coluna onde o card está localizado
+     * @param boardColumnId novo identificador da coluna onde o card está localizado
      * @see BoardColumn
      */
     private Long boardColumnId;
@@ -147,6 +178,8 @@ public class Card {
      * <p>Quando um card usa um tipo de card,
      * este campo armazena o ID do tipo de card.</p>
      * 
+     * @return identificador do tipo de card associado ao card
+     * @param cardTypeId novo identificador do tipo de card associado ao card
      * @see CardType
      */
     private Long cardTypeId;
@@ -156,6 +189,8 @@ public class Card {
      * <p>Define se e como o progresso deve ser exibido e calculado.
      * Cards podem ter progresso percentual, customizado ou nenhum progresso.</p>
      * 
+     * @return tipo de progresso do card
+     * @param progressType novo tipo de progresso do card
      * @see ProgressType
      */
     private ProgressType progressType;

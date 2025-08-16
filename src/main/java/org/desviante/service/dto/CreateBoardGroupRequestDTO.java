@@ -6,6 +6,9 @@ package org.desviante.service.dto;
  * <p>Encapsula os dados necessários para criar ou atualizar um grupo
  * de board, incluindo validações básicas e normalização de dados.</p>
  * 
+ * @param name nome do grupo
+ * @param description descrição do grupo
+ * @param icon ícone do grupo
  * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
  * @version 1.0
  * @since 1.0

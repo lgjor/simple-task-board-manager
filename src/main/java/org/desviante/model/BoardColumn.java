@@ -30,6 +30,9 @@ public class BoardColumn {
      * Identificador único da coluna.
      * <p>Usado como chave primária na persistência e para operações
      * de igualdade e hash code.</p>
+     * 
+     * @return identificador único da coluna
+     * @param id novo identificador único da coluna
      */
     private Long id;
 
@@ -37,6 +40,9 @@ public class BoardColumn {
      * Nome da coluna.
      * <p>Representa o título da coluna que será exibido no quadro,
      * como "A Fazer", "Em Andamento", etc.</p>
+     * 
+     * @return nome da coluna
+     * @param name novo nome da coluna
      */
     private String name;
 
@@ -44,6 +50,9 @@ public class BoardColumn {
      * Índice de ordem da coluna no quadro.
      * <p>Define a posição da coluna em relação às outras colunas do mesmo quadro.
      * Valores menores aparecem primeiro (da esquerda para a direita).</p>
+     * 
+     * @return índice de ordem da coluna no quadro
+     * @param orderIndex novo índice de ordem da coluna no quadro
      */
     private int orderIndex;
 
@@ -52,6 +61,8 @@ public class BoardColumn {
      * <p>Define o comportamento e características específicas da coluna,
      * como se permite adicionar tarefas, se é uma coluna de entrada/saída, etc.</p>
      * 
+     * @return tipo da coluna
+     * @param kind novo tipo da coluna
      * @see BoardColumnKindEnum
      */
     private BoardColumnKindEnum kind;
@@ -62,6 +73,8 @@ public class BoardColumn {
      * Em uma abordagem com JDBC, os relacionamentos são representados
      * diretamente pelos IDs, em vez de referências a objetos.</p>
      * 
+     * @return identificador do quadro ao qual esta coluna pertence
+     * @param boardId novo identificador do quadro ao qual esta coluna pertence
      * @see Board
      */
     private Long boardId;

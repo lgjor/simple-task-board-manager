@@ -3,11 +3,11 @@ package org.desviante.util;
 import java.util.*;
 
 /**
- * Mapeador para busca de ícones por palavras-chave e categorias.
+ * Mapeador de busca de ícones por categorias e palavras-chave.
  * 
- * <p>Fornece mapeamento entre códigos de ícones e suas descrições
- * semânticas para permitir busca por palavras-chave como "livros",
- * "casa", "trabalho", etc.</p>
+ * <p>Esta classe fornece funcionalidades de busca de ícones baseadas em
+ * categorias e palavras-chave, facilitando a localização de ícones
+ * apropriados para diferentes contextos como "casa", "trabalho", etc.</p>
  * 
  * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
  * @version 1.0
@@ -20,6 +20,15 @@ public class IconSearchMapper {
     
     static {
         initializeIconMappings();
+    }
+    
+    /**
+     * Construtor padrão do mapeador de busca de ícones.
+     * 
+     * <p>Esta classe não requer inicialização especial.</p>
+     */
+    public IconSearchMapper() {
+        // Mapeador estático de ícones
     }
     
     /**

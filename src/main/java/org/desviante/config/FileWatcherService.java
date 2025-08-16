@@ -12,14 +12,10 @@ import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 /**
- * Serviço para monitorar alterações em arquivos de configuração.
+ * Serviço de monitoramento de arquivos para detectar mudanças.
  * 
- * <p>Este serviço utiliza o WatchService do Java NIO para monitorar
- * alterações em arquivos específicos, notificando quando configurações
- * são modificadas e requerem reinicialização da aplicação.</p>
- * 
- * <p>O monitoramento é executado em uma thread separada para não
- * bloquear a thread principal da aplicação.</p>
+ * <p>Esta classe monitora arquivos específicos em diretórios para detectar
+ * mudanças e executar callbacks quando necessário.</p>
  * 
  * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
  * @version 1.0
@@ -35,6 +31,15 @@ public class FileWatcherService implements InitializingBean, DisposableBean {
     private Path watchedDirectory;
     private String watchedFileName;
     private Consumer<Path> fileChangeCallback;
+    
+    /**
+     * Construtor padrão do serviço de monitoramento de arquivos.
+     * 
+     * <p>Este serviço não requer inicialização especial.</p>
+     */
+    public FileWatcherService() {
+        // Serviço automático de monitoramento
+    }
     
     /**
      * Inicializa o serviço de monitoramento.

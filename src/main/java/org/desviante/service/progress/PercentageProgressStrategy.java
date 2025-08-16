@@ -4,9 +4,24 @@ import org.desviante.model.enums.ProgressType;
 
 /**
  * Estratégia para progresso percentual.
- * Gerencia a lógica específica para progresso baseado em porcentagem.
+ * 
+ * <p>Gerencia a lógica específica para progresso baseado em porcentagem,
+ * incluindo validações de valores e configuração da interface de usuário.</p>
+ * 
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @version 1.0
+ * @since 1.0
  */
 public class PercentageProgressStrategy implements ProgressStrategy {
+    
+    /**
+     * Construtor padrão da estratégia de progresso percentual.
+     * 
+     * <p>Esta estratégia não requer inicialização especial.</p>
+     */
+    public PercentageProgressStrategy() {
+        // Estratégia padrão para progresso percentual
+    }
     
     @Override
     public boolean isEnabled() {

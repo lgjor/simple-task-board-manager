@@ -5,6 +5,13 @@ import java.time.LocalDateTime;
 /**
  * DTO para transferência de dados de itens do checklist.
  * 
+ * @param id identificador único do item do checklist
+ * @param cardId identificador do card ao qual o item pertence
+ * @param text texto descritivo do item do checklist
+ * @param completed indica se o item foi concluído
+ * @param orderIndex posição do item na lista de checklist
+ * @param createdAt data e hora de criação do item
+ * @param completedAt data e hora de conclusão do item (null se não concluído)
  * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
  * @version 1.0
  * @since 1.0

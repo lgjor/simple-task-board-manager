@@ -37,6 +37,9 @@ public class BoardGroup {
      * Identificador único do grupo.
      * <p>Este campo é usado como chave primária na persistência e para
      * operações de igualdade e hash code.</p>
+     * 
+     * @return identificador único do grupo
+     * @param id novo identificador único do grupo
      */
     private Long id;
     
@@ -44,6 +47,9 @@ public class BoardGroup {
      * Nome do grupo.
      * <p>Representa o nome descritivo do grupo que será exibido na interface
      * e usado para identificação do grupo pelos usuários.</p>
+     * 
+     * @return nome do grupo
+     * @param name novo nome do grupo
      */
     private String name;
     
@@ -51,6 +57,9 @@ public class BoardGroup {
      * Descrição detalhada do grupo.
      * <p>Fornece informações adicionais sobre o propósito e conteúdo do grupo,
      * ajudando os usuários a entenderem melhor a organização dos quadros.</p>
+     * 
+     * @return descrição detalhada do grupo
+     * @param description nova descrição detalhada do grupo
      */
     private String description;
     
@@ -60,6 +69,9 @@ public class BoardGroup {
      * permitindo que cada grupo tenha uma cor distintiva para melhor organização.</p>
      * 
      * <p><strong>Formato esperado:</strong> Código hexadecimal (ex: "#FF5733")</p>
+     * 
+     * @return cor do grupo em formato hexadecimal
+     * @param color nova cor do grupo em formato hexadecimal
      */
     private String color;
     
@@ -67,6 +79,9 @@ public class BoardGroup {
      * Ícone associado ao grupo.
      * <p>Representa um identificador ou caminho para um ícone que será exibido
      * junto com o nome do grupo na interface, melhorando a identificação visual.</p>
+     * 
+     * @return ícone associado ao grupo
+     * @param icon novo ícone associado ao grupo
      */
     private String icon;
     
@@ -74,6 +89,9 @@ public class BoardGroup {
      * Data e hora de criação do grupo.
      * <p>Este campo é automaticamente preenchido quando um novo grupo é criado
      * e não deve ser modificado posteriormente. Útil para auditoria e histórico.</p>
+     * 
+     * @return data e hora de criação do grupo
+     * @param creationDate nova data e hora de criação do grupo
      */
     private LocalDateTime creationDate;
     

@@ -14,7 +14,7 @@ package org.desviante.model.enums;
  * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
  * @version 1.0
  * @since 1.0
- * @see BoardColumn
+ * @see org.desviante.model.BoardColumn
  */
 public enum BoardColumnKindEnum {
     

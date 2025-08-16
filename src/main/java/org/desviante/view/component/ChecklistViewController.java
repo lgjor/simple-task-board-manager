@@ -11,8 +11,10 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Controller para o componente de checklist.
- * Gerencia a interface de usuário para itens do checklist.
+ * Controlador para gerenciamento de checklist de cards.
+ * 
+ * <p>Gerencia a interface de usuário para itens do checklist, incluindo
+ * criação, edição, remoção e controle de estado dos itens.</p>
  * 
  * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
  * @version 1.0
@@ -31,6 +33,16 @@ public class ChecklistViewController {
     private ChecklistItemService checklistItemService;
     private Long currentCardId;
     private List<ChecklistItemDTO> currentItems;
+    
+    /**
+     * Construtor padrão do controlador.
+     * 
+     * <p>Este construtor é chamado automaticamente pelo JavaFX
+     * durante a inicialização da interface.</p>
+     */
+    public ChecklistViewController() {
+        // Inicialização automática via JavaFX
+    }
     
     /**
      * Inicializa o controller.

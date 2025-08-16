@@ -24,6 +24,17 @@ import java.util.function.BiConsumer;
 // A interface Runnable está em java.lang e é importada automaticamente.
 import java.util.Optional;
 
+/**
+ * Controlador para uma coluna individual do quadro.
+ * 
+ * <p>Este controlador gerencia a exibição e interação com uma coluna específica
+ * do quadro, incluindo a exibição de cards, drag and drop, e atualizações
+ * de dados em tempo real.</p>
+ * 
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @version 1.0
+ * @since 1.0
+ */
 public class ColumnViewController {
 
     @FXML
@@ -39,12 +50,38 @@ public class ColumnViewController {
     private BiConsumer<Long, Long> onCardDrop;
     private Runnable onDataChange;
     private BiConsumer<Long, UpdateCardDetailsDTO> onCardUpdate;
+    
+    /**
+     * Construtor padrão da classe ColumnViewController.
+     * 
+     * <p>Inicializa o controlador de coluna do quadro.
+     * A interface será configurada quando o método initialize() for chamado.</p>
+     */
+    public ColumnViewController() {
+        // Construtor padrão - interface será configurada via FXML
+    }
 
+    /**
+     * Inicializa o controlador e configura a interface.
+     * 
+     * <p>Este método é chamado automaticamente pelo JavaFX após a
+     * construção do controlador.</p>
+     */
     @FXML
     public void initialize() {
         setupDragAndDrop();
     }
 
+    /**
+     * Define os dados da coluna e configura o controlador.
+     * 
+     * @param facade fachada principal para gerenciamento de tarefas
+     * @param boardName nome do quadro ao qual a coluna pertence
+     * @param columnData dados da coluna
+     * @param onCardDrop callback para quando um card é solto na coluna
+     * @param onDataChange callback para quando os dados mudam
+     * @param onCardUpdate callback para quando um card é atualizado
+     */
     public void setData(
             TaskManagerFacade facade,
             String boardName,
@@ -62,10 +99,20 @@ public class ColumnViewController {
         this.columnNameLabel.setText(columnData.name());
     }
 
+    /**
+     * Obtém o ID da coluna.
+     * 
+     * @return ID da coluna
+     */
     public Long getColumnId() {
         return this.columnData.id();
     }
 
+    /**
+     * Adiciona um card à coluna.
+     * 
+     * @param cardNode nó visual do card a ser adicionado
+     */
     public void addCard(Node cardNode) {
         if (cardNode.getParent() instanceof VBox) {
             ((VBox) cardNode.getParent()).getChildren().remove(cardNode);

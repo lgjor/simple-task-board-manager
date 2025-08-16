@@ -6,13 +6,15 @@ package org.desviante.service.dto;
  * <p>Usado para receber dados da interface para criação de novos
  * tipos de cards.</p>
  * 
+ * @param name nome do tipo de card
+ * @param unitLabel label da unidade de progresso
  * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
  * @version 1.0
  * @since 1.0
  */
 public record CreateCardTypeRequestDTO(
-    String name,        // Nome do tipo de card
-    String unitLabel    // Label da unidade de progresso
+    String name,
+    String unitLabel
 ) {
     
     /**

@@ -20,11 +20,15 @@ import java.time.LocalDateTime;
  * de enviar para o GoogleTasksApiService, mantendo a separação entre a
  * lógica de negócio local e a comunicação com a API externa do Google.</p>
  * 
+ * @param listTitle título da lista no Google Tasks
+ * @param title título da tarefa a ser criada
+ * @param notes notas detalhadas da tarefa
+ * @param due data e horário de vencimento
  * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
  * @version 1.0
  * @since 1.0
- * @see TaskService
- * @see GoogleTasksApiService
+ * @see org.desviante.service.TaskService
+ * @see org.desviante.service.GoogleTasksApiService
  */
 public record CreateTaskRequest(
         String listTitle,           // Título da lista no Google Tasks

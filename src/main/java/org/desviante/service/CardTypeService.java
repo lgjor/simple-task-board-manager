@@ -397,6 +397,11 @@ public class CardTypeService {
         private final List<Card> affectedCards;
         private final String reason;
         
+        /**
+         * Construtor privado para instâncias de CardTypeRemovalCheck.
+         * 
+         * @param builder builder com os dados da verificação
+         */
         private CardTypeRemovalCheck(Builder builder) {
             this.canDelete = builder.canDelete;
             this.cardType = builder.cardType;
@@ -405,15 +410,46 @@ public class CardTypeService {
             this.reason = builder.reason;
         }
         
-        // Getters
+        /**
+         * Verifica se o tipo de card pode ser removido.
+         * 
+         * @return true se pode ser removido, false caso contrário
+         */
         public boolean canDelete() { return canDelete; }
+        
+        /**
+         * Obtém o tipo de card sendo verificado.
+         * 
+         * @return tipo de card sendo verificado
+         */
         public CardType getCardType() { return cardType; }
+        
+        /**
+         * Obtém o número de cards usando este tipo.
+         * 
+         * @return número de cards usando este tipo
+         */
         public int getCardCount() { return cardCount; }
+        
+        /**
+         * Obtém a lista de cards afetados.
+         * 
+         * @return lista de cards afetados
+         */
         public List<Card> getAffectedCards() { return affectedCards; }
+        
+        /**
+         * Obtém o motivo da verificação.
+         * 
+         * @return motivo da verificação
+         */
         public String getReason() { return reason; }
         
         /**
          * Builder para construção de instâncias de CardTypeRemovalCheck.
+         * 
+         * <p>Permite construção fluente de objetos CardTypeRemovalCheck
+         * com valores personalizados.</p>
          */
         public static class Builder {
             private boolean canDelete;
@@ -422,36 +458,76 @@ public class CardTypeService {
             private List<Card> affectedCards;
             private String reason;
             
+            /**
+             * Define se o tipo de card pode ser removido.
+             * 
+             * @param canDelete true se pode ser removido, false caso contrário
+             * @return builder para encadeamento
+             */
             public Builder canDelete(boolean canDelete) {
                 this.canDelete = canDelete;
                 return this;
             }
             
+            /**
+             * Define o tipo de card sendo verificado.
+             * 
+             * @param cardType tipo de card sendo verificado
+             * @return builder para encadeamento
+             */
             public Builder cardType(CardType cardType) {
                 this.cardType = cardType;
                 return this;
             }
             
+            /**
+             * Define o número de cards usando este tipo.
+             * 
+             * @param cardCount número de cards usando este tipo
+             * @return builder para encadeamento
+             */
             public Builder cardCount(int cardCount) {
                 this.cardCount = cardCount;
                 return this;
             }
             
+            /**
+             * Define a lista de cards afetados.
+             * 
+             * @param affectedCards lista de cards afetados
+             * @return builder para encadeamento
+             */
             public Builder affectedCards(List<Card> affectedCards) {
                 this.affectedCards = affectedCards;
                 return this;
             }
             
+            /**
+             * Define o motivo da verificação.
+             * 
+             * @param reason motivo da verificação
+             * @return builder para encadeamento
+             */
             public Builder reason(String reason) {
                 this.reason = reason;
                 return this;
             }
             
+            /**
+             * Constrói a verificação de remoção de tipo de card.
+             * 
+             * @return nova instância de CardTypeRemovalCheck
+             */
             public CardTypeRemovalCheck build() {
                 return new CardTypeRemovalCheck(this);
             }
         }
         
+        /**
+         * Cria um novo builder para verificação de remoção de tipo de card.
+         * 
+         * @return builder para verificação de remoção
+         */
         public static Builder builder() {
             return new Builder();
         }

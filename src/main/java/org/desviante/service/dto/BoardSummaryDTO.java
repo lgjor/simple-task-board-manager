@@ -20,6 +20,13 @@ import org.desviante.model.BoardGroup;
  * identificar rapidamente o progresso e status de cada board sem necessidade
  * de abrir detalhes completos.</p>
  * 
+ * @param id identificador único do board
+ * @param name nome do board para exibição
+ * @param percentInitial percentual de cards em colunas INITIAL
+ * @param percentPending percentual de cards em colunas PENDING
+ * @param percentFinal percentual de cards em colunas FINAL
+ * @param status status geral consolidado do board
+ * @param group grupo associado ao board (pode ser null)
  * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
  * @version 1.0
  * @since 1.0
@@ -27,12 +34,12 @@ import org.desviante.model.BoardGroup;
  * @see BoardDetailDTO
  */
 public record BoardSummaryDTO(
-        Long id,                    // Identificador único do board
-        String name,                // Nome do board para exibição
-        Integer percentInitial,     // Percentual de cards em colunas INITIAL
-        Integer percentPending,     // Percentual de cards em colunas PENDING
-        Integer percentFinal,       // Percentual de cards em colunas FINAL
-        String status,              // Status geral consolidado do board
-        BoardGroup group            // Grupo associado ao board (pode ser null)
+        Long id,
+        String name,
+        Integer percentInitial,
+        Integer percentPending,
+        Integer percentFinal,
+        String status,
+        BoardGroup group
 ) {
 }

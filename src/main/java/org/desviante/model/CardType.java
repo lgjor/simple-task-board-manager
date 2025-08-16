@@ -25,28 +25,43 @@ public class CardType {
     
     /**
      * Identificador único do tipo de card.
+     * 
+     * @return identificador único do tipo de card
+     * @param id novo identificador único do tipo de card
      */
     private Long id;
     
     /**
      * Nome do tipo de card (ex: "Livro", "Vídeo", "Curso").
      * Deve ser único no sistema.
+     * 
+     * @return nome do tipo de card
+     * @param name novo nome do tipo de card
      */
     private String name;
     
     /**
      * Label da unidade de progresso (ex: "páginas", "minutos", "aulas").
      * Usado na interface para mostrar o progresso dos cards.
+     * 
+     * @return label da unidade de progresso
+     * @param unitLabel novo label da unidade de progresso
      */
     private String unitLabel;
     
     /**
      * Data de criação do tipo de card.
+     * 
+     * @return data de criação do tipo de card
+     * @param creationDate nova data de criação do tipo de card
      */
     private LocalDateTime creationDate;
     
     /**
      * Data da última atualização do tipo de card.
+     * 
+     * @return data da última atualização do tipo de card
+     * @param lastUpdateDate nova data da última atualização do tipo de card
      */
     private LocalDateTime lastUpdateDate;
 } 

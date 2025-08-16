@@ -93,6 +93,16 @@ public class ConfigurationManagementController {
     private CardTypeService cardTypeService;
     
     /**
+     * Construtor padrão da classe ConfigurationManagementController.
+     * 
+     * <p>Inicializa o controlador de gerenciamento de configurações.
+     * As dependências serão injetadas via Spring.</p>
+     */
+    public ConfigurationManagementController() {
+        // Construtor padrão - dependências serão injetadas via Spring
+    }
+    
+    /**
      * Inicializa o controlador.
      */
     @FXML

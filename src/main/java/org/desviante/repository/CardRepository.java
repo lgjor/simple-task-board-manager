@@ -303,14 +303,12 @@ public class CardRepository {
      * Verifica se existem cards usando um tipo específico de card.
      * 
      * <p>Esta consulta é utilizada para validar se um tipo de card pode ser
-     * removido com segurança, verificando se há dependências ativas.</p>
+     * alterado com segurança, verificando se há cards que dependem dele.</p>
      * 
-     * @param cardTypeId identificador do tipo de card a ser verificado
+     * @param cardTypeId identificador do tipo de card para verificação
      * @return {@code true} se existem cards usando o tipo, {@code false} caso contrário
      * @throws IllegalArgumentException se o cardTypeId for {@code null}
      * @throws RuntimeException se houver erro na operação de banco
-     * 
-     * @see JdbcTemplate#queryForObject(String, Class, Object...)
      */
     public boolean existsByCardTypeId(Long cardTypeId) {
         if (cardTypeId == null) {
@@ -336,8 +334,6 @@ public class CardRepository {
      * @return número de cards usando o tipo especificado (pode ser zero)
      * @throws IllegalArgumentException se o cardTypeId for {@code null}
      * @throws RuntimeException se houver erro na operação de banco
-     * 
-     * @see JdbcTemplate#queryForObject(String, Class, Object...)
      */
     public int countByCardTypeId(Long cardTypeId) {
         if (cardTypeId == null) {
@@ -363,7 +359,6 @@ public class CardRepository {
      * @throws IllegalArgumentException se o cardTypeId for {@code null}
      * @throws RuntimeException se houver erro na operação de banco
      * 
-     * @see JdbcTemplate#query(String, RowMapper, MapSqlParameterSource)
      * @see #cardRowMapper
      */
     public List<Card> findByCardTypeId(Long cardTypeId) {
@@ -388,8 +383,6 @@ public class CardRepository {
      * @return {@code true} se existem cards usando o tipo, {@code false} caso contrário
      * @throws IllegalArgumentException se o progressType for {@code null}
      * @throws RuntimeException se houver erro na operação de banco
-     * 
-     * @see JdbcTemplate#queryForObject(String, Class, Object...)
      */
     public boolean existsByProgressType(org.desviante.model.enums.ProgressType progressType) {
         if (progressType == null) {
@@ -415,8 +408,6 @@ public class CardRepository {
      * @return número de cards usando o tipo especificado (pode ser zero)
      * @throws IllegalArgumentException se o progressType for {@code null}
      * @throws RuntimeException se houver erro na operação de banco
-     * 
-     * @see JdbcTemplate#queryForObject(String, Class, Object...)
      */
     public int countByProgressType(org.desviante.model.enums.ProgressType progressType) {
         if (progressType == null) {
@@ -442,7 +433,6 @@ public class CardRepository {
      * @throws IllegalArgumentException se o progressType for {@code null}
      * @throws RuntimeException se houver erro na operação de banco
      * 
-     * @see JdbcTemplate#query(String, RowMapper, MapSqlParameterSource)
      * @see #cardRowMapper
      */
     public List<Card> findByProgressType(org.desviante.model.enums.ProgressType progressType) {

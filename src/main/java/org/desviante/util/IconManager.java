@@ -13,10 +13,10 @@ import java.util.List;
 import java.util.Scanner;
 
 /**
- * Utilitário para gerenciar ícones emoji disponíveis no sistema.
+ * Gerenciador de ícones para a aplicação.
  * 
- * <p>Responsável por carregar, listar e criar ImageViews para os ícones
- * emoji disponíveis no diretório de recursos.</p>
+ * <p>Esta classe gerencia o carregamento e acesso aos ícones disponíveis
+ * no sistema, incluindo ícones emoji e outros tipos de ícones.</p>
  * 
  * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
  * @version 1.0
@@ -26,6 +26,15 @@ public class IconManager {
     
     private static final String EMOJI_DIRECTORY = "/icons/emoji/";
     private static List<String> availableIcons = null;
+    
+    /**
+     * Construtor padrão do gerenciador de ícones.
+     * 
+     * <p>Esta classe não requer inicialização especial.</p>
+     */
+    public IconManager() {
+        // Gerenciador estático de ícones
+    }
     
     /**
      * Obtém a lista de todos os ícones disponíveis no sistema.

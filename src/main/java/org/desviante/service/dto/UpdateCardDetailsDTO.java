@@ -24,17 +24,22 @@ import org.desviante.model.enums.ProgressType;
  * de edição da interface do usuário e delegar a atualização para o
  * CardService, mantendo a separação entre apresentação e lógica de negócio.</p>
  * 
+ * @param title novo título do card
+ * @param description nova descrição do card
+ * @param totalUnits total de unidades para progresso (pode ser null)
+ * @param currentUnits unidades atuais para progresso (pode ser null)
+ * @param progressType tipo de progresso do card (pode ser null)
  * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
  * @version 1.0
  * @since 1.0
- * @see TaskManagerFacade
- * @see CardService
+ * @see org.desviante.service.TaskManagerFacade
+ * @see org.desviante.service.CardService
  */
 public record UpdateCardDetailsDTO(
-        String title,               // Novo título do card
-        String description,         // Nova descrição do card
-        Integer totalUnits,         // Total de unidades para progresso (pode ser null)
-        Integer currentUnits,       // Unidades atuais para progresso (pode ser null)
-        ProgressType progressType   // Tipo de progresso do card (pode ser null)
+        String title,
+        String description,
+        Integer totalUnits,
+        Integer currentUnits,
+        ProgressType progressType
 ) {
 }

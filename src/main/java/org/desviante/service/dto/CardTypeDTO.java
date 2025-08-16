@@ -10,6 +10,11 @@ import java.time.format.DateTimeFormatter;
  * <p>Usado para enviar informações de tipos de card para a interface,
  * incluindo dados formatados para exibição.</p>
  * 
+ * @param id identificador único do tipo de card
+ * @param name nome do tipo de card
+ * @param unitLabel label da unidade de progresso
+ * @param creationDate data de criação formatada como string
+ * @param lastUpdateDate data da última atualização formatada como string
  * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
  * @version 1.0
  * @since 1.0

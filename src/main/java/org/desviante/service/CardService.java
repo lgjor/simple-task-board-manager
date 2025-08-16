@@ -65,7 +65,7 @@ public class CardService {
      * @param title título do novo card
      * @param description descrição do novo card
      * @param parentColumnId identificador da coluna pai
-     * @param type tipo do card (CARD, BOOK, VIDEO, COURSE)
+     * @param cardTypeId ID do tipo do card (CARD, BOOK, VIDEO, COURSE)
      * @return card criado com ID gerado
      * @throws ResourceNotFoundException se a coluna pai não for encontrada
      */

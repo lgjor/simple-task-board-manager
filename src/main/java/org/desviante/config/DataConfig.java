@@ -21,27 +21,14 @@ import java.sql.SQLException;
 import java.util.logging.Logger;
 
 /**
- * Configuração de dados e persistência da aplicação.
- *
- * <p>Esta classe configura a infraestrutura de dados da aplicação, incluindo
- * a fonte de dados H2, gerenciamento de transações e inicialização do banco.
- * Utiliza HikariCP para pool de conexões e H2 como banco de dados embutido.</p>
- *
- * <p>A configuração inclui:</p>
- * <ul>
- *   <li>DataSource H2 com pool de conexões HikariCP</li>
- *   <li>Gerenciador de transações para operações JDBC</li>
- *   <li>Inicializador automático do banco de dados com preservação de dados</li>
- *   <li>Escaneamento de repositórios para injeção de dependência</li>
- * </ul>
- *
+ * Configuração de dados e banco de dados da aplicação.
+ * 
+ * <p>Esta classe configura o banco de dados H2 com pool de conexões HikariCP,
+ * gerenciamento de transações e inicialização automática do banco quando necessário.</p>
+ * 
  * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
  * @version 1.0
  * @since 1.0
- * @see org.springframework.context.annotation.Configuration
- * @see org.springframework.context.annotation.ComponentScan
- * @see org.springframework.transaction.annotation.EnableTransactionManagement
- * @see com.zaxxer.hikari.HikariDataSource
  * @see org.springframework.jdbc.datasource.DataSourceTransactionManager
  */
 @Configuration
@@ -51,6 +38,15 @@ public class DataConfig {
 
     private static final String DB_FILE_PATH = System.getProperty("user.home") + "/myboards/board_h2_db";
     private static final Logger logger = Logger.getLogger(DataConfig.class.getName());
+
+    /**
+     * Construtor padrão da configuração de dados.
+     * 
+     * <p>Esta classe não requer inicialização especial.</p>
+     */
+    public DataConfig() {
+        // Configuração automática via anotações Spring
+    }
 
     /**
      * Configura e retorna a fonte de dados H2 com pool de conexões HikariCP.

@@ -41,6 +41,15 @@ public class DatabaseMigrationService {
     // private ChecklistMigrationService checklistMigrationService;
 
     /**
+     * Construtor padrão do serviço de migração de banco de dados.
+     * 
+     * <p>Este serviço não requer inicialização especial.</p>
+     */
+    public DatabaseMigrationService() {
+        // Inicialização automática via Spring
+    }
+
+    /**
      * Executa migrações automáticas após a inicialização do serviço.
      * Verifica se há mudanças necessárias no banco e as aplica automaticamente.
      */

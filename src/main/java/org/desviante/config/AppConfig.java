@@ -28,8 +28,16 @@ import org.springframework.context.annotation.Import;
  * @see org.springframework.context.annotation.Import
  */
 @Configuration
-@ComponentScan(basePackages = {"org.desviante.service", "org.desviante.view"}) // Scan
-@Import({DataConfig.class, GoogleApiConfig.class, AppMetadataConfig.class}) // Import the other configs
+@ComponentScan(basePackages = {"org.desviante.service", "org.desviante.view"})
+@Import({DataConfig.class, GoogleApiConfig.class, AppMetadataConfig.class})
 public class AppConfig {
-    // This class is now much cleaner and composes the other configurations.
+    /**
+     * Construtor padrão da classe de configuração.
+     * 
+     * <p>Esta classe não requer inicialização especial, pois utiliza apenas
+     * anotações Spring para configurar o contexto da aplicação.</p>
+     */
+    public AppConfig() {
+        // Configuração automática via anotações Spring
+    }
 }

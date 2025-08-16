@@ -18,15 +18,14 @@ import java.util.List;
 
 /**
  * Verificador de integridade do banco de dados.
- *
- * <p>Esta classe verifica a integridade do banco de dados H2 durante a inicialização
- * da aplicação, garantindo que as migrações foram aplicadas corretamente e que
- * o banco está em um estado consistente.</p>
- *
+ * 
+ * <p>Esta classe verifica a integridade e estrutura do banco de dados
+ * após a aplicação estar pronta, incluindo verificação de tabelas,
+ * estrutura e dados de exemplo.</p>
+ * 
  * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
  * @version 1.0
  * @since 1.0
- * @see org.springframework.stereotype.Component
  * @see org.springframework.context.event.EventListener
  */
 @Component
@@ -41,6 +40,15 @@ public class DatabaseIntegrityChecker {
     
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    /**
+     * Construtor padrão do verificador de integridade do banco de dados.
+     * 
+     * <p>Este verificador não requer inicialização especial.</p>
+     */
+    public DatabaseIntegrityChecker() {
+        // Verificador automático de integridade
+    }
 
     /**
      * Verifica a integridade do banco de dados após a aplicação estar pronta.

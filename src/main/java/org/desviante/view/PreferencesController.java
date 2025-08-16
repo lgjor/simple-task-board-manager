@@ -20,12 +20,41 @@ import java.util.Optional;
 /**
  * Controller para a tela de preferências da aplicação.
  * 
- * <p>Permite ao usuário configurar preferências globais como tipos padrão
- * de card e progresso que serão aplicados a novos cards criados.</p>
+ * <p>Esta classe gerencia a interface de usuário para configuração de preferências
+ * globais do sistema. Permite ao usuário definir valores padrão que serão aplicados
+ * automaticamente a novos elementos criados na aplicação.</p>
+ * 
+ * <p><strong>Responsabilidades Principais:</strong></p>
+ * <ul>
+ *   <li>Gerenciamento da interface de preferências (FXML)</li>
+ *   <li>Configuração de tipos padrão de cards</li>
+ *   <li>Configuração de tipos padrão de progresso</li>
+ *   <li>Configuração de grupos padrão para quadros</li>
+ *   <li>Persistência das configurações através do AppMetadataConfig</li>
+ * </ul>
+ * 
+ * <p><strong>Funcionalidades:</strong></p>
+ * <ul>
+ *   <li>Carregamento automático de opções disponíveis nos ComboBoxes</li>
+ *   <li>Validação de mudanças antes de habilitar o botão de salvar</li>
+ *   <li>Persistência das configurações no banco de dados</li>
+ *   <li>Feedback visual para o usuário sobre o estado das configurações</li>
+ * </ul>
+ * 
+ * <p><strong>Integração:</strong></p>
+ * <p>Utiliza serviços especializados ({@link CardTypeService}, {@link BoardGroupService})
+ * para obter dados e o {@link AppMetadataConfig} para persistir as configurações
+ * escolhidas pelo usuário.</p>
  * 
  * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
  * @version 1.0
  * @since 1.0
+ * @see CardTypeService
+ * @see BoardGroupService
+ * @see AppMetadataConfig
+ * @see CardType
+ * @see BoardGroup
+ * @see ProgressType
  */
 @Component
 @Slf4j
@@ -51,7 +80,28 @@ public class PreferencesController {
     private AppMetadataConfig appMetadataConfig;
     
     /**
+     * Construtor padrão da classe PreferencesController.
+     * 
+     * <p>Inicializa o controller de preferências da aplicação.
+     * Os serviços serão injetados via setter methods.</p>
+     */
+    public PreferencesController() {
+        // Construtor padrão - serviços serão injetados via setter methods
+    }
+    
+    /**
      * Inicializa o controller após o FXML ser carregado.
+     * 
+     * <p>Este método é chamado automaticamente pelo JavaFX após o carregamento
+     * do arquivo FXML. Ele configura os componentes da interface e prepara
+     * os listeners para detectar mudanças nas preferências.</p>
+     * 
+     * <p><strong>Comportamento:</strong></p>
+     * <ul>
+     *   <li>Configura os ComboBoxes com células personalizadas</li>
+     *   <li>Adiciona listeners para detectar mudanças de valores</li>
+     *   <li>Prepara a interface para carregamento das preferências</li>
+     * </ul>
      */
     @FXML
     public void initialize() {
@@ -61,6 +111,18 @@ public class PreferencesController {
     
     /**
      * Configura os ComboBoxes com os dados necessários.
+     * 
+     * <p>Este método privado configura cada ComboBox com células personalizadas
+     * para exibição adequada dos dados e adiciona listeners para detectar
+     * mudanças nos valores selecionados.</p>
+     * 
+     * <p><strong>Configurações:</strong></p>
+     * <ul>
+     *   <li>Tipos de card com células personalizadas</li>
+     *   <li>Tipos de progresso com células personalizadas</li>
+     *   <li>Grupos de quadros com células personalizadas</li>
+     *   <li>Listeners para atualização do estado do botão salvar</li>
+     * </ul>
      */
     private void setupComboBoxes() {
         // Configurar ComboBox de tipos de card
@@ -97,6 +159,9 @@ public class PreferencesController {
     
     /**
      * Atualiza o estado do botão de salvar baseado nas mudanças.
+     * 
+     * <p>Verifica se houve alterações nas preferências selecionadas e
+     * habilita ou desabilita o botão de salvar conforme necessário.</p>
      */
     private void updateSaveButtonState() {
         // Tipo de card e progresso são obrigatórios
@@ -261,18 +326,14 @@ public class PreferencesController {
             Long newGroupId = null;
             
             // Se "Sem Grupo" for selecionado, definir como null
-            if (selectedGroup != null && selectedGroup.getId() == null) {
+            if (selectedGroup.getId() == null) {
                 // "Sem Grupo" selecionado - manter como null
                 newGroupId = null;
                 log.debug("'Sem Grupo' selecionado - configuração será null");
-            } else if (selectedGroup != null) {
+            } else {
                 // Grupo válido selecionado - usar o ID do grupo
                 newGroupId = selectedGroup.getId();
                 log.debug("Grupo válido selecionado: {} (ID: {})", selectedGroup.getName(), newGroupId);
-            } else {
-                // Nenhum grupo selecionado - manter como null
-                newGroupId = null;
-                log.debug("Nenhum grupo selecionado - configuração será null");
             }
             
             if (!currentBoardGroupId.equals(Optional.ofNullable(newGroupId))) {
@@ -350,6 +411,8 @@ public class PreferencesController {
     
     /**
      * Define o serviço de tipos de card.
+     * 
+     * @param cardTypeService serviço de tipos de card
      */
     public void setCardTypeService(CardTypeService cardTypeService) {
         this.cardTypeService = cardTypeService;
@@ -361,6 +424,8 @@ public class PreferencesController {
 
     /**
      * Define o serviço de grupos de tabuleiro.
+     * 
+     * @param boardGroupService serviço de grupos de tabuleiro
      */
     public void setBoardGroupService(BoardGroupService boardGroupService) {
         this.boardGroupService = boardGroupService;
@@ -372,6 +437,8 @@ public class PreferencesController {
     
     /**
      * Define a configuração de metadados da aplicação.
+     * 
+     * @param appMetadataConfig configuração de metadados da aplicação
      */
     public void setAppMetadataConfig(AppMetadataConfig appMetadataConfig) {
         this.appMetadataConfig = appMetadataConfig;

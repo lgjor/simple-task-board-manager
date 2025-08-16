@@ -23,10 +23,12 @@ import java.util.List;
 import java.util.ResourceBundle;
 
 /**
- * Controlador para a tela de gerenciamento de grupos de board.
+ * Controlador para gerenciamento de grupos de quadros.
  * 
- * <p>Permite que os usuários criem, editem e excluam grupos de board
- * com seus próprios ícones e cores personalizadas.</p>
+ * <p>Responsável por gerenciar a interface de usuário para criação, edição,
+ * visualização e remoção de grupos de quadros. Implementa funcionalidades
+ * como validação de dados, navegação entre telas e sincronização com
+ * o serviço de negócio.</p>
  * 
  * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
  * @version 1.0
@@ -48,6 +50,16 @@ public class BoardGroupManagementController implements Initializable {
 
     private BoardGroupService boardGroupService;
     private ObservableList<BoardGroupDTO> groupsList;
+
+    /**
+     * Construtor padrão do controlador.
+     * 
+     * <p>Este construtor é chamado automaticamente pelo JavaFX
+     * durante a inicialização da interface.</p>
+     */
+    public BoardGroupManagementController() {
+        // Inicialização automática via JavaFX
+    }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -440,7 +452,9 @@ public class BoardGroupManagementController implements Initializable {
     }
 
     /**
-     * Define o serviço de grupos de board
+     * Define o serviço de grupos de board.
+     * 
+     * @param service serviço de grupos de board a ser utilizado
      */
     public void setBoardGroupService(BoardGroupService service) {
         this.boardGroupService = service;

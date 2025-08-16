@@ -23,6 +23,40 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * Fachada principal para o gerenciamento de tarefas no sistema.
+ * 
+ * <p>Esta classe implementa o padrão Facade, fornecendo uma interface simplificada
+ * para todas as operações relacionadas ao gerenciamento de quadros, colunas, cards
+ * e tarefas. Ela coordena a interação entre os diversos serviços especializados,
+ * garantindo consistência transacional e otimizações de performance.</p>
+ * 
+ * <p><strong>Responsabilidades Principais:</strong></p>
+ * <ul>
+ *   <li>Gerenciamento de quadros (boards) e suas operações CRUD</li>
+ *   <li>Coordenação de operações entre diferentes entidades do sistema</li>
+ *   <li>Implementação de regras de negócio para status e progresso</li>
+ *   <li>Otimização de consultas através de agrupamento de dados</li>
+ *   <li>Gerenciamento de transações para operações complexas</li>
+ * </ul>
+ * 
+ * <p><strong>Otimizações de Performance:</strong></p>
+ * <ul>
+ *   <li>Busca em lote de dados relacionados para reduzir consultas ao banco</li>
+ *   <li>Agrupamento de dados em mapas para acesso O(1)</li>
+ *   <li>Uso de transações somente leitura quando apropriado</li>
+ * </ul>
+ * 
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @version 1.0
+ * @since 1.0
+ * @see BoardService
+ * @see BoardColumnService
+ * @see CardService
+ * @see TaskService
+ * @see BoardGroupService
+ * @see CardTypeService
+ */
 @Service
 @RequiredArgsConstructor
 public class TaskManagerFacade {
@@ -35,7 +69,24 @@ public class TaskManagerFacade {
     private final CardTypeService cardTypeService;
     private final CheckListItemRepository checklistItemRepository;
     private final AppMetadataConfig appMetadataConfig;
-
+    
+    /**
+     * Obtém resumos de todos os quadros disponíveis no sistema.
+     * 
+     * <p>Este método implementa uma otimização de performance ao buscar todos os dados
+     * relacionados (quadros, colunas e cards) em consultas separadas e depois agrupá-los
+     * em memória para evitar o problema N+1 de consultas.</p>
+     * 
+     * <p><strong>Comportamento:</strong></p>
+ * <ul>
+ *   <li>Retorna lista vazia se não houver quadros cadastrados</li>
+ *   <li>Calcula estatísticas de progresso para cada quadro</li>
+ *   <li>Determina status automático baseado na distribuição dos cards</li>
+ * </ul>
+ * 
+ * @return Lista de resumos dos quadros com estatísticas de progresso
+ * @see BoardSummaryDTO
+ */
     @Transactional(readOnly = true)
     public List<BoardSummaryDTO> getAllBoardSummaries() {
         List<Board> allBoards = boardService.getAllBoards();
@@ -61,6 +112,18 @@ public class TaskManagerFacade {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Obtém o resumo detalhado de um quadro específico.
+     * 
+     * <p>Similar ao método {@link #getAllBoardSummaries()}, mas focado em um único
+     * quadro. Implementa as mesmas otimizações de performance para consultas eficientes.</p>
+ * 
+ * @param boardId ID do quadro para obter o resumo
+ * @return Resumo do quadro com estatísticas de progresso
+ * @throws ResourceNotFoundException se o quadro não for encontrado
+ * @see BoardSummaryDTO
+ * @see ResourceNotFoundException
+ */
     @Transactional(readOnly = true)
     public BoardSummaryDTO getBoardSummary(Long boardId) {
         Board board = boardService.getBoardById(boardId)
@@ -82,8 +145,25 @@ public class TaskManagerFacade {
     }
 
     /**
-     * MÉTODO PRIVADO E CENTRALIZADO, AGORA COM LÓGICA DE STATUS.
-     */
+     * Calcula o resumo de um quadro baseado em suas colunas e cards.
+     * 
+     * <p>Método privado que centraliza a lógica de cálculo de estatísticas e status
+     * dos quadros. Implementa as regras de negócio para determinação automática
+     * do status baseado na distribuição dos cards nas colunas.</p>
+ * 
+ * <p><strong>Regras de Status:</strong></p>
+ * <ul>
+ *   <li><strong>Vazio:</strong> Quando não há cards no quadro</li>
+ *   <li><strong>Não iniciado:</strong> Quando todos os cards estão na coluna inicial</li>
+ *   <li><strong>Concluído:</strong> Quando todos os cards estão na coluna final</li>
+ *   <li><strong>Em andamento:</strong> Quando há cards em diferentes colunas</li>
+ * </ul>
+ * 
+ * @param board Quadro para calcular o resumo
+ * @param columnsByBoardId Mapa de colunas agrupadas por ID do quadro
+ * @param cardsByColumnId Mapa de cards agrupados por ID da coluna
+ * @return DTO com resumo do quadro e estatísticas
+ */
     private BoardSummaryDTO calculateBoardSummary(Board board, Map<Long, List<BoardColumn>> columnsByBoardId, Map<Long, List<Card>> cardsByColumnId) {
         List<BoardColumn> boardColumns = columnsByBoardId.getOrDefault(board.getId(), Collections.emptyList());
 
@@ -143,6 +223,23 @@ public class TaskManagerFacade {
         );
     }
 
+    /**
+     * Cria um novo quadro com configuração padrão.
+     * 
+     * <p>Cria um quadro com três colunas padrão (A Fazer, Em Andamento, Concluído)
+     * e aplica automaticamente o grupo padrão configurado no sistema, se disponível.</p>
+ * 
+ * <p><strong>Colunas Criadas:</strong></p>
+ * <ul>
+ *   <li>Coluna 0: "A Fazer" (INITIAL)</li>
+ *   <li>Coluna 1: "Em Andamento" (PENDING)</li>
+ *   <li>Coluna 2: "Concluído" (FINAL)</li>
+ * </ul>
+ * 
+ * @param name Nome do novo quadro
+ * @return Resumo do quadro criado com status "Vazio"
+ * @see BoardSummaryDTO
+ */
     @Transactional
     public BoardSummaryDTO createNewBoard(String name) {
         var newBoard = boardService.createBoard(name);
@@ -162,6 +259,18 @@ public class TaskManagerFacade {
         return new BoardSummaryDTO(newBoard.getId(), newBoard.getName(), 0, 0, 0, "Vazio", newBoard.getGroup());
     }
 
+    /**
+     * Cria um novo quadro associado a um grupo específico.
+     * 
+     * <p>Similar ao método {@link #createNewBoard(String)}, mas permite especificar
+     * diretamente o grupo ao qual o quadro será associado, ignorando a configuração
+     * padrão do sistema.</p>
+ * 
+ * @param name Nome do novo quadro
+ * @param groupId ID do grupo ao qual o quadro será associado
+ * @return Resumo do quadro criado com status "Vazio"
+ * @see BoardSummaryDTO
+ */
     @Transactional
     public BoardSummaryDTO createNewBoardWithGroup(String name, Long groupId) {
         var newBoard = boardService.createBoard(name);
@@ -177,7 +286,19 @@ public class TaskManagerFacade {
         return new BoardSummaryDTO(newBoard.getId(), newBoard.getName(), 0, 0, 0, "Vazio", newBoard.getGroup());
     }
 
-    // ... O resto da classe permanece o mesmo ...
+    /**
+     * Obtém detalhes completos de um quadro específico.
+     * 
+     * <p>Retorna informações detalhadas do quadro, incluindo todas as suas colunas
+     * e cards organizados por coluna. Implementa otimizações de performance similares
+     * aos métodos de resumo.</p>
+     * 
+     * @param boardId ID do quadro para obter os detalhes
+     * @return DTO com detalhes completos do quadro
+     * @throws ResourceNotFoundException se o quadro não for encontrado
+     * @see BoardDetailDTO
+     * @see ResourceNotFoundException
+     */
     @Transactional(readOnly = true)
     public BoardDetailDTO getBoardDetails(Long boardId) {
         var board = boardService.getBoardById(boardId)
@@ -219,6 +340,20 @@ public class TaskManagerFacade {
         return new BoardDetailDTO(board.getId(), board.getName(), columnDTOs);
     }
 
+    /**
+     * Cria um novo card no sistema.
+     * 
+     * <p>Delega a criação do card para o serviço especializado e retorna
+     * os detalhes completos do card criado, incluindo informações da coluna
+     * e tipo de progresso.</p>
+     * 
+     * @param request DTO com dados para criação do card
+     * @return DTO com detalhes completos do card criado
+     * @throws ResourceNotFoundException se a coluna pai não for encontrada
+     * @see CreateCardRequestDTO
+     * @see CardDetailDTO
+     * @see ResourceNotFoundException
+     */
     @Transactional
     public CardDetailDTO createNewCard(CreateCardRequestDTO request) {
         Card newCard = cardService.createCard(
@@ -248,6 +383,19 @@ public class TaskManagerFacade {
         );
     }
 
+    /**
+     * Move um card para uma nova coluna.
+     * 
+     * <p>Atualiza a posição do card no quadro, movendo-o para a coluna especificada.
+     * O progresso e status do card permanecem desacoplados da movimentação.</p>
+     * 
+     * @param cardId ID do card a ser movido
+     * @param newColumnId ID da nova coluna de destino
+     * @return DTO com detalhes atualizados do card
+     * @throws ResourceNotFoundException se o card ou a coluna não forem encontrados
+     * @see CardDetailDTO
+     * @see ResourceNotFoundException
+     */
     @Transactional
     public CardDetailDTO moveCard(Long cardId, Long newColumnId) {
         // Mover o card sem sincronizar progresso - progresso e status desacoplados
@@ -272,16 +420,38 @@ public class TaskManagerFacade {
         );
     }
 
+    /**
+     * Remove um card do sistema.
+     * 
+     * <p>Delega a exclusão do card para o serviço especializado.
+     * Esta operação é irreversível e remove todos os dados associados ao card.</p>
+     * 
+     * @param cardId ID do card a ser removido
+     */
     @Transactional
     public void deleteCard(Long cardId) {
         cardService.deleteCard(cardId);
     }
 
+    /**
+     * Atualiza o nome de um quadro.
+     * 
+     * @param boardId ID do quadro a ser atualizado
+     * @param newName Novo nome para o quadro
+     */
     @Transactional
     public void updateBoardName(Long boardId, String newName) {
         boardService.updateBoardName(boardId, newName);
     }
 
+    /**
+     * Atualiza o grupo associado a um quadro.
+     * 
+     * @param boardId ID do quadro a ser atualizado
+     * @param groupId ID do novo grupo para o quadro
+     * @throws ResourceNotFoundException se o quadro não for encontrado
+     * @see ResourceNotFoundException
+     */
     @Transactional
     public void updateBoardGroup(Long boardId, Long groupId) {
         Board board = boardService.getBoardById(boardId)
@@ -291,13 +461,32 @@ public class TaskManagerFacade {
         boardService.updateBoard(board);
     }
 
+    /**
+     * Remove um quadro do sistema.
+     * 
+     * <p>Esta operação é irreversível e remove todos os dados associados ao quadro,
+     * incluindo colunas, cards e relacionamentos.</p>
+     * 
+     * @param boardId ID do quadro a ser removido
+     */
     @Transactional
     public void deleteBoard(Long boardId) {
         boardService.deleteBoard(boardId);
     }
 
     /**
-     * MÉTODO: Atualiza os detalhes de um card.
+     * Atualiza os detalhes de um card existente.
+     * 
+     * <p>Permite modificar título, descrição, unidades de progresso e tipo de progresso
+     * de um card. O card permanece na mesma coluna após a atualização.</p>
+     * 
+     * @param cardId ID do card a ser atualizado
+     * @param request DTO com os novos dados do card
+     * @return DTO com detalhes atualizados do card
+     * @throws ResourceNotFoundException se o card ou a coluna não forem encontrados
+     * @see UpdateCardDetailsDTO
+     * @see CardDetailDTO
+     * @see ResourceNotFoundException
      */
     @Transactional
     public CardDetailDTO updateCardDetails(Long cardId, UpdateCardDetailsDTO request) {
@@ -331,6 +520,15 @@ public class TaskManagerFacade {
         );
     }
 
+    /**
+     * Formata uma data/hora para exibição na interface.
+     * 
+     * <p>Método utilitário privado que converte LocalDateTime para string
+     * no formato "dd/MM/yy HH:mm". Retorna null se a data for null.</p>
+     * 
+     * @param localDateTime Data/hora a ser formatada
+     * @return String formatada ou null se a data for null
+     */
     private String formatDateTime(LocalDateTime localDateTime) {
         if (localDateTime == null) {
             return null;
@@ -340,7 +538,13 @@ public class TaskManagerFacade {
     }
 
     /**
-     * Cria uma nova Task associada a um Card.
+     * Cria uma nova tarefa associada a um card.
+     * 
+     * <p>Integra o card com o Google Tasks, criando uma tarefa sincronizada
+     * que pode ser gerenciada externamente.</p>
+     * 
+     * @param request DTO com dados para criação da tarefa
+     * @see CreateTaskRequestDTO
      */
     @Transactional
     public void createTaskForCard(CreateTaskRequestDTO request) {
@@ -354,27 +558,75 @@ public class TaskManagerFacade {
         System.out.println("Fachada: Criando tarefa para o card ID " + request.cardId());
     }
 
-    // Novos métodos:
+    /**
+     * Obtém todos os grupos de quadros disponíveis no sistema.
+     * 
+     * @return Lista de todos os grupos de quadros
+     * @see BoardGroup
+     */
     public List<BoardGroup> getAllBoardGroups() {
         return boardGroupService.getAllBoardGroups();
     }
 
+    /**
+     * Cria um novo grupo de quadros.
+     * 
+     * @param name Nome do novo grupo
+     * @param description Descrição do grupo
+     * @param icon Ícone representativo do grupo
+     * @return Grupo criado com ID gerado
+     * @see BoardGroup
+     */
     public BoardGroup createBoardGroup(String name, String description, String icon) {
         return boardGroupService.createBoardGroup(name, description, icon);
     }
 
+    /**
+     * Atualiza um grupo de quadros existente.
+     * 
+     * @param groupId ID do grupo a ser atualizado
+     * @param name Novo nome para o grupo
+     * @param description Nova descrição para o grupo
+     * @param icon Novo ícone para o grupo
+     * @return Grupo atualizado
+     * @see BoardGroup
+     */
     public BoardGroup updateBoardGroup(Long groupId, String name, String description, String icon) {
         return boardGroupService.updateBoardGroup(groupId, name, description, icon);
     }
 
+    /**
+     * Remove um grupo de quadros do sistema.
+     * 
+     * <p>Esta operação é irreversível. Os quadros associados ao grupo
+     * permanecerão no sistema, mas sem associação a grupo.</p>
+     * 
+     * @param groupId ID do grupo a ser removido
+     */
     public void deleteBoardGroup(Long groupId) {
         boardGroupService.deleteBoardGroup(groupId);
     }
 
+    /**
+     * Obtém todos os quadros associados a um grupo específico.
+     * 
+     * @param groupId ID do grupo para filtrar os quadros
+     * @return Lista de resumos dos quadros do grupo
+     * @see BoardSummaryDTO
+     */
     public List<BoardSummaryDTO> getBoardsByGroup(Long groupId) {
         return boardGroupService.getBoardsByGroup(groupId);
     }
 
+    /**
+     * Obtém todos os quadros que não estão associados a nenhum grupo.
+     * 
+     * <p>Implementa as mesmas otimizações de performance dos outros métodos
+     * de listagem de quadros, agrupando consultas para eficiência.</p>
+     * 
+     * @return Lista de resumos dos quadros sem grupo
+     * @see BoardSummaryDTO
+     */
     @Transactional(readOnly = true)
     public List<BoardSummaryDTO> getBoardsWithoutGroup() {
         List<Board> boardsWithoutGroup = boardService.getBoardsWithoutGroup();
@@ -401,24 +653,46 @@ public class TaskManagerFacade {
     }
 
     /**
-     * Retorna o serviço de tipos de card para uso na interface.
+     * Obtém o serviço de tipos de card para uso na interface.
+     * 
+     * <p>Método de acesso direto ao serviço especializado, permitindo
+     * que a interface acesse funcionalidades específicas do CardTypeService.</p>
+     * 
+     * @return Instância do CardTypeService
+     * @see CardTypeService
      */
     public CardTypeService getCardTypeService() {
         return cardTypeService;
     }
     
+    /**
+     * Obtém o serviço de grupos de quadros para uso na interface.
+     * 
+     * @return Instância do BoardGroupService
+     * @see BoardGroupService
+     */
     public BoardGroupService getBoardGroupService() {
         return boardGroupService;
     }
     
+    /**
+     * Obtém o repositório de itens de checklist para uso na interface.
+     * 
+     * @return Instância do CheckListItemRepository
+     * @see CheckListItemRepository
+     */
     public CheckListItemRepository getChecklistItemRepository() {
         return checklistItemRepository;
     }
 
     /**
      * Obtém todas as opções de tipos de card disponíveis.
+     * 
+     * <p>Converte os tipos de card em DTOs de opção para uso na interface,
+     * fornecendo dados formatados para seleção pelo usuário.</p>
      *
-     * @return lista de opções de tipos de card
+     * @return Lista de opções de tipos de card
+     * @see CardTypeOptionDTO
      */
     @Transactional(readOnly = true)
     public List<CardTypeOptionDTO> getAllCardTypeOptions() {
@@ -430,6 +704,9 @@ public class TaskManagerFacade {
 
     /**
      * Sugere o tipo de card padrão baseado nas configurações do sistema.
+     * 
+     * <p>Utiliza as configurações de metadados da aplicação para determinar
+     * qual tipo de card deve ser sugerido como padrão para novos cards.</p>
      *
      * @return ID do tipo de card sugerido como padrão
      */
@@ -440,8 +717,11 @@ public class TaskManagerFacade {
 
     /**
      * Sugere o tipo de progresso padrão baseado nas configurações do sistema.
+     * 
+     * <p>Utiliza as configurações de metadados da aplicação para determinar
+     * qual tipo de progresso deve ser sugerido como padrão para novos cards.</p>
      *
-     * @return tipo de progresso sugerido como padrão
+     * @return Tipo de progresso sugerido como padrão
      */
     @Transactional(readOnly = true)
     public org.desviante.model.enums.ProgressType suggestDefaultProgressType() {
@@ -450,6 +730,9 @@ public class TaskManagerFacade {
 
     /**
      * Sugere o grupo padrão baseado nas configurações do sistema.
+     * 
+     * <p>Utiliza as configurações de metadados da aplicação para determinar
+     * qual grupo deve ser sugerido como padrão para novos quadros.</p>
      *
      * @return ID do grupo sugerido como padrão, ou null se não houver grupos
      */
@@ -460,8 +743,12 @@ public class TaskManagerFacade {
 
     /**
      * Sugere o grupo padrão como objeto completo.
+     * 
+     * <p>Similar ao método {@link #suggestDefaultBoardGroupId()}, mas retorna
+     * o objeto completo do grupo em vez de apenas o ID.</p>
      *
-     * @return grupo padrão sugerido, ou null se não houver grupos
+     * @return Grupo padrão sugerido, ou null se não houver grupos
+     * @see BoardGroup
      */
     @Transactional(readOnly = true)
     public BoardGroup suggestDefaultBoardGroup() {
@@ -470,6 +757,9 @@ public class TaskManagerFacade {
 
     /**
      * Move um card para cima na mesma coluna.
+     * 
+     * <p>Altera a ordem do card dentro da coluna, movendo-o uma posição acima.
+     * A operação falha silenciosamente se o card já estiver no topo da coluna.</p>
      * 
      * @param cardId ID do card a ser movido
      * @return true se o card foi movido, false se já estava no topo
@@ -482,6 +772,9 @@ public class TaskManagerFacade {
     /**
      * Move um card para baixo na mesma coluna.
      * 
+     * <p>Altera a ordem do card dentro da coluna, movendo-o uma posição abaixo.
+     * A operação falha silenciosamente se o card já estiver na base da coluna.</p>
+     * 
      * @param cardId ID do card a ser movido
      * @return true se o card foi movido, false se já estava na base
      */
@@ -492,6 +785,9 @@ public class TaskManagerFacade {
 
     /**
      * Verifica se um card pode ser movido para cima.
+     * 
+     * <p>Determina se o card está em uma posição que permite movimentação
+     * para cima dentro da coluna.</p>
      * 
      * @param cardId ID do card
      * @return true se o card pode ser movido para cima, false caso contrário
@@ -504,6 +800,9 @@ public class TaskManagerFacade {
     /**
      * Verifica se um card pode ser movido para baixo.
      * 
+     * <p>Determina se o card está em uma posição que permite movimentação
+     * para baixo dentro da coluna.</p>
+     * 
      * @param cardId ID do card
      * @return true se o card pode ser movido para baixo, false caso contrário
      */
@@ -512,11 +811,28 @@ public class TaskManagerFacade {
         return cardService.canMoveCardDown(cardId);
     }
 
+    /**
+     * Obtém um card pelo seu ID.
+     * 
+     * @param cardId ID do card a ser buscado
+     * @return Optional contendo o card se encontrado, ou vazio caso contrário
+     * @see Card
+     */
     @Transactional(readOnly = true)
     public Optional<Card> getCardById(Long cardId) {
         return cardService.getCardById(cardId);
     }
 
+    /**
+     * Obtém detalhes completos de um card pelo seu ID.
+     * 
+     * <p>Converte a entidade Card em um DTO detalhado, incluindo informações
+     * da coluna e tipo de progresso para exibição na interface.</p>
+     * 
+     * @param cardId ID do card a ser buscado
+     * @return Optional contendo os detalhes do card se encontrado, ou vazio caso contrário
+     * @see CardDetailDTO
+     */
     @Transactional(readOnly = true)
     public Optional<CardDetailDTO> getCardDetailById(Long cardId) {
         return cardService.getCardById(cardId)

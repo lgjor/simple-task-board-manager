@@ -16,6 +16,12 @@ public class ProgressContext {
     private final Map<ProgressType, ProgressStrategy> strategies;
     private ProgressUIConfig uiConfig;
     
+    /**
+     * Construtor padrão da classe ProgressContext.
+     * 
+     * <p>Inicializa o contexto de progresso com as estratégias padrão
+     * e configura a interface do usuário.</p>
+     */
     public ProgressContext() {
         this.strategies = new HashMap<>();
         initializeStrategies();

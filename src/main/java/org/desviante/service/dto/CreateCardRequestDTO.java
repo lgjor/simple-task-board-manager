@@ -20,17 +20,22 @@ import org.desviante.model.enums.ProgressType;
  * da interface do usuário e delegar a criação do card para o CardService,
  * mantendo a separação entre a camada de apresentação e a lógica de negócio.</p>
  * 
+ * @param title título do card a ser criado
+ * @param description descrição detalhada do card
+ * @param parentColumnId ID da coluna onde o card será criado
+ * @param cardTypeId ID do tipo de card a ser criado
+ * @param progressType tipo de progresso do card (pode ser null)
  * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
  * @version 1.0
  * @since 1.0
- * @see TaskManagerFacade
- * @see CardService
- * @see CardType
+ * @see org.desviante.service.TaskManagerFacade
+ * @see org.desviante.service.CardService
+ * @see org.desviante.model.CardType
  */
 public record CreateCardRequestDTO(
-        String title,               // Título do card a ser criado
-        String description,         // Descrição detalhada do card
-        Long parentColumnId,        // ID da coluna onde o card será criado
-        Long cardTypeId,          // ID do tipo de card a ser criado
-        ProgressType progressType   // Tipo de progresso do card (pode ser null)
+        String title,
+        String description,
+        Long parentColumnId,
+        Long cardTypeId,
+        ProgressType progressType
 ) {}

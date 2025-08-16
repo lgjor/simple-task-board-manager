@@ -23,7 +23,7 @@ package org.desviante.exception;
  * @version 1.0
  * @since 1.0
  * @see RuntimeException
- * @see GoogleTasksApiService
+ * @see org.desviante.service.GoogleTasksApiService
  */
 public class GoogleApiServiceException extends RuntimeException {
     

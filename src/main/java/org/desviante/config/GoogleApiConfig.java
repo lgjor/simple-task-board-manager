@@ -24,24 +24,15 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Configuração da integração com Google Tasks API.
- *
- * <p>Esta classe configura a integração não-interativa com a Google Tasks API,
- * permitindo sincronização de tarefas entre a aplicação local e o Google Tasks.
- * A configuração é condicional e só é ativada quando explicitamente habilitada.</p>
- *
- * <p>Características principais:</p>
- * <ul>
- *   <li>Configuração condicional baseada em propriedades e perfis</li>
- *   <li>Autenticação OAuth2 não-interativa usando credenciais salvas</li>
- *   <li>Fallback gracioso quando credenciais não estão disponíveis</li>
- *   <li>Integração segura para processamento AOT</li>
- * </ul>
- *
+ * Configuração da API do Google para integração com Google Tasks.
+ * 
+ * <p>Esta classe configura a integração com a API do Google Tasks através de
+ * OAuth2, incluindo fluxo de autorização e serviço autenticado.</p>
+ * 
  * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
  * @version 1.0
  * @since 1.0
- * @see org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+ * @see org.springframework.context.annotation.Configuration
  * @see org.springframework.context.annotation.Profile
  * @see com.google.api.services.tasks.Tasks
  * @see com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
@@ -57,6 +48,15 @@ public class GoogleApiConfig {
     private static final String CREDENTIALS_FILE_PATH = "/auth/credentials.json";
     private static final String TOKENS_DIRECTORY_PATH = System.getProperty("user.home") + File.separator + ".credentials" + File.separator + "simple-task-board-manager";
     private static final String USER_ID = "user";
+
+    /**
+     * Construtor padrão da configuração da API do Google.
+     * 
+     * <p>Esta classe não requer inicialização especial.</p>
+     */
+    public GoogleApiConfig() {
+        // Configuração automática via anotações Spring
+    }
 
     /**
      * Cria o bean principal do fluxo de autorização Google OAuth2.

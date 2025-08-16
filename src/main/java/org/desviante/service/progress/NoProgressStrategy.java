@@ -4,9 +4,25 @@ import org.desviante.model.enums.ProgressType;
 
 /**
  * Estratégia para cards sem progresso.
- * Gerencia a lógica para cards que não possuem progresso.
+ * 
+ * <p>Gerencia a lógica para cards que não possuem progresso,
+ * ocultando elementos de interface relacionados ao progresso
+ * mas mantendo o status visível.</p>
+ * 
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @version 1.0
+ * @since 1.0
  */
 public class NoProgressStrategy implements ProgressStrategy {
+    
+    /**
+     * Construtor padrão da estratégia sem progresso.
+     * 
+     * <p>Esta estratégia não requer inicialização especial.</p>
+     */
+    public NoProgressStrategy() {
+        // Estratégia padrão sem progresso
+    }
     
     @Override
     public boolean isEnabled() {

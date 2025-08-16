@@ -25,6 +25,17 @@ import org.desviante.service.progress.ProgressValidationResult;
 import javafx.scene.image.WritableImage;
 import org.desviante.service.ChecklistItemService;
 
+/**
+ * Controlador para visualização e edição de cards individuais.
+ * 
+ * <p>Responsável por gerenciar a interface de usuário para exibição,
+ * edição e manipulação de cards, incluindo funcionalidades como
+ * drag and drop, edição inline, controle de progresso e checklist.</p>
+ * 
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @version 1.0
+ * @since 1.0
+ */
 public class CardViewController {
 
     @FXML private VBox cardPane;
@@ -93,6 +104,22 @@ public class CardViewController {
     // --- PROGRESS CONTEXT ---
     private ProgressContext progressContext;
 
+    /**
+     * Construtor padrão do controlador.
+     * 
+     * <p>Este construtor é chamado automaticamente pelo JavaFX
+     * durante a inicialização da interface.</p>
+     */
+    public CardViewController() {
+        // Inicialização automática via JavaFX
+    }
+
+    /**
+     * Inicializa o controlador e configura a interface.
+     * 
+     * <p>Este método é chamado automaticamente pelo JavaFX após a
+     * construção do controlador.</p>
+     */
     @FXML
     public void initialize() {
         setupDragAndDrop();
@@ -325,6 +352,14 @@ public class CardViewController {
         }
     }
 
+    /**
+     * Define os dados do card e configura o controlador.
+     * 
+     * @param facade fachada principal para gerenciamento de tarefas
+     * @param boardName nome do quadro ao qual o card pertence
+     * @param card dados do card a ser exibido
+     * @param onSaveCallback callback para quando o card for salvo
+     */
     public void setData(
             TaskManagerFacade facade,
             String boardName,
@@ -342,6 +377,11 @@ public class CardViewController {
         updateDisplayData(card);
     }
 
+    /**
+     * Atualiza a exibição dos dados do card.
+     * 
+     * @param card dados atualizados do card
+     */
     public void updateDisplayData(CardDetailDTO card) {
         this.cardData = card;
         updateCardTypeLabel(card);

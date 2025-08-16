@@ -38,6 +38,17 @@ import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.desviante.util.WindowManager;
 
+/**
+ * Controlador principal para a visualização e gerenciamento de quadros.
+ * 
+ * <p>Responsável por gerenciar a interface principal da aplicação, incluindo
+ * a visualização de quadros, filtros, criação de cards e navegação entre
+ * diferentes funcionalidades do sistema.</p>
+ * 
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @version 1.0
+ * @since 1.0
+ */
 @Component
 public class BoardViewController {
 
@@ -123,11 +134,21 @@ public class BoardViewController {
         }
     }
 
-
+    /**
+     * Construtor que inicializa o controlador com as dependências necessárias.
+     * 
+     * @param facade fachada principal para gerenciamento de tarefas
+     */
     public BoardViewController(TaskManagerFacade facade) {
         this.facade = facade;
     }
 
+    /**
+     * Inicializa o controlador e configura a interface.
+     * 
+     * <p>Este método é chamado automaticamente pelo JavaFX após a
+     * construção do controlador.</p>
+     */
     @FXML
     public void initialize() {
         System.out.println("BoardViewController inicializado.");

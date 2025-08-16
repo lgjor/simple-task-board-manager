@@ -33,12 +33,18 @@ public class Board {
      * Identificador único do quadro.
      * <p>Este campo é usado como chave primária na persistência e para
      * operações de igualdade e hash code.</p>
+     * 
+     * @return identificador único do quadro
+     * @param id novo identificador único do quadro
      */
     private Long id;
     
     /**
      * Nome do quadro.
      * <p>Representa o nome descritivo do quadro que será exibido na interface.</p>
+     * 
+     * @return nome do quadro
+     * @param name novo nome do quadro
      */
     private String name;
     
@@ -46,6 +52,9 @@ public class Board {
      * Data e hora de criação do quadro.
      * <p>Este campo é automaticamente preenchido quando um novo quadro é criado
      * e não deve ser modificado posteriormente.</p>
+     * 
+     * @return data e hora de criação do quadro
+     * @param creationDate nova data e hora de criação do quadro
      */
     private LocalDateTime creationDate;
     
@@ -53,6 +62,9 @@ public class Board {
      * Identificador do grupo ao qual o quadro pertence.
      * <p>Este campo mantém a referência ao grupo através do ID, permitindo
      * consultas eficientes sem carregar o objeto completo do grupo.</p>
+     * 
+     * @return identificador do grupo associado ao quadro
+     * @param groupId novo identificador do grupo associado ao quadro
      */
     private Long groupId;
     
@@ -61,6 +73,8 @@ public class Board {
      * <p>Este campo é usado para carregamento eager quando necessário,
      * permitindo acesso direto às propriedades do grupo sem consultas adicionais.</p>
      * 
+     * @return objeto do grupo associado ao quadro
+     * @param group novo objeto do grupo associado ao quadro
      * @see BoardGroup
      */
     private BoardGroup group;

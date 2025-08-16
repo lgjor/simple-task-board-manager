@@ -11,16 +11,9 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Gerenciador de janelas secundárias da aplicação.
  * 
- * <p>Esta classe mantém um registro de todas as janelas secundárias abertas
- * e as fecha automaticamente quando a janela principal for fechada.</p>
- * 
- * <p>Funcionalidades:</p>
- * <ul>
- *   <li>Registro automático de novas janelas</li>
- *   <li>Fechamento automático de todas as janelas ao sair</li>
- *   <li>Prevenção de vazamentos de memória</li>
- *   <li>Logs para auditoria e debugging</li>
- * </ul>
+ * <p>Esta classe gerencia o ciclo de vida de todas as janelas secundárias
+ * da aplicação, garantindo que sejam fechadas adequadamente quando a
+ * aplicação principal for encerrada.</p>
  * 
  * @author Aú Desviante
  * @version 1.0
@@ -36,6 +29,15 @@ public class WindowManager {
      * Usa ConcurrentHashMap.newKeySet() para garantir thread-safety.
      */
     private final Set<Stage> secondaryWindows = ConcurrentHashMap.newKeySet();
+    
+    /**
+     * Construtor padrão do gerenciador de janelas.
+     * 
+     * <p>Este gerenciador não requer inicialização especial.</p>
+     */
+    public WindowManager() {
+        // Gerenciador automático de janelas
+    }
     
     /**
      * Registra uma nova janela secundária para gerenciamento.

@@ -25,12 +25,23 @@ import org.desviante.model.enums.ProgressType;
  * completa de cards em uma coluna, sendo parte da hierarquia de dados que
  * permite a renderização completa do Kanban board na interface do usuário.</p>
  * 
+ * @param id identificador único do card
+ * @param title título do card para exibição
+ * @param description descrição detalhada do card
+ * @param typeName nome do tipo de card
+ * @param totalUnits total de unidades para progresso (páginas, minutos, módulos)
+ * @param currentUnits unidades atuais para progresso
+ * @param creationDate data de criação formatada como string
+ * @param lastUpdateDate data da última atualização formatada como string
+ * @param completionDate data de conclusão formatada como string (pode ser null)
+ * @param columnKind tipo da coluna onde o card está localizado
+ * @param progressType tipo de progresso do card (NONE, PERCENTAGE, CUSTOM)
  * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
  * @version 1.0
  * @since 1.0
- * @see BoardColumnDetailDTO
- * @see BoardDetailDTO
- * @see CardType
+ * @see org.desviante.service.dto.BoardColumnDetailDTO
+ * @see org.desviante.service.dto.BoardDetailDTO
+ * @see org.desviante.model.CardType
  */
 public record CardDetailDTO(
         Long id,                    // Identificador único do card

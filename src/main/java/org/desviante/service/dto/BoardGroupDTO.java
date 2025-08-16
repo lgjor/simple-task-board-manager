@@ -1,7 +1,5 @@
 package org.desviante.service.dto;
 
-import java.time.LocalDateTime;
-
 /**
  * DTO para representação de grupos de board na interface de usuário.
  * 
@@ -9,6 +7,12 @@ import java.time.LocalDateTime;
  * e componentes de interface, incluindo formatação adequada de datas
  * e informações essenciais para gerenciamento.</p>
  * 
+ * @param id identificador único do grupo
+ * @param name nome do grupo
+ * @param description descrição do grupo
+ * @param color cor do grupo em formato hexadecimal
+ * @param icon ícone do grupo
+ * @param creationDate data de criação formatada
  * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
  * @version 1.0
  * @since 1.0

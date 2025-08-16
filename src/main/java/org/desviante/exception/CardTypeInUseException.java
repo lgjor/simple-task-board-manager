@@ -8,7 +8,7 @@ package org.desviante.exception;
  * ou modificado de forma que afete cards existentes, devido a regras
  * de integridade referencial e negócio.</p>
  * 
- * <p>Esta exception é utilizada principalmente pelo {@link CardTypeService}
+ * <p>Esta exception é utilizada principalmente pelo CardTypeService
  * para indicar que uma operação de remoção ou modificação falhou porque
  * existem cards que dependem do tipo de card em questão.</p>
  * 
@@ -25,7 +25,7 @@ package org.desviante.exception;
  * @version 1.0
  * @since 1.0
  * @see RuntimeException
- * @see CardTypeService
+ * @see org.desviante.service.CardTypeService
  */
 public class CardTypeInUseException extends RuntimeException {
 

@@ -21,6 +21,11 @@ public class ChecklistItemService {
     
     private final CheckListItemRepository checklistItemRepository;
     
+    /**
+     * Construtor que inicializa o serviço com as dependências necessárias.
+     * 
+     * @param checklistItemRepository repositório para operações de itens de checklist
+     */
     public ChecklistItemService(CheckListItemRepository checklistItemRepository) {
         this.checklistItemRepository = checklistItemRepository;
     }
