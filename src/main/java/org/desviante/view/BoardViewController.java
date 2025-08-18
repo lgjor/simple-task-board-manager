@@ -120,6 +120,8 @@ public class BoardViewController {
     private Button googleTaskButton;
     @FXML
     private Button preferencesButton;
+    @FXML
+    private Button aboutButton;
 
     // Mapa para rastrear o nó visual de cada card pelo seu ID.
     private final Map<Long, Node> cardNodeMap = new HashMap<>();
@@ -1195,6 +1197,57 @@ public class BoardViewController {
             
         } catch (IOException e) {
             showError("Erro", "Não foi possível abrir a tela de preferências: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Abre a janela "Sobre" com informações do aplicativo.
+     */
+    @FXML
+    private void handleAbout() {
+        try {
+            // Carregar a tela About definitiva
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/about.fxml"));
+            Parent root = loader.load();
+            
+            // Criar uma nova janela
+            javafx.stage.Stage stage = new javafx.stage.Stage();
+            stage.setTitle("Sobre - Simple Task Board Manager");
+            stage.setScene(new javafx.scene.Scene(root));
+            stage.setMinWidth(600);
+            stage.setMinHeight(700);
+            stage.setResizable(false);
+            
+            // Configurar handler para o botão fechar
+            Button closeButton = (Button) root.lookup("#closeButton");
+            if (closeButton != null) {
+                closeButton.setOnAction(e -> stage.close());
+            }
+            
+            // Aplicar CSS diretamente
+            try {
+                String cssPath = getClass().getResource("/css/about.css").toExternalForm();
+                stage.getScene().getStylesheets().add(cssPath);
+            } catch (Exception cssException) {
+                System.err.println("Erro ao carregar CSS: " + cssException.getMessage());
+                // Continuar sem CSS se houver erro
+            }
+            
+            // Centralizar a janela
+            stage.centerOnScreen();
+            
+            // Registrar a janela no WindowManager para fechamento automático
+            windowManager.registerWindow(stage, "Sobre");
+            
+            // Mostrar a janela
+            stage.show();
+            
+        } catch (IOException e) {
+            e.printStackTrace(); // Adicionar stack trace para debug
+            showError("Erro", "Não foi possível abrir a tela Sobre: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace(); // Adicionar stack trace para debug
+            showError("Erro Inesperado", "Erro inesperado ao abrir a tela Sobre: " + e.getMessage());
         }
     }
 }

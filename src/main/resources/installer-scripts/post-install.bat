@@ -134,7 +134,7 @@ echo 2. Verifique se tudo está funcionando
 echo 3. Consulte a documentação se necessário
 echo.
 echo Para suporte:
-echo - GitHub: https://github.com/desviante/simple-task-board-manager
+echo - GitHub: https://github.com/lgjor/simple-task-board-manager
 echo - Documentação: GUIA_ATUALIZACAO.md
 echo.
 echo Pressione qualquer tecla para finalizar...

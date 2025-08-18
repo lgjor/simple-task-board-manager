@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.Hyperlink?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.FontWeight?>
+<?import javafx.scene.text.TextAlignment?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+
+<VBox fx:id="aboutPane" spacing="15" styleClass="about-pane" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.desviante.view.AboutController">
+    <padding>
+        <Insets top="20.0" right="25.0" bottom="20.0" left="25.0" />
+    </padding>
+    
+    <!-- Cabeçalho com logo e título -->
+    <VBox alignment="CENTER" spacing="10">
+        <Label fx:id="appTitleLabel" text="Simple Task Board Manager" styleClass="app-title" />
+        <Label fx:id="appVersionLabel" text="Versão 1.1.7" styleClass="app-version" />
+        <Label fx:id="appTaglineLabel" text="Aplicação desktop simples e eficiente para gerenciamento de tarefas" styleClass="app-tagline" />
+    </VBox>
+    
+    <Separator />
+    
+    <!-- Descrição do aplicativo -->
+    <VBox spacing="10">
+        <Label text="Sobre o Aplicativo" styleClass="section-title" />
+        <TextArea fx:id="appDescriptionArea" editable="false" wrapText="true" prefRowCount="4" styleClass="description-text" />
+    </VBox>
+    
+    <!-- Informações técnicas -->
+    <VBox spacing="10">
+        <Label text="Informações Técnicas" styleClass="section-title" />
+        <GridPane hgap="10" vgap="5">
+            <Label text="Desenvolvedor:" GridPane.columnIndex="0" GridPane.rowIndex="0" styleClass="info-label" />
+            <Label fx:id="developerLabel" text="Aú Desviante - Lucas Godoy" GridPane.columnIndex="1" GridPane.rowIndex="0" styleClass="info-value" />
+            
+            <Label text="Linguagem:" GridPane.columnIndex="0" GridPane.rowIndex="1" styleClass="info-label" />
+            <Label text="Java 21" GridPane.columnIndex="1" GridPane.rowIndex="1" styleClass="info-value" />
+            
+            <Label text="Framework:" GridPane.columnIndex="0" GridPane.rowIndex="2" styleClass="info-label" />
+            <Label text="Spring Boot 3.2.5" GridPane.columnIndex="1" GridPane.rowIndex="2" styleClass="info-value" />
+            
+            <Label text="Interface:" GridPane.columnIndex="0" GridPane.rowIndex="3" styleClass="info-label" />
+            <Label text="JavaFX 21.0.4" GridPane.columnIndex="1" GridPane.rowIndex="3" styleClass="info-value" />
+            
+            <Label text="Banco de Dados:" GridPane.columnIndex="0" GridPane.rowIndex="4" styleClass="info-label" />
+            <Label text="H2 Database 2.3.232" GridPane.columnIndex="1" GridPane.rowIndex="4" styleClass="info-value" />
+            
+            <Label text="Build System:" GridPane.columnIndex="0" GridPane.rowIndex="5" styleClass="info-label" />
+            <Label text="Gradle 8.14.3" GridPane.columnIndex="1" GridPane.rowIndex="5" styleClass="info-value" />
+        </GridPane>
+    </VBox>
+    
+    <!-- Funcionalidades principais -->
+    <VBox spacing="10">
+        <Label text="Funcionalidades Principais" styleClass="section-title" />
+        <VBox spacing="5" styleClass="features-list">
+            <Label text="• Boards visuais com colunas organizadas (A Fazer, Em Andamento, Concluído)" />
+            <Label text="• Cards interativos com edição inline e drag &amp; drop" />
+            <Label text="• Sistema de progresso visual com tipo percentual ou checklist" />
+            <Label text="• Gestão de tipos de cards e grupos de quadros" />
+            <Label text="• Persistência local automática com banco H2" />
+            <Label text="• Interface minimalista focada na produtividade" />
+        </VBox>
+    </VBox>
+    
+    <!-- Links úteis -->
+    <VBox spacing="10">
+        <Label text="Links Úteis" styleClass="section-title" />
+        <HBox spacing="15" alignment="CENTER">
+            <Hyperlink fx:id="githubLink" text="GitHub" onAction="#openGitHub" />
+            <Hyperlink fx:id="licenseLink" text="Licença" onAction="#openLicense" />
+            <Hyperlink fx:id="changelogLink" text="Changelog" onAction="#openChangelog" />
+        </HBox>
+    </VBox>
+    
+    <Separator />
+    
+    <!-- Rodapé com copyright -->
+    <VBox alignment="CENTER" spacing="5">
+        <Label fx:id="copyrightLabel" text="© 2025 Aú Desviante. Todos os direitos reservados." styleClass="copyright-text" />
+        <HBox alignment="CENTER" spacing="5">
+            <Label text="Desenvolvido com" styleClass="footer-text" />
+            <ImageView fitWidth="16" fitHeight="16">
+                <Image url="@../icons/emoji/2764.png" />
+            </ImageView>
+            <Label text="para simplificar o gerenciamento de tarefas" styleClass="footer-text" />
+        </HBox>
+    </VBox>
+    
+    <!-- Botão de fechar -->
+    <HBox alignment="CENTER">
+        <Button fx:id="closeButton" text="Fechar" onAction="#handleClose" styleClass="close-button" />
+    </HBox>
+</VBox>

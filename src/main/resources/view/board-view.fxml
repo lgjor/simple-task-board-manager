@@ -46,6 +46,8 @@
                         <Button fx:id="preferencesButton" onAction="#handlePreferences" text="Preferências" />
                         <Separator orientation="VERTICAL" />
                         <Button fx:id="googleTaskButton" onAction="#handleGoogleTask" text="Google Task" />
+                        <Separator orientation="VERTICAL" />
+                        <Button fx:id="aboutButton" onAction="#handleAbout" text="Sobre" />
                     </items>
                 </ToolBar>
             </children>

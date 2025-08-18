@@ -1,7 +1,7 @@
 import java.io.File
 
 // Constante centralizada para a versão da aplicação
-val appVersion = "1.1.7"
+val appVersion = "1.1.8"
 
 val platform = when {
     org.gradle.internal.os.OperatingSystem.current().isWindows -> "win"
@@ -193,8 +193,8 @@ tasks.register<Exec>("jpackage") {
         "--win-shortcut",
         "--win-per-user-install",
         "--win-upgrade-uuid", "550e8400-e29b-41d4-a716-446655440000",
-        "--win-help-url", "https://github.com/desviante/simple-task-board-manager",
-        "--win-update-url", "https://github.com/desviante/simple-task-board-manager/releases",
+        "--win-help-url", "https://github.com/lgjor/simple-task-board-manager",
+        "--win-update-url", "https://github.com/lgjor/simple-task-board-manager/releases",
         "--vendor", "AuDesviante",
         "--app-version", appVersion,
         "--icon", iconFile.absolutePath
