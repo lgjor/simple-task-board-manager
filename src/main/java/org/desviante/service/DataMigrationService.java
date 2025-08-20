@@ -106,15 +106,15 @@ public class DataMigrationService {
     private void fixProgressType() {
         log.info("Corrigindo ProgressType dos cards existentes...");
         
-        // Cards do tipo CARD (ID 1) devem ter ProgressType.NONE
+        // Cards do tipo CARD (ID 1) devem ter ProgressType.NONE apenas se for NULL (não sobrescrever configurações do usuário)
         String fixCardType = """
             UPDATE cards 
             SET progress_type = 'NONE' 
-            WHERE card_type_id = 1 AND (progress_type = 'PERCENTAGE' OR progress_type IS NULL)
+            WHERE card_type_id = 1 AND progress_type IS NULL
             """;
         
         int cardTypeFixed = jdbcTemplate.update(fixCardType);
-        log.info("ProgressType corrigido para {} cards do tipo CARD", cardTypeFixed);
+        log.info("ProgressType definido como NONE para {} cards do tipo CARD que estavam NULL", cardTypeFixed);
         
         // Cards dos tipos BOOK, VIDEO, COURSE (IDs 2, 3, 4) devem ter ProgressType.PERCENTAGE
         String fixProgressTypes = """
@@ -192,9 +192,9 @@ public class DataMigrationService {
             String checkQuery = """
                 SELECT COUNT(*) FROM cards 
                 WHERE order_index = 0 
-                   OR (card_type_id = 1 AND progress_type = 'PERCENTAGE')
                    OR (card_type_id IN (2, 3, 4) AND progress_type = 'NONE')
                    OR (progress_type = 'NONE' AND (total_units IS NOT NULL OR current_units IS NOT NULL))
+                   OR progress_type IS NULL
                 """;
             
             int count = jdbcTemplate.queryForObject(checkQuery, Integer.class);

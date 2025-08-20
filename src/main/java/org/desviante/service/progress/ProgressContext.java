@@ -79,10 +79,9 @@ public class ProgressContext {
             return;
         }
         
-        // Calcular progresso percentual somente para tipo PERCENTAGE
+        // Calcular progresso percentual para qualquer tipo que tenha unidades válidas
         Double progressPercentage = null;
         if (currentStrategy.isEnabled()
-                && currentStrategy.getType() == ProgressType.PERCENTAGE
                 && totalUnits != null && totalUnits > 0) {
             int current = currentUnits != null ? currentUnits : 0;
             progressPercentage = Math.min(100.0, (double) current / totalUnits * 100);
