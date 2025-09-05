@@ -11,6 +11,8 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.GridPane;
+import javafx.geometry.Insets;
 import org.desviante.service.TaskManagerFacade;
 import org.desviante.service.dto.CardDetailDTO;
 import org.desviante.service.dto.CreateTaskRequestDTO;
@@ -24,6 +26,12 @@ import org.desviante.service.progress.ProgressInputData;
 import org.desviante.service.progress.ProgressValidationResult;
 import javafx.scene.image.WritableImage;
 import org.desviante.service.ChecklistItemService;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.Optional;
 
 /**
  * Controlador para visualização e edição de cards individuais.
@@ -915,21 +923,134 @@ public class CardViewController {
 
     @FXML
     private void handleCreateTask() {
-        try {
-            CreateTaskRequestDTO taskRequest = new CreateTaskRequestDTO(
-                    boardName, // listTitle
-                    cardData.title(), // title
-                    cardData.description(), // notes
-                    null, // due (null por enquanto)
-                    cardData.id() // cardId
-            );
-            
-            facade.createTaskForCard(taskRequest);
-            showAlert("Sucesso", "Tarefa criada com sucesso no Google Tasks!", Alert.AlertType.INFORMATION);
-            
-        } catch (Exception e) {
-            showAlert("Erro", "Erro ao criar tarefa: " + e.getMessage(), Alert.AlertType.ERROR);
-        }
+        // Abrir diálogo para permitir edição dos dados antes de persistir
+        Dialog<CreateTaskRequestDTO> dialog = new Dialog<>();
+        dialog.setTitle("Criar Tarefa no Google Tasks");
+        dialog.setHeaderText("Revise e ajuste os dados antes de enviar");
+
+        ButtonType createButtonType = new ButtonType("Criar", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(createButtonType, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        Label listLabel = new Label("Lista (Board):");
+        TextField listField = new TextField(boardName != null ? boardName : "");
+        listField.setEditable(false);
+
+        Label titleLabelControl = new Label("Título:");
+        TextField titleInput = new TextField(cardData != null ? cardData.title() : "");
+        titleInput.setPromptText("Título da tarefa");
+
+        Label notesLabel = new Label("Notas:");
+        TextArea notesInput = new TextArea(cardData != null ? cardData.description() : "");
+        notesInput.setPromptText("Descrição/Notas da tarefa");
+        notesInput.setPrefRowCount(4);
+
+        Label dueDateLabel = new Label("Data de vencimento:");
+        DatePicker dueDatePicker = new DatePicker();
+
+        Label dueTimeLabel = new Label("Hora (HH:mm):");
+        TextField dueTimeField = new TextField();
+        dueTimeField.setPromptText("HH:mm");
+
+        grid.add(listLabel, 0, 0);
+        grid.add(listField, 1, 0);
+        grid.add(titleLabelControl, 0, 1);
+        grid.add(titleInput, 1, 1);
+        grid.add(notesLabel, 0, 2);
+        grid.add(notesInput, 1, 2);
+        grid.add(dueDateLabel, 0, 3);
+        grid.add(dueDatePicker, 1, 3);
+        grid.add(dueTimeLabel, 0, 4);
+        grid.add(dueTimeField, 1, 4);
+
+        dialog.getDialogPane().setContent(grid);
+
+        // Converter resultado
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == createButtonType) {
+                String title = titleInput.getText() != null ? titleInput.getText().trim() : "";
+                String notes = notesInput.getText() != null ? notesInput.getText().trim() : "";
+                if (title.isEmpty()) {
+                    showAlert("Erro", "O título da tarefa é obrigatório.", Alert.AlertType.ERROR);
+                    return null;
+                }
+
+                LocalDateTime due = null;
+                LocalDate selectedDate = dueDatePicker.getValue();
+                if (selectedDate != null) {
+                    LocalTime time = LocalTime.MIDNIGHT;
+                    String timeText = dueTimeField.getText();
+                    if (timeText != null && !timeText.trim().isEmpty()) {
+                        try {
+                            time = LocalTime.parse(timeText.trim(), DateTimeFormatter.ofPattern("HH:mm"));
+                        } catch (DateTimeParseException e) {
+                            showAlert("Erro", "Hora inválida. Use o formato HH:mm.", Alert.AlertType.ERROR);
+                            return null;
+                        }
+                    }
+                    due = LocalDateTime.of(selectedDate, time);
+                }
+
+                return new CreateTaskRequestDTO(
+                        listField.getText(),
+                        title,
+                        notes,
+                        due,
+                        cardData != null ? cardData.id() : null
+                );
+            }
+            return null;
+        });
+
+        Optional<CreateTaskRequestDTO> result = dialog.showAndWait();
+        result.ifPresent(request -> {
+            // Desabilita o botão para evitar múltiplos cliques enquanto a operação está em andamento.
+            createTaskButton.setDisable(true);
+
+            // Cria uma tarefa JavaFX para executar a operação em uma thread de background.
+            // Isso evita que a interface do usuário congele durante a autenticação ou chamada de API.
+            javafx.concurrent.Task<Void> creationTask = new javafx.concurrent.Task<>() {
+                @Override
+                protected Void call() throws Exception {
+                    // Esta operação agora roda em uma thread de background
+                    facade.createTaskForCard(request);
+                    return null;
+                }
+            };
+
+            // Define o que fazer quando a tarefa for bem-sucedida.
+            creationTask.setOnSucceeded(event -> {
+                createTaskButton.setDisable(false); // Reabilita o botão.
+                showAlert("Sucesso", "Tarefa criada com sucesso no Google Tasks!", Alert.AlertType.INFORMATION);
+            });
+
+            // Define o que fazer se a tarefa falhar.
+            creationTask.setOnFailed(event -> {
+                createTaskButton.setDisable(false); // Reabilita o botão.
+                Throwable e = creationTask.getException();
+                String errorMessage = (e != null) ? e.getMessage() : "Ocorreu um erro desconhecido.";
+
+                if (errorMessage != null && errorMessage.contains("Google Tasks API não está configurada")) {
+                    showAlert("Integração Google Tasks Desabilitada",
+                        "A integração com Google Tasks não está configurada.\n\n" +
+                        "Para habilitar:\n" +
+                        "1. Configure as credenciais do Google em src/main/resources/auth/credentials.json\n" +
+                        "2. Execute a autenticação inicial\n" +
+                        "3. Reinicie a aplicação\n\n" +
+                        "A tarefa foi salva localmente, mas não foi sincronizada com o Google Tasks.",
+                        Alert.AlertType.WARNING);
+                } else {
+                    showAlert("Erro ao Criar Tarefa", "Ocorreu um erro ao tentar criar a tarefa no Google: " + errorMessage, Alert.AlertType.ERROR);
+                }
+            });
+
+            // Inicia a tarefa em uma nova thread.
+            new Thread(creationTask).start();
+        });
     }
 
     @FXML

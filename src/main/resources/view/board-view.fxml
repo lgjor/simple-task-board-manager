@@ -88,7 +88,7 @@
                 </Pane>
                 <ScrollPane fitToHeight="true" fitToWidth="true" VBox.vgrow="ALWAYS" prefHeight="300.0" minHeight="200.0">
                     <content>
-                        <HBox fx:id="kanbanContainer" spacing="10">
+                        <HBox fx:id="kanbanContainer" spacing="10" fillHeight="true">
                             <padding>
                                 <Insets bottom="10" left="10" right="10" top="10" />
                             </padding>

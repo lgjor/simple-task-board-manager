@@ -1,7 +1,7 @@
 import java.io.File
 
 // Constante centralizada para a versão da aplicação
-val appVersion = "1.1.9"
+val appVersion = "1.2.2"
 
 val platform = when {
     org.gradle.internal.os.OperatingSystem.current().isWindows -> "win"
@@ -89,13 +89,14 @@ dependencies {
     runtimeOnly("com.h2database:h2:2.3.232")
     compileOnly("org.projectlombok:lombok:1.18.32")
     annotationProcessor("org.projectlombok:lombok:1.18.32")
-    implementation("com.google.apis:google-api-services-tasks:v1-rev20240630-2.0.0")
+    implementation("com.google.apis:google-api-services-tasks:v1-rev20250518-2.0.0")    
     implementation("com.google.api-client:google-api-client:2.2.0")
     implementation("com.google.api-client:google-api-client-jackson2:2.2.0")
     implementation("com.google.auth:google-auth-library-oauth2-http:1.19.0")
     implementation("com.google.auth:google-auth-library-credentials:1.19.0")
     implementation("com.google.oauth-client:google-oauth-client:1.34.1")
     implementation("com.google.oauth-client:google-oauth-client-jetty:1.34.1")
+    implementation("com.google.oauth-client:google-oauth-client-java6:1.34.1")
     implementation("com.google.http-client:google-http-client-jackson2:1.42.3")
 
     // Dependências de teste

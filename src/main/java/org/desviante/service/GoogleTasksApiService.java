@@ -1,20 +1,27 @@
 package org.desviante.service;
 
+import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.auth.oauth2.TokenResponseException;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.tasks.Tasks;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.tasks.model.Task;
-import com.google.api.services.tasks.model.TaskList;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.java.Log;
+import com.google.api.services.tasks.model.TaskList; 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
+import org.desviante.config.GoogleApiConfig;
+import lombok.extern.slf4j.Slf4j;
 import org.desviante.exception.GoogleApiServiceException; // Importa a exceção customizada
 import org.desviante.service.dto.CreateTaskRequest; // Importa o DTO
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.security.GeneralSecurityException;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.ZoneOffset;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -42,13 +49,32 @@ import java.util.List;
  * @see Tasks
  */
 @Service
-@RequiredArgsConstructor
-@Log
+@Slf4j
 @Profile("!test")
-@ConditionalOnProperty(name = "google.api.enabled", havingValue = "true", matchIfMissing = false)
 public class GoogleTasksApiService {
 
-    private final Tasks tasksService;
+    private Tasks tasksService;
+    private final GoogleApiConfig googleApiConfig;
+    private final NetHttpTransport httpTransport;
+
+    /**
+     * Construtor que injeta o serviço do Google Tasks de forma opcional.
+     * Se o serviço não puder ser criado (por falta de credenciais ou falha na autorização),
+     * a integração ficará desativada, mas a aplicação continuará funcionando.
+     * @param tasksService O serviço do Google Tasks, que pode ser nulo.
+     * @param googleApiConfig A configuração da API do Google para reautenticação.
+     * @param httpTransport O transporte HTTP para as requisições.
+     */
+    @Autowired
+    public GoogleTasksApiService(
+            @Autowired(required = false) Tasks tasksService,
+            @Autowired(required = false) GoogleApiConfig googleApiConfig,
+            @Autowired(required = false) NetHttpTransport httpTransport
+    ) {
+        this.tasksService = tasksService;
+        this.googleApiConfig = googleApiConfig;
+        this.httpTransport = httpTransport;
+    }
 
     /**
      * Cria uma tarefa no Google Tasks com informações completas.
@@ -67,10 +93,24 @@ public class GoogleTasksApiService {
      * @throws GoogleApiServiceException se houver falha na comunicação com a API
      */
     public Task createTaskInList(CreateTaskRequest request) {
-        // Verifica se o serviço do Google está disponível
+        // Verifica se o serviço do Google está disponível, e tenta inicializar se não estiver.
         if (tasksService == null) {
-            log.warning("Google Tasks API não está disponível. A tarefa não será criada no Google Tasks.");
-            throw new GoogleApiServiceException("Google Tasks API não está configurada. Verifique as credenciais do Google.", null);
+            log.warn("Serviço do Google Tasks não inicializado. Tentando inicialização sob demanda...");
+            try {
+                // Tenta criar o serviço, o que vai disparar a autenticação via navegador se necessário.
+                createAndSetTasksService();
+                log.info("Serviço do Google Tasks inicializado com sucesso sob demanda.");
+            } catch (Exception e) {
+                log.error("Falha ao inicializar o serviço do Google Tasks sob demanda.", e);
+                // Monta a mensagem de erro informativa que o usuário está vendo.
+                String userMessage = "A integração com Google Tasks não está configurada.\n" +
+                                     "Para habilitar:\n" +
+                                     "1. Configure as credenciais do Google em src/main/resources/auth/credentials.json\n" +
+                                     "2. Execute a autenticação inicial\n" +
+                                     "3. Reinicie a aplicação\n\n" +
+                                     "A tarefa foi salva localmente, mas não foi sincronizada com o Google Tasks.";
+                throw new GoogleApiServiceException(userMessage, e);
+            }
         }
 
         try {
@@ -113,8 +153,35 @@ public class GoogleTasksApiService {
             log.info("Criando tarefa '" + request.title() + "' na lista '" + request.listTitle() + "' com vencimento em " + taskPayload.getDue());
             return tasksService.tasks().insert(targetList.getId(), taskPayload).execute();
 
+        } catch (TokenResponseException e) {
+            // Erro específico de token inválido (ex: revogado pelo usuário)
+            if (e.getDetails() != null && "invalid_grant".equals(e.getDetails().getError())) {
+                log.warn("Token inválido detectado (invalid_grant). Tentando reautenticar automaticamente...");
+                try {
+                    return reAuthenticateAndRetry(request);
+                } catch (Exception ex) {
+                    log.error("Falha crítica durante o processo de reautenticação. A tarefa não pôde ser criada no Google.", ex);
+                    throw new GoogleApiServiceException("Falha ao tentar reautenticar com o Google. Por favor, reinicie a aplicação.", ex);
+                }
+            }
+            // Outros erros de token
+            String userFriendlyMessage = String.format("Erro de autenticação com Google: %s", e.getDetails() != null ? e.getDetails().getErrorDescription() : e.getMessage());
+            log.error(userFriendlyMessage, e);
+            throw new GoogleApiServiceException(userFriendlyMessage, e);
+
+        } catch (GoogleJsonResponseException e) {
+            // Erro específico da API do Google com detalhes em JSON
+            String details = e.getDetails() != null ? e.getDetails().getMessage() : "Nenhum detalhe adicional da API.";
+            String userFriendlyMessage = String.format("Erro da API do Google: %s (Código: %d). Detalhes: %s",
+                    e.getStatusMessage(), e.getStatusCode(), details);
+            log.error("Falha na API do Google ao criar tarefa: {}", userFriendlyMessage, e);
+            throw new GoogleApiServiceException(userFriendlyMessage, e);
+
         } catch (IOException e) {
-            throw new GoogleApiServiceException("Falha na comunicação com a API do Google Tasks.", e);
+            // Erro genérico de comunicação (rede, etc.)
+            String errorMessage = "Falha na comunicação com a API do Google Tasks. Verifique sua conexão com a internet ou se as permissões da aplicação foram revogadas.";
+            log.error(errorMessage, e);
+            throw new GoogleApiServiceException(errorMessage, e);
         }
     }
 
@@ -150,13 +217,22 @@ public class GoogleTasksApiService {
                 .findFirst()
                 .orElseGet(() -> {
                     try {
-                        log.info("Lista de tarefas "+ listTitle + " não encontrada. Criando...");
+                        log.info("Lista de tarefas '{}' não encontrada. Criando...", listTitle);
                         TaskList newList = new TaskList().setTitle(listTitle);
                         return tasksService.tasklists().insert(newList).execute();
+                    } catch (GoogleJsonResponseException e) {
+                        String details = e.getDetails() != null ? e.getDetails().getMessage() : "Nenhum detalhe adicional.";
+                        String userFriendlyMessage = String.format("Falha ao criar a lista de tarefas '%s'. Erro da API: %s (Código: %d). Detalhes: %s",
+                                listTitle, e.getStatusMessage(), e.getStatusCode(), details);
+                        log.error("Falha na API do Google ao criar lista de tarefas: {}", userFriendlyMessage, e);
+                        // Re-lança como uma exceção de runtime para ser capturada pelo bloco try-catch principal.
+                        throw new GoogleApiServiceException(userFriendlyMessage, e);
                     } catch (IOException e) {
+                        String errorMessage = "Falha ao criar a lista de tarefas '" + listTitle + "'. Verifique sua conexão com a internet.";
+                        log.error(errorMessage, e);
                         // Re-lança como uma exceção de runtime para ser capturada pelo bloco try-catch principal.
                         // Isso simplifica o tratamento de exceções no chamador.
-                        throw new GoogleApiServiceException("Falha ao criar a lista de tarefas '" + listTitle + "'.", e);
+                        throw new GoogleApiServiceException(errorMessage, e);
                     }
                 });
     }
@@ -169,4 +245,67 @@ public class GoogleTasksApiService {
     public boolean isGoogleTasksAvailable() {
         return tasksService != null;
     }
+
+    /**
+     * Lida com o erro 'invalid_grant', que geralmente significa que o token de atualização
+     * foi revogado. A solução é limpar as credenciais armazenadas para forçar uma
+     * nova autenticação na próxima inicialização.
+     */
+    private void handleInvalidGrant() {
+        log.error("O token de atualização do Google foi revogado ou expirou (invalid_grant). Removendo credenciais antigas para forçar nova autenticação.");
+        try {
+            File tokenDirectory = new File(GoogleApiConfig.TOKENS_DIRECTORY_PATH);
+            if (tokenDirectory.exists() && tokenDirectory.isDirectory()) {
+                for (File file : tokenDirectory.listFiles()) {
+                    if (!file.delete()) {
+                        log.warn("Não foi possível deletar o arquivo de credencial: {}", file.getAbsolutePath());
+                    }
+                }
+                log.info("Arquivos de credenciais do Google removidos com sucesso.");
+            }
+        } catch (Exception ex) {
+            log.error("Falha ao tentar remover o diretório de credenciais antigas.", ex);
+        }
+    }
+
+    /**
+     * Executa o fluxo de reautenticação completo.
+     * <p>
+     * Este método é chamado quando um erro 'invalid_grant' é detectado. Ele limpa
+     * as credenciais antigas, dispara o fluxo de autorização OAuth2 (que abrirá o
+     * navegador para o usuário) e recria o serviço do Google Tasks com as novas
+     * credenciais válidas.
+     * </p>
+     * @throws IOException se houver um erro de I/O durante a autorização.
+     * @throws GeneralSecurityException se houver um erro de segurança.
+     */
+    private Task reAuthenticateAndRetry(CreateTaskRequest request) throws IOException, GeneralSecurityException {
+        handleInvalidGrant(); // Limpa as credenciais antigas
+        createAndSetTasksService(); // Recria o serviço, disparando a autenticação
+        log.info("Serviço do Google Tasks foi recriado com novas credenciais.");
+        return createTaskInList(request);
+    }
+
+    /**
+     * Cria (ou recria) a instância do serviço do Google Tasks.
+     * <p>
+     * Este método centraliza a lógica de autorização e criação do serviço. Ele dispara
+     * o fluxo de autorização OAuth2, que abrirá o navegador para o usuário se
+     * necessário, e então constrói e atribui a instância do serviço Tasks.
+     * </p>
+     * @throws IOException se houver um erro de I/O durante a autorização.
+     * @throws GeneralSecurityException se houver um erro de segurança ou de configuração.
+     */
+    private void createAndSetTasksService() throws IOException, GeneralSecurityException {
+        if (googleApiConfig == null || httpTransport == null) {
+            throw new GeneralSecurityException("Componentes de configuração do Google não estão disponíveis. Verifique se 'google.api.enabled=true' está ativo.");
+        }
+
+        // O método authorize já abre o navegador e lida com o fluxo OAuth2.
+        Credential credential = googleApiConfig.authorize(httpTransport);
+        this.tasksService = new Tasks.Builder(httpTransport, GsonFactory.getDefaultInstance(), credential)
+                .setApplicationName(GoogleApiConfig.APPLICATION_NAME)
+                .build();
+    }
+
 }

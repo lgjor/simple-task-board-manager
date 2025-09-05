@@ -17,6 +17,13 @@
     -fx-scale-y: 1.02;
 }
 
+/* Estilo para container de coluna - distribuição igual do espaço */
+.column-container {
+    -fx-hgrow: ALWAYS;
+    -fx-max-width: Infinity;
+    -fx-min-width: 200px;
+}
+
 /* Estilo para coluna que pode receber o card */
 .column-container:drag-over {
     -fx-background-color: rgba(0,123,255,0.1);
