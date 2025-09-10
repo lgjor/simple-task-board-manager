@@ -1,6 +1,7 @@
 package org.desviante.view;
 
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -77,11 +78,11 @@ public class BoardViewController {
     @FXML
     private TableColumn<BoardSummaryDTO, String> boardStatusColumn;
     @FXML
-    private TableColumn<BoardSummaryDTO, String> statusInitialColumn;
+    private TableColumn<BoardSummaryDTO, Integer> statusInitialColumn;
     @FXML
-    private TableColumn<BoardSummaryDTO, String> statusPendingColumn;
+    private TableColumn<BoardSummaryDTO, Integer> statusPendingColumn;
     @FXML
-    private TableColumn<BoardSummaryDTO, String> statusFinalColumn;
+    private TableColumn<BoardSummaryDTO, Integer> statusFinalColumn;
 
     // --- Filtro de Grupos ---
     @FXML
@@ -311,46 +312,46 @@ public class BoardViewController {
             }
         });
         
-        statusInitialColumn.setCellValueFactory(cellData ->
-                new SimpleStringProperty(cellData.getValue().percentInitial() + " %"));
-        statusInitialColumn.setCellFactory(column -> new TableCell<BoardSummaryDTO, String>() {
+        statusInitialColumn.setCellValueFactory(cellData -> 
+                new ReadOnlyObjectWrapper<>(cellData.getValue().percentInitial()));
+        statusInitialColumn.setCellFactory(column -> new TableCell<BoardSummaryDTO, Integer>() {
             @Override
-            protected void updateItem(String item, boolean empty) {
+            protected void updateItem(Integer item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    setText(item);
+                    setText(item + " %");
                     setAlignment(javafx.geometry.Pos.CENTER);
                 }
             }
         });
         
-        statusPendingColumn.setCellValueFactory(cellData ->
-                new SimpleStringProperty(cellData.getValue().percentPending() + " %"));
-        statusPendingColumn.setCellFactory(column -> new TableCell<BoardSummaryDTO, String>() {
+        statusPendingColumn.setCellValueFactory(cellData -> 
+                new ReadOnlyObjectWrapper<>(cellData.getValue().percentPending()));
+        statusPendingColumn.setCellFactory(column -> new TableCell<BoardSummaryDTO, Integer>() {
             @Override
-            protected void updateItem(String item, boolean empty) {
+            protected void updateItem(Integer item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    setText(item);
+                    setText(item + " %");
                     setAlignment(javafx.geometry.Pos.CENTER);
                 }
             }
         });
         
-        statusFinalColumn.setCellValueFactory(cellData ->
-                new SimpleStringProperty(cellData.getValue().percentFinal() + " %"));
-        statusFinalColumn.setCellFactory(column -> new TableCell<BoardSummaryDTO, String>() {
+        statusFinalColumn.setCellValueFactory(cellData -> 
+                new ReadOnlyObjectWrapper<>(cellData.getValue().percentFinal()));
+        statusFinalColumn.setCellFactory(column -> new TableCell<BoardSummaryDTO, Integer>() {
             @Override
-            protected void updateItem(String item, boolean empty) {
+            protected void updateItem(Integer item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    setText(item);
+                    setText(item + " %");
                     setAlignment(javafx.geometry.Pos.CENTER);
                 }
             }

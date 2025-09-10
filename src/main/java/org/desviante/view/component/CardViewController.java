@@ -447,6 +447,9 @@ public class CardViewController {
         
         // Gerenciar componente de checklist
         updateChecklistComponent(card);
+        
+        // Atualizar o display de progresso após configurar tudo
+        updateProgressDisplay();
     }
     
     /**
@@ -547,9 +550,15 @@ public class CardViewController {
             return;
         }
         
+        // Para CHECKLIST, não exibir porcentagem pois o progresso é baseado nos itens do checklist
+        if (cardData.progressType() == ProgressType.CHECKLIST) {
+            progressValueLabel.setText(""); // Não exibir porcentagem para checklist
+            return;
+        }
+        
         double progress = 0.0;
         
-        // Usar spinners genéricos para todos os tipos
+        // Usar spinners genéricos para todos os tipos (exceto CHECKLIST)
         int total = totalSpinner.getValue();
         int current = currentSpinner.getValue();
         
