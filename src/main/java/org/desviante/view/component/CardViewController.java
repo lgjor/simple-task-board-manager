@@ -1075,15 +1075,9 @@ public class CardViewController {
                 // Notificar o controlador pai para recarregar a interface
                 Platform.runLater(() -> {
                     if (onSaveCallback != null) {
-                        // Notificar mudança para recarregar toda a visão Kanban
-                        // Usar valores válidos para evitar erro de validação
-                        onSaveCallback.accept(cardData.id(), new UpdateCardDetailsDTO(
-                            cardData.title(), 
-                            cardData.description(), 
-                            cardData.totalUnits() != null ? cardData.totalUnits() : 1,
-                            cardData.currentUnits() != null ? cardData.currentUnits() : 0,
-                            cardData.progressType()
-                        ));
+                        // Para movimentação, não chamar updateCardDetails() pois isso sobrescreve o order_index
+                        // Apenas recarregar a interface passando null para indicar que é apenas uma atualização de posição
+                        onSaveCallback.accept(cardData.id(), null);
                     }
                 });
             } else {
@@ -1107,15 +1101,9 @@ public class CardViewController {
                 // Notificar o controlador pai para recarregar a interface
                 Platform.runLater(() -> {
                     if (onSaveCallback != null) {
-                        // Notificar mudança para recarregar toda a visão Kanban
-                        // Usar valores válidos para evitar erro de validação
-                        onSaveCallback.accept(cardData.id(), new UpdateCardDetailsDTO(
-                            cardData.title(), 
-                            cardData.description(), 
-                            cardData.totalUnits() != null ? cardData.totalUnits() : 1,
-                            cardData.currentUnits() != null ? cardData.currentUnits() : 0,
-                            cardData.progressType()
-                        ));
+                        // Para movimentação, não chamar updateCardDetails() pois isso sobrescreve o order_index
+                        // Apenas recarregar a interface passando null para indicar que é apenas uma atualização de posição
+                        onSaveCallback.accept(cardData.id(), null);
                     }
                 });
             } else {

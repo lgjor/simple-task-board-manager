@@ -318,7 +318,10 @@ public class TaskManagerFacade {
         List<BoardColumnDetailDTO> columnDTOs = columns.stream()
                 .map(column -> {
                     List<Card> cardsForColumn = cardsByColumnId.getOrDefault(column.getId(), Collections.emptyList());
+                    
+                    // Ordenar cards por order_index para preservar a ordem definida pelo usuário
                     List<CardDetailDTO> cardDTOs = cardsForColumn.stream()
+                            .sorted((c1, c2) -> Integer.compare(c1.getOrderIndex(), c2.getOrderIndex()))
                             .map(card -> new CardDetailDTO(
                                     card.getId(),
                                     card.getTitle(),

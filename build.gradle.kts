@@ -1,7 +1,7 @@
 import java.io.File
 
 // Constante centralizada para a versão da aplicação
-val appVersion = "1.2.3"
+val appVersion = "1.2.4"
 
 val platform = when {
     org.gradle.internal.os.OperatingSystem.current().isWindows -> "win"
@@ -80,11 +80,8 @@ dependencies {
         exclude(group = "org.apache.logging.log4j")
     }
     implementation("jakarta.annotation:jakarta.annotation-api:2.1.1")
-    // Liquibase para migrações de banco (comentado temporariamente devido a conflitos)
-    // implementation("org.springframework.boot:spring-boot-starter-liquibase"){
-    //     exclude(group = "org.springframework.boot", module = "spring-boot-starter-logging")
-    //     exclude(group = "org.apache.logging.log4j")
-    // }
+    // Liquibase para migrações de banco (removido temporariamente)
+    // implementation("org.liquibase:liquibase-core:4.24.0")
     implementation("org.slf4j:slf4j-simple:2.0.13")
     runtimeOnly("com.h2database:h2:2.3.232")
     compileOnly("org.projectlombok:lombok:1.18.32")

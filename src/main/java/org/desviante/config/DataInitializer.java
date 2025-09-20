@@ -3,6 +3,7 @@ package org.desviante.config;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.desviante.service.DataMigrationService;
+import org.desviante.service.SafeDatabaseMigrationService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -46,6 +47,12 @@ public class DataInitializer implements CommandLineRunner {
      * Injetado automaticamente pelo Spring através do construtor.
      */
     private final DataMigrationService dataMigrationService;
+    
+    /**
+     * Serviço responsável por migrações seguras do banco de dados.
+     * Injetado automaticamente pelo Spring através do construtor.
+     */
+    private final SafeDatabaseMigrationService safeMigrationService;
 
     /**
      * Executa a inicialização de dados padrão durante a inicialização da aplicação.
@@ -76,6 +83,20 @@ public class DataInitializer implements CommandLineRunner {
         log.info("Iniciando inicialização de dados padrão...");
         
         try {
+            // Executar migração segura para suporte à ordenação de cards
+            log.info("Executando migração segura para suporte à ordenação de cards...");
+            boolean cardOrderingMigrationApplied = safeMigrationService.migrateCardOrderingSupport();
+            
+            if (cardOrderingMigrationApplied) {
+                log.info("Migração de ordenação de cards aplicada com sucesso!");
+            } else {
+                log.info("Migração de ordenação de cards já estava aplicada.");
+            }
+            
+            // Exibir estatísticas do banco
+            log.info("Estatísticas do banco de dados:");
+            safeMigrationService.getDatabaseStats().forEach(log::info);
+            
             // Verificar se migração de dados existentes é necessária
             if (dataMigrationService.isMigrationNeeded()) {
                 log.info("Migração de dados existentes necessária. Executando...");

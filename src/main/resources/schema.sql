@@ -1,14 +1,8 @@
--- Garante que as tabelas sejam recriadas do zero a cada inicialização,
--- evitando erros de "tabela já existe" e garantindo um ambiente limpo para testes.
-DROP TABLE IF EXISTS tasks CASCADE;
-DROP TABLE IF EXISTS cards CASCADE;
-DROP TABLE IF EXISTS board_columns CASCADE;
-DROP TABLE IF EXISTS boards CASCADE;
-DROP TABLE IF EXISTS board_groups CASCADE;
-DROP TABLE IF EXISTS card_types CASCADE;
+-- Schema seguro que preserva dados existentes
+-- Usa CREATE TABLE IF NOT EXISTS para evitar recriação desnecessária
 
 -- Definição da tabela 'board_groups'
-CREATE TABLE board_groups (
+CREATE TABLE IF NOT EXISTS board_groups (
     id              BIGINT AUTO_INCREMENT PRIMARY KEY,
     name            VARCHAR(255) NOT NULL,
     description     TEXT,
@@ -19,7 +13,7 @@ CREATE TABLE board_groups (
 );
 
 -- Definição da tabela 'boards'
-CREATE TABLE boards (
+CREATE TABLE IF NOT EXISTS boards (
     -- BIGINT é um bom tipo para IDs.
     -- AUTO_INCREMENT é a diretiva do H2 que gera o ID automaticamente.
     -- PRIMARY KEY garante que a coluna seja a chave primária.
@@ -42,7 +36,7 @@ CREATE TABLE boards (
 );
 
 -- Definição da tabela 'board_columns'
-CREATE TABLE board_columns (
+CREATE TABLE IF NOT EXISTS board_columns (
     id            BIGINT AUTO_INCREMENT PRIMARY KEY,
     name          VARCHAR(255) NOT NULL,
     order_index   INT NOT NULL,
@@ -57,7 +51,7 @@ CREATE TABLE board_columns (
 );
 
 -- Definição da tabela 'card_types' (para tipos de card)
-CREATE TABLE card_types (
+CREATE TABLE IF NOT EXISTS card_types (
     id              BIGINT AUTO_INCREMENT PRIMARY KEY,
     name            VARCHAR(255) NOT NULL UNIQUE,
     unit_label      VARCHAR(100) NOT NULL,
@@ -66,7 +60,7 @@ CREATE TABLE card_types (
 );
 
 -- Definição da tabela 'cards'
-CREATE TABLE cards (
+CREATE TABLE IF NOT EXISTS cards (
     id                BIGINT AUTO_INCREMENT PRIMARY KEY,
     title             VARCHAR(255) NOT NULL,
     description       TEXT,
@@ -79,13 +73,17 @@ CREATE TABLE cards (
     board_column_id   BIGINT NOT NULL,
     card_type_id      BIGINT,
     progress_type     VARCHAR(50) DEFAULT 'PERCENTAGE',
+    order_index       INT NOT NULL DEFAULT 0,
 
     CONSTRAINT fk_cards_to_board_columns FOREIGN KEY (board_column_id) REFERENCES board_columns(id) ON DELETE CASCADE,
     CONSTRAINT fk_cards_to_card_types FOREIGN KEY (card_type_id) REFERENCES card_types(id) ON DELETE SET NULL
 );
 
+-- Cria índice para otimizar consultas por coluna e ordem dos cards
+CREATE INDEX IF NOT EXISTS idx_cards_column_order ON cards(board_column_id, order_index);
+
 -- Definição da tabela 'tasks' (para integração com Google Tasks)
-CREATE TABLE tasks (
+CREATE TABLE IF NOT EXISTS tasks (
     id                 BIGINT AUTO_INCREMENT PRIMARY KEY,
     list_title         VARCHAR(255),
     title              VARCHAR(255) NOT NULL,
@@ -101,37 +99,63 @@ CREATE TABLE tasks (
 );
 
 -- Cria índices para as chaves estrangeiras, melhorando a performance de joins e buscas.
-CREATE INDEX idx_board_columns_board_id ON board_columns(board_id);
-CREATE INDEX idx_cards_board_column_id ON cards(board_column_id);
-CREATE INDEX idx_tasks_card_id ON tasks(card_id);
-CREATE INDEX idx_boards_group_id ON boards(group_id);
+CREATE INDEX IF NOT EXISTS idx_board_columns_board_id ON board_columns(board_id);
+CREATE INDEX IF NOT EXISTS idx_cards_board_column_id ON cards(board_column_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_card_id ON tasks(card_id);
+CREATE INDEX IF NOT EXISTS idx_boards_group_id ON boards(group_id);
 
 -- Não inserimos mais grupo padrão - boards sem grupo terão group_id = NULL
 
--- Dados de exemplo para testes
--- Inserir um board de exemplo
-INSERT INTO boards (name, creation_date) VALUES 
-('Board de Exemplo', CURRENT_TIMESTAMP);
+-- Dados de exemplo para testes (apenas se não existirem)
+-- Inserir um board de exemplo apenas se não existir
+INSERT INTO boards (id, name, creation_date) 
+SELECT 1, 'Board de Exemplo', CURRENT_TIMESTAMP 
+WHERE NOT EXISTS (SELECT 1 FROM boards WHERE id = 1);
 
--- Inserir as 3 colunas padrão para o board de exemplo (ID 1)
-INSERT INTO board_columns (name, order_index, kind, board_id) VALUES 
-('Inicial', 1, 'INITIAL', 1),
-('Em Andamento', 2, 'PENDING', 1),
-('Finalizado', 3, 'FINAL', 1);
+-- Inserir as 3 colunas padrão para o board de exemplo (ID 1) apenas se não existirem
+INSERT INTO board_columns (id, name, order_index, kind, board_id) 
+SELECT 1, 'Inicial', 1, 'INITIAL', 1 
+WHERE NOT EXISTS (SELECT 1 FROM board_columns WHERE id = 1);
 
--- Inserir tipos padrão na tabela card_types
-INSERT INTO card_types (name, unit_label, creation_date, last_update_date) VALUES 
-('CARD', 'card', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('BOOK', 'páginas', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('VIDEO', 'minutos', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('COURSE', 'aulas', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+INSERT INTO board_columns (id, name, order_index, kind, board_id) 
+SELECT 2, 'Em Andamento', 2, 'PENDING', 1 
+WHERE NOT EXISTS (SELECT 1 FROM board_columns WHERE id = 2);
 
--- Inserir grupos padrão na tabela board_groups
-INSERT INTO board_groups (name, description, color, icon, creation_date) VALUES 
-('Projetos pessoais', 'Projetos pessoais e hobbies', '#FFEAA7', '1f4bb', CURRENT_TIMESTAMP),
-('Livros', 'Leitura e estudo de livros', '#4ECDC4', '1f4da', CURRENT_TIMESTAMP),
-('Trabalho', 'Tarefas profissionais e trabalho', '#45B7D1', '1f528', CURRENT_TIMESTAMP);
+INSERT INTO board_columns (id, name, order_index, kind, board_id) 
+SELECT 3, 'Finalizado', 3, 'FINAL', 1 
+WHERE NOT EXISTS (SELECT 1 FROM board_columns WHERE id = 3);
 
--- Inserir um card de exemplo na coluna inicial (ID 1)
-INSERT INTO cards (title, description, board_column_id, creation_date, last_update_date) VALUES 
-('Card de Exemplo', 'Este é um card de exemplo para demonstrar o sistema', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+-- Inserir tipos padrão na tabela card_types apenas se não existirem
+INSERT INTO card_types (id, name, unit_label, creation_date, last_update_date) 
+SELECT 1, 'CARD', 'card', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP 
+WHERE NOT EXISTS (SELECT 1 FROM card_types WHERE id = 1);
+
+INSERT INTO card_types (id, name, unit_label, creation_date, last_update_date) 
+SELECT 2, 'BOOK', 'páginas', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP 
+WHERE NOT EXISTS (SELECT 1 FROM card_types WHERE id = 2);
+
+INSERT INTO card_types (id, name, unit_label, creation_date, last_update_date) 
+SELECT 3, 'VIDEO', 'minutos', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP 
+WHERE NOT EXISTS (SELECT 1 FROM card_types WHERE id = 3);
+
+INSERT INTO card_types (id, name, unit_label, creation_date, last_update_date) 
+SELECT 4, 'COURSE', 'aulas', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP 
+WHERE NOT EXISTS (SELECT 1 FROM card_types WHERE id = 4);
+
+-- Inserir grupos padrão na tabela board_groups apenas se não existirem
+INSERT INTO board_groups (id, name, description, color, icon, creation_date) 
+SELECT 1, 'Projetos pessoais', 'Projetos pessoais e hobbies', '#FFEAA7', '1f4bb', CURRENT_TIMESTAMP 
+WHERE NOT EXISTS (SELECT 1 FROM board_groups WHERE id = 1);
+
+INSERT INTO board_groups (id, name, description, color, icon, creation_date) 
+SELECT 2, 'Livros', 'Leitura e estudo de livros', '#4ECDC4', '1f4da', CURRENT_TIMESTAMP 
+WHERE NOT EXISTS (SELECT 1 FROM board_groups WHERE id = 2);
+
+INSERT INTO board_groups (id, name, description, color, icon, creation_date) 
+SELECT 3, 'Trabalho', 'Tarefas profissionais e trabalho', '#45B7D1', '1f528', CURRENT_TIMESTAMP 
+WHERE NOT EXISTS (SELECT 1 FROM board_groups WHERE id = 3);
+
+-- Inserir um card de exemplo na coluna inicial (ID 1) apenas se não existir
+INSERT INTO cards (id, title, description, board_column_id, creation_date, last_update_date) 
+SELECT 1, 'Card de Exemplo', 'Este é um card de exemplo para demonstrar o sistema', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP 
+WHERE NOT EXISTS (SELECT 1 FROM cards WHERE id = 1);
