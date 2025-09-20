@@ -5,7 +5,6 @@ import org.desviante.model.Board;
 import org.desviante.model.BoardColumn;
 import org.desviante.model.Card;
 import org.desviante.model.enums.BoardColumnKindEnum;
-import org.desviante.model.CardType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
