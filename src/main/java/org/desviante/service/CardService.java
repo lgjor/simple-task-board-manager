@@ -278,6 +278,40 @@ public class CardService {
     }
 
     /**
+     * Atualiza o tipo de card de um card existente.
+     * 
+     * @param cardId identificador do card a ser atualizado
+     * @param newCardTypeId novo ID do tipo de card
+     * @return card atualizado
+     * @throws ResourceNotFoundException se o card não for encontrado
+     * @throws IllegalArgumentException se o cardTypeId for inválido
+     */
+    @Transactional
+    public Card updateCardType(Long cardId, Long newCardTypeId) {
+        // 1. Encontra o card ou lança uma exceção se não existir
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new ResourceNotFoundException("Card com ID " + cardId + " não encontrado para atualização."));
+
+        // 2. Valida o novo tipo de card
+        if (newCardTypeId == null) {
+            throw new IllegalArgumentException("ID do tipo de card não pode ser nulo");
+        }
+
+        // 3. Verifica se o tipo de card existe
+        CardType newCardType = CardTypeService.getCardTypeById(newCardTypeId);
+        
+        // 4. Atualiza o tipo de card
+        card.setCardTypeId(newCardTypeId);
+        card.setCardType(newCardType);
+        
+        // 5. Atualiza a data da última modificação
+        card.setLastUpdateDate(LocalDateTime.now());
+
+        // 6. Salva e retorna a entidade atualizada
+        return cardRepository.save(card);
+    }
+
+    /**
      * Busca um card específico pelo ID.
      * 
      * @param id identificador único do card

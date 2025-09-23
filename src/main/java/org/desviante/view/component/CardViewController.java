@@ -17,6 +17,7 @@ import org.desviante.service.TaskManagerFacade;
 import org.desviante.service.dto.CardDetailDTO;
 import org.desviante.service.dto.CreateTaskRequestDTO;
 import org.desviante.service.dto.UpdateCardDetailsDTO;
+import org.desviante.model.CardType;
 
 import java.util.function.BiConsumer;
 import org.desviante.model.enums.ProgressType;
@@ -31,6 +32,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -48,6 +50,7 @@ public class CardViewController {
 
     @FXML private VBox cardPane;
     @FXML private Label cardTypeLabel;
+    @FXML private ComboBox<CardType> cardTypeComboBox;
     @FXML private Label titleLabel;
     @FXML private TextField titleField;
     @FXML private Label descriptionLabel;
@@ -135,6 +138,7 @@ public class CardViewController {
         setupProgressSpinners();
         setupTooltips();
         setupProgressTypeComboBox();
+        setupCardTypeComboBox();
         setupChecklistComponent();
         
         // Inicializar ProgressContext
@@ -204,6 +208,56 @@ public class CardViewController {
         
         // Configurar a exibição do item selecionado
         progressTypeComboBox.setButtonCell(progressTypeComboBox.getCellFactory().call(null));
+    }
+    
+    /**
+     * Configura o ComboBox dos tipos de card.
+     */
+    private void setupCardTypeComboBox() {
+        // Configurar a exibição dos itens
+        cardTypeComboBox.setCellFactory(param -> new ListCell<CardType>() {
+            @Override
+            protected void updateItem(CardType item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText("");
+                } else {
+                    setText(item.getName());
+                }
+            }
+        });
+        
+        // Configurar a exibição do item selecionado
+        cardTypeComboBox.setButtonCell(cardTypeComboBox.getCellFactory().call(null));
+    }
+    
+    /**
+     * Carrega os tipos de card disponíveis no ComboBox.
+     */
+    private void loadCardTypes() {
+        if (facade != null) {
+            try {
+                List<CardType> cardTypes = facade.getAllCardTypes();
+                cardTypeComboBox.getItems().clear();
+                cardTypeComboBox.getItems().addAll(cardTypes);
+            } catch (Exception e) {
+                System.err.println("Erro ao carregar tipos de card: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    /**
+     * Define o tipo de card atual no ComboBox baseado no card atual.
+     */
+    private void setCurrentCardType() {
+        if (cardData != null && cardData.typeName() != null) {
+            // Encontrar o tipo de card atual na lista
+            cardTypeComboBox.getItems().stream()
+                .filter(type -> type.getName().equals(cardData.typeName()))
+                .findFirst()
+                .ifPresent(cardTypeComboBox::setValue);
+        }
     }
     
     /**
@@ -665,6 +719,10 @@ public class CardViewController {
         titleField.setText(titleLabel.getText());
         descriptionArea.setText(descriptionLabel.getText());
         
+        // Configurar ComboBox de tipos de card
+        loadCardTypes();
+        setCurrentCardType();
+        
         titleLabel.setVisible(false);
         titleField.setVisible(true);
         titleField.setManaged(true);
@@ -672,6 +730,11 @@ public class CardViewController {
         descriptionLabel.setVisible(false);
         descriptionArea.setVisible(true);
         descriptionArea.setManaged(true);
+        
+        // Mostrar ComboBox de tipo de card e ocultar label
+        cardTypeLabel.setVisible(false);
+        cardTypeComboBox.setVisible(true);
+        cardTypeComboBox.setManaged(true);
         
         editControlsBox.setVisible(true);
         editControlsBox.setManaged(true);
@@ -767,6 +830,11 @@ public class CardViewController {
         descriptionArea.setManaged(false);
         descriptionLabel.setVisible(true);
         
+        // Ocultar ComboBox de tipo de card e mostrar label
+        cardTypeComboBox.setVisible(false);
+        cardTypeComboBox.setManaged(false);
+        cardTypeLabel.setVisible(true);
+        
         editControlsBox.setVisible(false);
         editControlsBox.setManaged(false);
         
@@ -844,6 +912,13 @@ public class CardViewController {
         String newTitle = titleField.getText().trim();
         String newDescription = descriptionArea.getText().trim();
         
+        // Obter o tipo de card selecionado
+        CardType selectedCardType = cardTypeComboBox.getValue();
+        if (selectedCardType == null) {
+            showAlert("Erro", "Selecione um tipo de card válido", Alert.AlertType.ERROR);
+            return;
+        }
+        
         // Obter o tipo de progresso selecionado
         ProgressType selectedProgressType = progressTypeComboBox.getValue();
         if (selectedProgressType == null) {
@@ -873,6 +948,18 @@ public class CardViewController {
         if (!validationResult.isValid()) {
             showAlert("Erro", validationResult.getErrorMessage(), Alert.AlertType.ERROR);
             return;
+        }
+        
+        // Atualizar o card com o novo tipo
+        if (facade != null) {
+            try {
+                CardDetailDTO updatedCard = facade.updateCardType(cardData.id(), selectedCardType.getId());
+                // Atualizar os dados do card com o tipo atualizado
+                updateDisplayData(updatedCard);
+            } catch (Exception e) {
+                showAlert("Erro", "Erro ao atualizar tipo do card: " + e.getMessage(), Alert.AlertType.ERROR);
+                return;
+            }
         }
         
         // Criar DTO de atualização com progresso

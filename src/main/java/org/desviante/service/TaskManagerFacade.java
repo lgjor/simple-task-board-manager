@@ -6,6 +6,7 @@ import org.desviante.model.Board;
 import org.desviante.model.BoardColumn;
 import org.desviante.model.BoardGroup;
 import org.desviante.model.Card;
+import org.desviante.model.CardType;
 import org.desviante.model.enums.BoardColumnKindEnum;
 import org.desviante.repository.CheckListItemRepository;
 
@@ -524,6 +525,39 @@ public class TaskManagerFacade {
     }
 
     /**
+     * Atualiza o tipo de card de um card existente.
+     * 
+     * @param cardId identificador do card a ser atualizado
+     * @param newCardTypeId novo ID do tipo de card
+     * @return card atualizado
+     * @throws ResourceNotFoundException se o card não for encontrado
+     * @throws IllegalArgumentException se o cardTypeId for inválido
+     */
+    public CardDetailDTO updateCardType(Long cardId, Long newCardTypeId) {
+        // 1. Atualiza o tipo do card usando o CardService
+        Card updatedCard = cardService.updateCardType(cardId, newCardTypeId);
+
+        // 2. Obter o tipo da coluna atual
+        BoardColumn column = columnService.getColumnById(updatedCard.getBoardColumnId())
+                .orElseThrow(() -> new ResourceNotFoundException("Coluna com ID " + updatedCard.getBoardColumnId() + " não encontrada."));
+
+        // 3. Converte a entidade persistida de volta para um DTO para a resposta da API
+        return new CardDetailDTO(
+                updatedCard.getId(),
+                updatedCard.getTitle(),
+                updatedCard.getDescription(),
+                updatedCard.getCardType() != null ? updatedCard.getCardType().getName() : null,
+                updatedCard.getTotalUnits(),
+                updatedCard.getCurrentUnits(),
+                formatDateTime(updatedCard.getCreationDate()),
+                formatDateTime(updatedCard.getLastUpdateDate()),
+                formatDateTime(updatedCard.getCompletionDate()),
+                column.getKind(),
+                updatedCard.getProgressTypeOrDefault()
+        );
+    }
+
+    /**
      * Formata uma data/hora para exibição na interface.
      * 
      * <p>Método utilitário privado que converte LocalDateTime para string
@@ -703,6 +737,16 @@ public class TaskManagerFacade {
                 .map(CardTypeDTO::from)
                 .map(CardTypeOptionDTO::fromCardType)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Lista todos os tipos de card disponíveis.
+     * 
+     * @return Lista de todos os tipos de card
+     */
+    @Transactional(readOnly = true)
+    public List<CardType> getAllCardTypes() {
+        return cardTypeService.getAllCardTypes();
     }
 
     /**

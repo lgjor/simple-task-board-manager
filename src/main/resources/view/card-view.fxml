@@ -20,8 +20,15 @@
         <!-- Header com tipo do card e controles de movimentação -->
         <HBox alignment="CENTER_LEFT" styleClass="card-header">
             <children>
-                <!-- Label da categoria do card -->
-                <Label fx:id="cardTypeLabel" styleClass="card-type-label" />
+                <!-- StackPane para o tipo do card (modo visualização e edição) -->
+                <StackPane alignment="TOP_LEFT">
+                    <children>
+                        <!-- Label da categoria do card (modo visualização) -->
+                        <Label fx:id="cardTypeLabel" styleClass="card-type-label" />
+                        <!-- ComboBox para seleção do tipo (modo edição) -->
+                        <ComboBox fx:id="cardTypeComboBox" managed="false" visible="false" prefWidth="120.0" />
+                    </children>
+                </StackPane>
                 
                 <!-- Container para os controles de movimentação (botões para cima e para baixo) -->
                 <HBox fx:id="moveControlsBox" alignment="CENTER_RIGHT" managed="false" visible="false" spacing="5" HBox.hgrow="ALWAYS">
