@@ -123,6 +123,9 @@ public class BoardViewController {
     private Button preferencesButton;
     @FXML
     private Button aboutButton;
+    
+    @FXML
+    private Button calendarButton;
 
     // Mapa para rastrear o nó visual de cada card pelo seu ID.
     private final Map<Long, Node> cardNodeMap = new HashMap<>();
@@ -1199,6 +1202,53 @@ public class BoardViewController {
             
         } catch (IOException e) {
             showError("Erro", "Não foi possível abrir a tela de preferências: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Abre a janela do calendário.
+     */
+    @FXML
+    private void handleOpenCalendar() {
+        try {
+            // Carregar a tela do calendário
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/calendar-view.fxml"));
+            
+            // Configurar o controller usando o Spring
+            org.desviante.calendar.controller.CalendarViewController controller = 
+                org.desviante.SimpleTaskBoardManagerApplication.getSpringContext()
+                    .getBean(org.desviante.calendar.controller.CalendarViewController.class);
+            loader.setController(controller);
+            
+            Parent root = loader.load();
+            
+            // Criar uma nova janela
+            javafx.stage.Stage stage = new javafx.stage.Stage();
+            stage.setTitle("Calendário - Simple Task Board Manager");
+            stage.setScene(new javafx.scene.Scene(root));
+            stage.setMinWidth(1000);
+            stage.setMinHeight(700);
+            stage.setResizable(true);
+            
+            // Centralizar a janela
+            stage.centerOnScreen();
+            
+            // Mostrar a janela
+            stage.show();
+            
+            // Registrar a janela no WindowManager
+            if (windowManager != null) {
+                windowManager.registerWindow(stage);
+            }
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+            // Mostrar erro para o usuário
+            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
+            alert.setTitle("Erro");
+            alert.setHeaderText("Erro ao abrir o calendário");
+            alert.setContentText("Não foi possível carregar a tela do calendário: " + e.getMessage());
+            alert.showAndWait();
         }
     }
 

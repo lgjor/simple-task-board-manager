@@ -1,7 +1,7 @@
 import java.io.File
 
 // Constante centralizada para a versão da aplicação
-val appVersion = "1.2.5"
+val appVersion = "1.2.6"
 
 val platform = when {
     org.gradle.internal.os.OperatingSystem.current().isWindows -> "win"
@@ -33,6 +33,7 @@ version = appVersion
 
 repositories {
     mavenCentral()
+    maven { url = uri("https://dlsc.com/maven") }
 }
 
 java {
@@ -59,6 +60,9 @@ dependencies {
         org.gradle.internal.os.OperatingSystem.current().isMacOsX -> "mac"
         else -> throw GradleException("Unsupported OS for JavaFX")
     }
+
+    // Biblioteca CalendarFX
+    implementation("com.calendarfx:view:12.0.1")
 
     //micrometer e blockhound
     implementation(platform("io.micrometer:micrometer-bom:1.15.2"))

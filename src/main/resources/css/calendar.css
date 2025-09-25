@@ -1,0 +1,262 @@
+/* Estilos para o Calendário */
+
+/* Estilo geral do calendário */
+.calendar-container {
+    -fx-background-color: #f8f9fa;
+    -fx-padding: 10px;
+}
+
+/* Barra de navegação */
+.navigation-bar {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #dee2e6;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 10px;
+}
+
+/* Botões de navegação */
+.nav-button {
+    -fx-background-color: #007bff;
+    -fx-text-fill: white;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-padding: 8px 16px;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+.nav-button:hover {
+    -fx-background-color: #0056b3;
+}
+
+.nav-button:pressed {
+    -fx-background-color: #004085;
+}
+
+/* Botão "Hoje" */
+.today-button {
+    -fx-background-color: #28a745;
+    -fx-text-fill: white;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-padding: 8px 16px;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+.today-button:hover {
+    -fx-background-color: #1e7e34;
+}
+
+.today-button:pressed {
+    -fx-background-color: #155724;
+}
+
+/* Botão de atualizar */
+.refresh-button {
+    -fx-background-color: #6c757d;
+    -fx-text-fill: white;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-padding: 8px 16px;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+.refresh-button:hover {
+    -fx-background-color: #545b62;
+}
+
+.refresh-button:pressed {
+    -fx-background-color: #3d4043;
+}
+
+/* Barra de status */
+.status-bar {
+    -fx-background-color: #e9ecef;
+    -fx-border-color: #dee2e6;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 8px 10px;
+}
+
+.status-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #495057;
+    -fx-font-weight: bold;
+}
+
+.version-label {
+    -fx-font-size: 10px;
+    -fx-text-fill: #6c757d;
+    -fx-font-style: italic;
+}
+
+/* Legenda */
+.legend-card {
+    -fx-text-fill: #007bff;
+    -fx-font-weight: bold;
+}
+
+.legend-task {
+    -fx-text-fill: #28a745;
+    -fx-font-weight: bold;
+}
+
+.legend-event {
+    -fx-text-fill: #ffc107;
+    -fx-font-weight: bold;
+}
+
+/* Estilos para o CalendarFX */
+.calendar-view {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #dee2e6;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+}
+
+/* Estilos para eventos do calendário */
+.calendar-event-card {
+    -fx-background-color: #007bff;
+    -fx-text-fill: white;
+    -fx-border-radius: 2px;
+    -fx-background-radius: 2px;
+    -fx-padding: 2px 4px;
+    -fx-font-size: 10px;
+}
+
+.calendar-event-task {
+    -fx-background-color: #28a745;
+    -fx-text-fill: white;
+    -fx-border-radius: 2px;
+    -fx-background-radius: 2px;
+    -fx-padding: 2px 4px;
+    -fx-font-size: 10px;
+}
+
+.calendar-event-custom {
+    -fx-background-color: #ffc107;
+    -fx-text-fill: #212529;
+    -fx-border-radius: 2px;
+    -fx-background-radius: 2px;
+    -fx-padding: 2px 4px;
+    -fx-font-size: 10px;
+}
+
+.calendar-event-meeting {
+    -fx-background-color: #dc3545;
+    -fx-text-fill: white;
+    -fx-border-radius: 2px;
+    -fx-background-radius: 2px;
+    -fx-padding: 2px 4px;
+    -fx-font-size: 10px;
+}
+
+.calendar-event-reminder {
+    -fx-background-color: #6f42c1;
+    -fx-text-fill: white;
+    -fx-border-radius: 2px;
+    -fx-background-radius: 2px;
+    -fx-padding: 2px 4px;
+    -fx-font-size: 10px;
+}
+
+/* Estilos para prioridades */
+.priority-low {
+    -fx-opacity: 0.7;
+}
+
+.priority-standard {
+    -fx-opacity: 1.0;
+}
+
+.priority-medium {
+    -fx-opacity: 1.0;
+    -fx-font-weight: bold;
+}
+
+.priority-high {
+    -fx-opacity: 1.0;
+    -fx-font-weight: bold;
+    -fx-border-color: #dc3545;
+    -fx-border-width: 1px;
+}
+
+.priority-urgent {
+    -fx-opacity: 1.0;
+    -fx-font-weight: bold;
+    -fx-border-color: #dc3545;
+    -fx-border-width: 2px;
+    -fx-background-color: #f8d7da;
+}
+
+/* Estilos para eventos de dia inteiro */
+.all-day-event {
+    -fx-background-color: #e9ecef;
+    -fx-text-fill: #495057;
+    -fx-border-color: #dee2e6;
+    -fx-border-width: 1px;
+    -fx-border-radius: 2px;
+    -fx-background-radius: 2px;
+    -fx-padding: 4px 8px;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+/* Estilos para eventos recorrentes */
+.recurring-event {
+    -fx-border-style: dashed;
+    -fx-border-width: 1px;
+}
+
+/* Estilos para eventos inativos */
+.inactive-event {
+    -fx-opacity: 0.5;
+    -fx-text-fill: #6c757d;
+}
+
+/* Estilos para hover */
+.calendar-event:hover {
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+    -fx-cursor: hand;
+}
+
+/* Estilos para seleção */
+.calendar-event:selected {
+    -fx-border-color: #007bff;
+    -fx-border-width: 2px;
+    -fx-background-color: #cce7ff;
+}
+
+/* Estilos para tooltips */
+.calendar-tooltip {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #dee2e6;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-padding: 8px;
+    -fx-font-size: 11px;
+}
+
+/* Estilos para mensagens de erro */
+.error-message {
+    -fx-text-fill: #dc3545;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
+/* Estilos para mensagens de sucesso */
+.success-message {
+    -fx-text-fill: #28a745;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
+/* Estilos para mensagens de informação */
+.info-message {
+    -fx-text-fill: #17a2b8;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}

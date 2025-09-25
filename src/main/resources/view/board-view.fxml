@@ -47,6 +47,8 @@
                         <Separator orientation="VERTICAL" />
                         <Button fx:id="googleTaskButton" onAction="#handleGoogleTask" text="Google Task" />
                         <Separator orientation="VERTICAL" />
+                        <Button fx:id="calendarButton" onAction="#handleOpenCalendar" text="📅 Calendário" styleClass="calendar-button" />
+                        <Separator orientation="VERTICAL" />
                         <Button fx:id="aboutButton" onAction="#handleAbout" text="Sobre" />
                     </items>
                 </ToolBar>
