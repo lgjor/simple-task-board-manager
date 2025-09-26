@@ -34,6 +34,8 @@ import org.desviante.model.enums.ProgressType;
  * @param creationDate data de criação formatada como string
  * @param lastUpdateDate data da última atualização formatada como string
  * @param completionDate data de conclusão formatada como string (pode ser null)
+ * @param scheduledDate data de agendamento formatada como string (pode ser null)
+ * @param dueDate data de vencimento formatada como string (pode ser null)
  * @param columnKind tipo da coluna onde o card está localizado
  * @param progressType tipo de progresso do card (NONE, PERCENTAGE, CUSTOM)
  * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
@@ -53,6 +55,8 @@ public record CardDetailDTO(
         String creationDate,        // Data de criação formatada como string
         String lastUpdateDate,      // Data da última atualização formatada como string
         String completionDate,      // Data de conclusão formatada como string (pode ser null)
+        String scheduledDate,       // Data de agendamento formatada como string (pode ser null)
+        String dueDate,             // Data de vencimento formatada como string (pode ser null)
         BoardColumnKindEnum columnKind, // Tipo da coluna onde o card está localizado
         ProgressType progressType   // Tipo de progresso do card (NONE, PERCENTAGE, CUSTOM)
 ) {

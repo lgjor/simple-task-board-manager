@@ -59,6 +59,8 @@ CREATE TABLE cards (
     creation_date     TIMESTAMP NOT NULL,
     last_update_date  TIMESTAMP NOT NULL,
     completion_date   TIMESTAMP,
+    scheduled_date    TIMESTAMP,
+    due_date          TIMESTAMP,
     board_column_id   BIGINT NOT NULL,
     order_index       INTEGER DEFAULT 0,
 
@@ -70,7 +72,7 @@ CREATE TABLE cards (
 CREATE TABLE checklist_items (
     id              BIGINT AUTO_INCREMENT PRIMARY KEY,
     card_id         BIGINT NOT NULL,
-    text            VARCHAR(1000) NOT NULL,
+    text            TEXT NOT NULL,
     completed       BOOLEAN NOT NULL DEFAULT FALSE,
     order_index     INT NOT NULL DEFAULT 0,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -101,6 +103,9 @@ CREATE TABLE tasks (
 CREATE INDEX idx_board_columns_board_id ON board_columns(board_id);
 CREATE INDEX idx_cards_board_column_id ON cards(board_column_id);
 CREATE INDEX idx_cards_column_order ON cards(board_column_id, order_index);
+CREATE INDEX idx_cards_scheduled_date ON cards(scheduled_date);
+CREATE INDEX idx_cards_due_date ON cards(due_date);
+CREATE INDEX idx_cards_urgency ON cards(completion_date, due_date);
 CREATE INDEX idx_tasks_card_id ON tasks(card_id);
 CREATE INDEX idx_boards_group_id ON boards(group_id);
 

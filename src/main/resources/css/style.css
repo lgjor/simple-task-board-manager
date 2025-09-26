@@ -169,6 +169,42 @@
     -fx-opacity: 0.3;
 }
 
+/* Spinners de horário - estilo placeholder quando não há data */
+.time-spinner-placeholder {
+    -fx-background-color: #F8F9FA;
+    -fx-border-color: #E9ECEF;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+    -fx-text-fill: #6C757D; /* Cor cinza para placeholder */
+    -fx-opacity: 0.7;
+}
+
+.time-spinner-placeholder .increment-arrow-button,
+.time-spinner-placeholder .decrement-arrow-button {
+    -fx-background-color: transparent;
+    -fx-opacity: 0.5;
+}
+
+.time-spinner-placeholder .increment-arrow,
+.time-spinner-placeholder .decrement-arrow {
+    -fx-opacity: 0.5;
+}
+
+/* Spinners de horário - estilo normal quando há data */
+.time-spinner-active {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #DEE2E6;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+    -fx-text-fill: #333333; /* Cor normal */
+    -fx-opacity: 1.0;
+}
+
+.time-spinner-active:focused {
+    -fx-border-color: #007BFF;
+    -fx-background-color: #FFFFFF;
+}
+
 /* Container de progresso */
 .progress-container {
     -fx-background-color: #F8F9FA;
@@ -933,4 +969,69 @@
 .calendar-button:pressed {
     -fx-background-color: #1e7e34; /* Verde ainda mais escuro quando pressionado */
     -fx-effect: dropshadow(gaussian, rgba(40, 167, 69, 0.5), 3, 0, 0, 1);
+}
+
+/* Estilos para campos de agendamento e vencimento */
+.scheduling-section {
+    -fx-background-color: #F8F9FA;
+    -fx-border-color: #E9ECEF;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 10px;
+}
+
+.progress-section-title {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #495057;
+}
+
+.urgency-value {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+/* Estilos para diferentes níveis de urgência */
+.urgency-level-0 {
+    -fx-text-fill: #6C757D; /* Cinza - sem urgência */
+}
+
+.urgency-level-1 {
+    -fx-text-fill: #007BFF; /* Azul - baixa urgência */
+}
+
+.urgency-level-2 {
+    -fx-text-fill: #FFC107; /* Amarelo - média urgência */
+}
+
+.urgency-level-3 {
+    -fx-text-fill: #FD7E14; /* Laranja - alta urgência */
+}
+
+.urgency-level-4 {
+    -fx-text-fill: #DC3545; /* Vermelho - crítica */
+}
+
+.urgency-error {
+    -fx-text-fill: #DC3545; /* Vermelho - erro */
+}
+
+/* Botões de limpar campos */
+.clear-button {
+    -fx-background-color: #6C757D;
+    -fx-text-fill: white;
+    -fx-border-radius: 3px;
+    -fx-background-radius: 3px;
+    -fx-padding: 4px 8px;
+    -fx-font-size: 10px;
+    -fx-cursor: hand;
+}
+
+.clear-button:hover {
+    -fx-background-color: #5A6268;
+}
+
+.clear-button:pressed {
+    -fx-background-color: #495057;
 }

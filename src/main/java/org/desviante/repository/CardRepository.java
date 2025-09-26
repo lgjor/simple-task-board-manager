@@ -51,7 +51,7 @@ public class CardRepository {
         this.jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
         this.jdbcInsert = new SimpleJdbcInsert(dataSource)
                 .withTableName("cards")
-                .usingColumns("title", "description", "card_type_id", "total_units", "current_units", "progress_type", "creation_date", "last_update_date", "completion_date", "board_column_id", "order_index")
+                .usingColumns("title", "description", "card_type_id", "total_units", "current_units", "progress_type", "creation_date", "last_update_date", "completion_date", "scheduled_date", "due_date", "board_column_id", "order_index")
                 .usingGeneratedKeyColumns("id");
     }
 
@@ -100,6 +100,26 @@ public class CardRepository {
         Timestamp completionTimestamp = rs.getTimestamp("completion_date");
         if (completionTimestamp != null) {
             card.setCompletionDate(completionTimestamp.toLocalDateTime());
+        }
+        // Trata a data de agendamento, que pode ser nula (verificar se a coluna existe)
+        try {
+            Timestamp scheduledTimestamp = rs.getTimestamp("scheduled_date");
+            if (scheduledTimestamp != null) {
+                card.setScheduledDate(scheduledTimestamp.toLocalDateTime());
+            }
+        } catch (Exception e) {
+            // Coluna scheduled_date não existe ainda, definir como null
+            card.setScheduledDate(null);
+        }
+        // Trata a data de vencimento, que pode ser nula (verificar se a coluna existe)
+        try {
+            Timestamp dueTimestamp = rs.getTimestamp("due_date");
+            if (dueTimestamp != null) {
+                card.setDueDate(dueTimestamp.toLocalDateTime());
+            }
+        } catch (Exception e) {
+            // Coluna due_date não existe ainda, definir como null
+            card.setDueDate(null);
         }
         card.setBoardColumnId(rs.getLong("board_column_id"));
         
@@ -169,6 +189,8 @@ public class CardRepository {
                 .addValue("creation_date", card.getCreationDate())
                 .addValue("last_update_date", card.getLastUpdateDate())
                 .addValue("completion_date", card.getCompletionDate())
+                .addValue("scheduled_date", card.getScheduledDate())
+                .addValue("due_date", card.getDueDate())
                 .addValue("board_column_id", card.getBoardColumnId())
                 .addValue("order_index", card.getOrderIndex());
 
@@ -187,6 +209,8 @@ public class CardRepository {
                         progress_type = :progress_type,
                         last_update_date = :last_update_date,
                         completion_date = :completion_date,
+                        scheduled_date = :scheduled_date,
+                        due_date = :due_date,
                         board_column_id = :board_column_id,
                         order_index = :order_index
                     WHERE id = :id
@@ -444,6 +468,124 @@ public class CardRepository {
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("progressType", progressType.name());
         
+        return jdbcTemplate.query(sql, params, cardRowMapper);
+    }
+
+    /**
+     * Busca cards agendados para uma data específica.
+     * 
+     * @param date data para busca de cards agendados
+     * @return lista de cards agendados para a data especificada
+     */
+    public List<Card> findByScheduledDate(java.time.LocalDate date) {
+        String sql = "SELECT * FROM cards WHERE DATE(scheduled_date) = :date ORDER BY scheduled_date ASC";
+        var params = new MapSqlParameterSource("date", date);
+        return jdbcTemplate.query(sql, params, cardRowMapper);
+    }
+
+    /**
+     * Busca cards próximos do vencimento.
+     * 
+     * @param daysThreshold número de dias para considerar "próximo do vencimento"
+     * @return lista de cards próximos do vencimento
+     */
+    public List<Card> findNearDue(int daysThreshold) {
+        String sql = """
+                SELECT * FROM cards 
+                WHERE due_date IS NOT NULL 
+                AND completion_date IS NULL 
+                AND due_date <= :threshold 
+                AND due_date >= :now
+                ORDER BY due_date ASC
+                """;
+        var params = new MapSqlParameterSource()
+                .addValue("threshold", java.time.LocalDateTime.now().plusDays(daysThreshold))
+                .addValue("now", java.time.LocalDateTime.now());
+        return jdbcTemplate.query(sql, params, cardRowMapper);
+    }
+
+    /**
+     * Busca cards vencidos (não concluídos e com data de vencimento passada).
+     * 
+     * @return lista de cards vencidos
+     */
+    public List<Card> findOverdue() {
+        String sql = """
+                SELECT * FROM cards 
+                WHERE due_date IS NOT NULL 
+                AND completion_date IS NULL 
+                AND due_date < :now
+                ORDER BY due_date ASC
+                """;
+        var params = new MapSqlParameterSource("now", java.time.LocalDateTime.now());
+        return jdbcTemplate.query(sql, params, cardRowMapper);
+    }
+
+    /**
+     * Busca cards por nível de urgência baseado na data de vencimento.
+     * 
+     * @param urgencyLevel nível de urgência (0-4)
+     * @return lista de cards com o nível de urgência especificado
+     */
+    public List<Card> findByUrgencyLevel(int urgencyLevel) {
+        String sql = """
+                SELECT * FROM cards 
+                WHERE due_date IS NOT NULL 
+                AND completion_date IS NULL
+                AND (
+                    CASE 
+                        WHEN due_date < :now THEN 4
+                        WHEN DATE(due_date) = DATE(:now) THEN 3
+                        WHEN due_date <= :now + INTERVAL 1 DAY THEN 2
+                        WHEN due_date <= :now + INTERVAL 3 DAY THEN 1
+                        ELSE 0
+                    END
+                ) = :urgencyLevel
+                ORDER BY due_date ASC
+                """;
+        var params = new MapSqlParameterSource()
+                .addValue("now", java.time.LocalDateTime.now())
+                .addValue("urgencyLevel", urgencyLevel);
+        return jdbcTemplate.query(sql, params, cardRowMapper);
+    }
+
+    /**
+     * Busca cards agendados para um período específico.
+     * 
+     * @param startDate data de início do período
+     * @param endDate data de fim do período
+     * @return lista de cards agendados no período
+     */
+    public List<Card> findByScheduledDateBetween(java.time.LocalDate startDate, java.time.LocalDate endDate) {
+        String sql = """
+                SELECT * FROM cards 
+                WHERE scheduled_date IS NOT NULL 
+                AND DATE(scheduled_date) BETWEEN :startDate AND :endDate
+                ORDER BY scheduled_date ASC
+                """;
+        var params = new MapSqlParameterSource()
+                .addValue("startDate", startDate)
+                .addValue("endDate", endDate);
+        return jdbcTemplate.query(sql, params, cardRowMapper);
+    }
+
+    /**
+     * Busca cards com vencimento em um período específico.
+     * 
+     * @param startDate data de início do período
+     * @param endDate data de fim do período
+     * @return lista de cards com vencimento no período
+     */
+    public List<Card> findByDueDateBetween(java.time.LocalDate startDate, java.time.LocalDate endDate) {
+        String sql = """
+                SELECT * FROM cards 
+                WHERE due_date IS NOT NULL 
+                AND DATE(due_date) BETWEEN :startDate AND :endDate
+                ORDER BY due_date ASC
+                """;
+        var params = new MapSqlParameterSource()
+                .addValue("startDate", startDate)
+                .addValue("endDate", endDate);
         return jdbcTemplate.query(sql, params, cardRowMapper);
     }
 }

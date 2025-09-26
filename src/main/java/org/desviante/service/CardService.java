@@ -492,4 +492,190 @@ public class CardService {
         Card card = cardOpt.get();
         return cardRepository.findNextCard(card.getBoardColumnId(), card.getOrderIndex()).isPresent();
     }
+
+    /**
+     * Define a data de agendamento de um card.
+     * 
+     * <p>Valida a existência do card e atualiza a data de agendamento.
+     * A data de agendamento é usada para sincronização com o calendário.</p>
+     * 
+     * @param cardId identificador do card
+     * @param scheduledDate nova data de agendamento (pode ser null para remover)
+     * @return card atualizado
+     * @throws ResourceNotFoundException se o card não for encontrado
+     */
+    @Transactional
+    public Card setScheduledDate(Long cardId, LocalDateTime scheduledDate) {
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new ResourceNotFoundException("Card com ID " + cardId + " não encontrado."));
+        
+        card.setScheduledDate(scheduledDate);
+        card.setLastUpdateDate(LocalDateTime.now());
+        
+        return cardRepository.save(card);
+    }
+
+    /**
+     * Define a data de vencimento de um card.
+     * 
+     * <p>Valida a existência do card e atualiza a data de vencimento.
+     * A data de vencimento é usada para cálculo de urgência e priorização.</p>
+     * 
+     * @param cardId identificador do card
+     * @param dueDate nova data de vencimento (pode ser null para remover)
+     * @return card atualizado
+     * @throws ResourceNotFoundException se o card não for encontrado
+     * @throws IllegalArgumentException se a data de vencimento for anterior à data de agendamento
+     */
+    @Transactional
+    public Card setDueDate(Long cardId, LocalDateTime dueDate) {
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new ResourceNotFoundException("Card com ID " + cardId + " não encontrado."));
+        
+        // Validação: data de vencimento não pode ser anterior à data de agendamento
+        if (dueDate != null && card.getScheduledDate() != null && dueDate.isBefore(card.getScheduledDate())) {
+            throw new IllegalArgumentException("Data de vencimento não pode ser anterior à data de agendamento");
+        }
+        
+        card.setDueDate(dueDate);
+        card.setLastUpdateDate(LocalDateTime.now());
+        
+        return cardRepository.save(card);
+    }
+
+    /**
+     * Define ambas as datas de agendamento e vencimento de um card.
+     * 
+     * <p>Valida a existência do card e as datas fornecidas.
+     * Garante que a data de vencimento não seja anterior à data de agendamento.</p>
+     * 
+     * @param cardId identificador do card
+     * @param scheduledDate data de agendamento (pode ser null)
+     * @param dueDate data de vencimento (pode ser null)
+     * @return card atualizado
+     * @throws ResourceNotFoundException se o card não for encontrado
+     * @throws IllegalArgumentException se as datas forem inválidas
+     */
+    @Transactional
+    public Card setSchedulingDates(Long cardId, LocalDateTime scheduledDate, LocalDateTime dueDate) {
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new ResourceNotFoundException("Card com ID " + cardId + " não encontrado."));
+        
+        // Validação: data de vencimento não pode ser anterior à data de agendamento
+        if (scheduledDate != null && dueDate != null && dueDate.isBefore(scheduledDate)) {
+            throw new IllegalArgumentException("Data de vencimento não pode ser anterior à data de agendamento");
+        }
+        
+        card.setScheduledDate(scheduledDate);
+        card.setDueDate(dueDate);
+        card.setLastUpdateDate(LocalDateTime.now());
+        
+        return cardRepository.save(card);
+    }
+
+    /**
+     * Busca cards agendados para uma data específica.
+     * 
+     * @param date data para busca
+     * @return lista de cards agendados para a data
+     */
+    @Transactional(readOnly = true)
+    public List<Card> getCardsScheduledForDate(java.time.LocalDate date) {
+        return cardRepository.findByScheduledDate(date);
+    }
+
+    /**
+     * Busca cards próximos do vencimento.
+     * 
+     * @param daysThreshold número de dias para considerar "próximo do vencimento"
+     * @return lista de cards próximos do vencimento
+     */
+    @Transactional(readOnly = true)
+    public List<Card> getCardsNearDue(int daysThreshold) {
+        return cardRepository.findNearDue(daysThreshold);
+    }
+
+    /**
+     * Busca cards vencidos.
+     * 
+     * @return lista de cards vencidos
+     */
+    @Transactional(readOnly = true)
+    public List<Card> getOverdueCards() {
+        return cardRepository.findOverdue();
+    }
+
+    /**
+     * Busca cards por nível de urgência.
+     * 
+     * @param urgencyLevel nível de urgência (0-4)
+     * @return lista de cards com o nível de urgência especificado
+     */
+    @Transactional(readOnly = true)
+    public List<Card> getCardsByUrgencyLevel(int urgencyLevel) {
+        return cardRepository.findByUrgencyLevel(urgencyLevel);
+    }
+
+    /**
+     * Busca cards agendados para um período.
+     * 
+     * @param startDate data de início do período
+     * @param endDate data de fim do período
+     * @return lista de cards agendados no período
+     */
+    @Transactional(readOnly = true)
+    public List<Card> getCardsScheduledBetween(java.time.LocalDate startDate, java.time.LocalDate endDate) {
+        return cardRepository.findByScheduledDateBetween(startDate, endDate);
+    }
+
+    /**
+     * Busca cards com vencimento em um período.
+     * 
+     * @param startDate data de início do período
+     * @param endDate data de fim do período
+     * @return lista de cards com vencimento no período
+     */
+    @Transactional(readOnly = true)
+    public List<Card> getCardsDueBetween(java.time.LocalDate startDate, java.time.LocalDate endDate) {
+        return cardRepository.findByDueDateBetween(startDate, endDate);
+    }
+
+    /**
+     * Obtém estatísticas de urgência dos cards.
+     * 
+     * @return estatísticas de urgência
+     */
+    @Transactional(readOnly = true)
+    public UrgencyStats getUrgencyStats() {
+        List<Card> overdueCards = getOverdueCards();
+        List<Card> nearDueCards = getCardsNearDue(3);
+        List<Card> highUrgencyCards = getCardsByUrgencyLevel(3);
+        List<Card> mediumUrgencyCards = getCardsByUrgencyLevel(2);
+        List<Card> lowUrgencyCards = getCardsByUrgencyLevel(1);
+        
+        return UrgencyStats.builder()
+                .overdueCount(overdueCards.size())
+                .nearDueCount(nearDueCards.size())
+                .highUrgencyCount(highUrgencyCards.size())
+                .mediumUrgencyCount(mediumUrgencyCards.size())
+                .lowUrgencyCount(lowUrgencyCards.size())
+                .build();
+    }
+
+    /**
+     * Classe para estatísticas de urgência dos cards.
+     */
+    @lombok.Data
+    @lombok.Builder
+    public static class UrgencyStats {
+        private int overdueCount;
+        private int nearDueCount;
+        private int highUrgencyCount;
+        private int mediumUrgencyCount;
+        private int lowUrgencyCount;
+        
+        public int getTotalUrgentCards() {
+            return overdueCount + nearDueCount + highUrgencyCount;
+        }
+    }
 }

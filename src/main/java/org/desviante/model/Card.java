@@ -162,6 +162,28 @@ public class Card {
     private LocalDateTime completionDate;
 
     /**
+     * Data e hora de agendamento da tarefa.
+     * <p>Este campo define quando a tarefa deve ser iniciada ou agendada.
+     * É usado para sincronização com o calendário e planejamento temporal.
+     * Pode ser null se a tarefa não tiver data de agendamento específica.</p>
+     * 
+     * @return data e hora de agendamento da tarefa
+     * @param scheduledDate nova data e hora de agendamento da tarefa
+     */
+    private LocalDateTime scheduledDate;
+
+    /**
+     * Data e hora de vencimento da tarefa.
+     * <p>Este campo define o prazo limite para conclusão da tarefa.
+     * É usado para cálculo de urgência e priorização de tarefas.
+     * Pode ser null se a tarefa não tiver prazo específico.</p>
+     * 
+     * @return data e hora de vencimento da tarefa
+     * @param dueDate nova data e hora de vencimento da tarefa
+     */
+    private LocalDateTime dueDate;
+
+    /**
      * Identificador da coluna onde o card está localizado.
      * <p>Representa a chave estrangeira para a tabela 'board_columns'.
      * Em uma abordagem com JDBC, os relacionamentos são representados
@@ -253,5 +275,85 @@ public class Card {
         } else {
             return BoardColumnKindEnum.PENDING;
         }
+    }
+
+    /**
+     * Verifica se o card está agendado para uma data específica.
+     * 
+     * @param date data a ser verificada
+     * @return true se o card está agendado para a data especificada
+     */
+    public boolean isScheduledForDate(java.time.LocalDate date) {
+        return scheduledDate != null && scheduledDate.toLocalDate().equals(date);
+    }
+
+    /**
+     * Verifica se o card está vencido.
+     * 
+     * @return true se o card tem data de vencimento e já passou do prazo
+     */
+    public boolean isOverdue() {
+        return dueDate != null && 
+               completionDate == null && 
+               java.time.LocalDateTime.now().isAfter(dueDate);
+    }
+
+    /**
+     * Verifica se o card está próximo do vencimento.
+     * 
+     * @param daysThreshold número de dias para considerar "próximo do vencimento"
+     * @return true se o card está próximo do vencimento
+     */
+    public boolean isNearDue(int daysThreshold) {
+        if (dueDate == null || completionDate != null) {
+            return false;
+        }
+        
+        java.time.LocalDateTime threshold = java.time.LocalDateTime.now().plusDays(daysThreshold);
+        return dueDate.isBefore(threshold) && !isOverdue();
+    }
+
+    /**
+     * Calcula o nível de urgência do card baseado na data de vencimento.
+     * 
+     * @return nível de urgência (0 = sem urgência, 1 = baixa, 2 = média, 3 = alta, 4 = crítica)
+     */
+    public int getUrgencyLevel() {
+        if (dueDate == null || completionDate != null) {
+            return 0; // Sem urgência se não há prazo ou já foi concluído
+        }
+        
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        long daysUntilDue = java.time.temporal.ChronoUnit.DAYS.between(now.toLocalDate(), dueDate.toLocalDate());
+        
+        if (daysUntilDue < 0) {
+            return 4; // Crítica - vencido
+        } else if (daysUntilDue == 0) {
+            return 3; // Alta - vence hoje
+        } else if (daysUntilDue <= 1) {
+            return 2; // Média - vence em 1 dia
+        } else if (daysUntilDue <= 3) {
+            return 1; // Baixa - vence em 2-3 dias
+        }
+        
+        return 0; // Sem urgência
+    }
+
+    /**
+     * Verifica se o card pode ser agendado (tem data de agendamento definida).
+     * 
+     * @return true se o card pode ser agendado
+     */
+    public boolean canBeScheduled() {
+        return scheduledDate != null;
+    }
+
+    /**
+     * Verifica se o card tem prazo definido.
+     * 
+     * @return true se o card tem data de vencimento definida
+     */
+    public boolean hasDueDate() {
+        return dueDate != null;
     }
 }

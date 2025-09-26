@@ -17,6 +17,7 @@ import org.desviante.service.TaskManagerFacade;
 import org.desviante.service.dto.CardDetailDTO;
 import org.desviante.service.dto.CreateTaskRequestDTO;
 import org.desviante.service.dto.UpdateCardDetailsDTO;
+import org.desviante.model.Card;
 import org.desviante.model.CardType;
 
 import java.util.function.BiConsumer;
@@ -59,6 +60,10 @@ public class CardViewController {
     // --- COMPONENTES DO RODAPÉ ATUALIZADOS ---
     @FXML private Separator footerSeparator;
     @FXML private VBox footerPane;
+    @FXML private HBox scheduledDateBox;
+    @FXML private Label scheduledDateLabel;
+    @FXML private HBox dueDateBox;
+    @FXML private Label dueDateLabel;
     @FXML private HBox creationDateBox;
     @FXML private Label creationDateLabel;
     @FXML private HBox lastUpdateDateBox;
@@ -98,6 +103,19 @@ public class CardViewController {
     // Campo de status do card
     @FXML private Label statusValueLabel;
     
+    // --- CAMPOS DE AGENDAMENTO E VENCIMENTO ---
+    @FXML private VBox schedulingContainer;
+    @FXML private VBox schedulingSection;
+    @FXML private DatePicker scheduledDatePicker;
+    @FXML private Spinner<Integer> scheduledHourSpinner;
+    @FXML private Spinner<Integer> scheduledMinuteSpinner;
+    @FXML private DatePicker dueDatePicker;
+    @FXML private Spinner<Integer> dueHourSpinner;
+    @FXML private Spinner<Integer> dueMinuteSpinner;
+    @FXML private Button clearScheduledDateButton;
+    @FXML private Button clearDueDateButton;
+    @FXML private Label urgencyLabel;
+    
     // Campo de tipo de progresso
     @FXML private HBox progressTypeContainer;
     @FXML private ComboBox<ProgressType> progressTypeComboBox;
@@ -133,6 +151,7 @@ public class CardViewController {
      */
     @FXML
     public void initialize() {
+        System.out.println("=== CARDVIEWCONTROLLER INITIALIZE() CHAMADO ===");
         setupDragAndDrop();
         setupEditMode();
         setupProgressSpinners();
@@ -140,6 +159,7 @@ public class CardViewController {
         setupProgressTypeComboBox();
         setupCardTypeComboBox();
         setupChecklistComponent();
+        setupDatePickers();
         
         // Inicializar ProgressContext
         progressContext = new ProgressContext();
@@ -257,6 +277,182 @@ public class CardViewController {
                 .filter(type -> type.getName().equals(cardData.typeName()))
                 .findFirst()
                 .ifPresent(cardTypeComboBox::setValue);
+        }
+    }
+    
+    /**
+     * Configura os DatePickers e campos de horário.
+     */
+    private void setupDatePickers() {
+        // Configurar formatação dos DatePickers
+        scheduledDatePicker.setPromptText("Selecionar data");
+        dueDatePicker.setPromptText("Selecionar data");
+        
+        // Adicionar listeners para debug
+        scheduledDatePicker.valueProperty().addListener((obs, oldVal, newVal) -> {
+            System.out.println("SCHEDULED DatePicker alterado: " + oldVal + " -> " + newVal);
+        });
+        
+        dueDatePicker.valueProperty().addListener((obs, oldVal, newVal) -> {
+            System.out.println("DUE DatePicker alterado: " + oldVal + " -> " + newVal);
+        });
+        
+        // Configurar Spinners de horário para agendamento
+        scheduledHourSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 23, 12));
+        scheduledMinuteSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 59, 0));
+        
+        // Configurar Spinners de horário para vencimento
+        dueHourSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 23, 18));
+        dueMinuteSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 59, 0));
+        
+        // Configurar formatação dos Spinners (agendamento)
+        scheduledHourSpinner.setEditable(true);
+        scheduledMinuteSpinner.setEditable(true);
+        
+        // Configurar formatação dos Spinners (vencimento)
+        dueHourSpinner.setEditable(true);
+        dueMinuteSpinner.setEditable(true);
+        
+        // Configurar formatação de exibição para agendamento
+        scheduledHourSpinner.getValueFactory().setConverter(new javafx.util.converter.IntegerStringConverter() {
+            @Override
+            public String toString(Integer value) {
+                return String.format("%02d", value);
+            }
+        });
+        
+        scheduledMinuteSpinner.getValueFactory().setConverter(new javafx.util.converter.IntegerStringConverter() {
+            @Override
+            public String toString(Integer value) {
+                return String.format("%02d", value);
+            }
+        });
+        
+        // Configurar formatação de exibição para vencimento
+        dueHourSpinner.getValueFactory().setConverter(new javafx.util.converter.IntegerStringConverter() {
+            @Override
+            public String toString(Integer value) {
+                return String.format("%02d", value);
+            }
+        });
+        
+        dueMinuteSpinner.getValueFactory().setConverter(new javafx.util.converter.IntegerStringConverter() {
+            @Override
+            public String toString(Integer value) {
+                return String.format("%02d", value);
+            }
+        });
+        
+        // Aplicar estilos iniciais (placeholder)
+        updateTimeSpinnerStyles();
+        
+        // Adicionar listeners para atualização de estilos
+        scheduledDatePicker.valueProperty().addListener((obs, oldVal, newVal) -> updateTimeSpinnerStyles());
+        dueDatePicker.valueProperty().addListener((obs, oldVal, newVal) -> updateTimeSpinnerStyles());
+        scheduledHourSpinner.valueProperty().addListener((obs, oldVal, newVal) -> updateTimeSpinnerStyles());
+        scheduledMinuteSpinner.valueProperty().addListener((obs, oldVal, newVal) -> updateTimeSpinnerStyles());
+        dueHourSpinner.valueProperty().addListener((obs, oldVal, newVal) -> updateTimeSpinnerStyles());
+        dueMinuteSpinner.valueProperty().addListener((obs, oldVal, newVal) -> updateTimeSpinnerStyles());
+    }
+    
+    /**
+     * Atualiza os estilos dos spinners de horário baseado no estado dos DatePickers
+     */
+    private void updateTimeSpinnerStyles() {
+        // Verificar se há data selecionada para agendamento
+        boolean hasScheduledDate = scheduledDatePicker.getValue() != null;
+        
+        // Aplicar estilos para spinners de agendamento
+        if (hasScheduledDate) {
+            scheduledHourSpinner.getStyleClass().removeAll("time-spinner-placeholder");
+            scheduledHourSpinner.getStyleClass().add("time-spinner-active");
+            scheduledMinuteSpinner.getStyleClass().removeAll("time-spinner-placeholder");
+            scheduledMinuteSpinner.getStyleClass().add("time-spinner-active");
+        } else {
+            scheduledHourSpinner.getStyleClass().removeAll("time-spinner-active");
+            scheduledHourSpinner.getStyleClass().add("time-spinner-placeholder");
+            scheduledMinuteSpinner.getStyleClass().removeAll("time-spinner-active");
+            scheduledMinuteSpinner.getStyleClass().add("time-spinner-placeholder");
+        }
+        
+        // Verificar se há data selecionada para vencimento
+        boolean hasDueDate = dueDatePicker.getValue() != null;
+        
+        // Aplicar estilos para spinners de vencimento
+        if (hasDueDate) {
+            dueHourSpinner.getStyleClass().removeAll("time-spinner-placeholder");
+            dueHourSpinner.getStyleClass().add("time-spinner-active");
+            dueMinuteSpinner.getStyleClass().removeAll("time-spinner-placeholder");
+            dueMinuteSpinner.getStyleClass().add("time-spinner-active");
+        } else {
+            dueHourSpinner.getStyleClass().removeAll("time-spinner-active");
+            dueHourSpinner.getStyleClass().add("time-spinner-placeholder");
+            dueMinuteSpinner.getStyleClass().removeAll("time-spinner-active");
+            dueMinuteSpinner.getStyleClass().add("time-spinner-placeholder");
+        }
+    }
+    
+    /**
+     * Combina data do DatePicker com horário dos Spinners para criar LocalDateTime.
+     * 
+     * @return LocalDateTime combinado ou null se não houver data
+     */
+    private LocalDateTime getScheduledDateTime() {
+        LocalDate date = scheduledDatePicker.getValue();
+        System.out.println("getScheduledDateTime() - Data selecionada: " + date);
+        
+        if (date == null) {
+            System.out.println("getScheduledDateTime() - Retornando null (sem data)");
+            return null;
+        }
+        
+        // Obter valores dos Spinners
+        int hour = scheduledHourSpinner.getValue();
+        int minute = scheduledMinuteSpinner.getValue();
+        System.out.println("getScheduledDateTime() - Hora: " + hour + ", Minuto: " + minute);
+        
+        try {
+            LocalTime time = LocalTime.of(hour, minute);
+            LocalDateTime result = date.atTime(time);
+            System.out.println("getScheduledDateTime() - Resultado: " + result);
+            return result;
+        } catch (Exception e) {
+            // Se houver erro, usar meio-dia como padrão
+            LocalDateTime result = date.atTime(12, 0);
+            System.out.println("getScheduledDateTime() - Erro, usando padrão 12:00: " + result);
+            return result;
+        }
+    }
+    
+    /**
+     * Combina data do DatePicker de vencimento com horário dos Spinners para criar LocalDateTime.
+     * 
+     * @return LocalDateTime combinado ou null se não houver data
+     */
+    private LocalDateTime getDueDateTime() {
+        LocalDate date = dueDatePicker.getValue();
+        System.out.println("getDueDateTime() - Data selecionada: " + date);
+        
+        if (date == null) {
+            System.out.println("getDueDateTime() - Retornando null (sem data)");
+            return null;
+        }
+        
+        // Obter valores dos Spinners
+        int hour = dueHourSpinner.getValue();
+        int minute = dueMinuteSpinner.getValue();
+        System.out.println("getDueDateTime() - Hora: " + hour + ", Minuto: " + minute);
+        
+        try {
+            LocalTime time = LocalTime.of(hour, minute);
+            LocalDateTime result = date.atTime(time);
+            System.out.println("getDueDateTime() - Resultado: " + result);
+            return result;
+        } catch (Exception e) {
+            // Se houver erro, usar 18:00 como padrão
+            LocalDateTime result = date.atTime(18, 0);
+            System.out.println("getDueDateTime() - Erro, usando padrão 18:00: " + result);
+            return result;
         }
     }
     
@@ -450,6 +646,7 @@ public class CardViewController {
         titleLabel.setText(card.title());
         descriptionLabel.setText(card.description());
         updateProgressFields(card);
+        updateSchedulingFields(card);
         updateFooter(card);
         
         // Garantir que os controles de movimentação sejam exibidos em modo de visualização
@@ -459,6 +656,133 @@ public class CardViewController {
         if (statusValueLabel.getParent() != null) {
             statusValueLabel.getParent().setVisible(true);
             statusValueLabel.getParent().setManaged(true);
+        }
+    }
+
+    /**
+     * Carrega as datas de agendamento e vencimento do banco de dados para os campos de edição
+     */
+    private void loadSchedulingDatesFromDatabase() {
+        System.out.println("=== CARREGANDO DATAS DO BANCO DE DADOS ===");
+        System.out.println("Card ID: " + cardData.id());
+        
+        if (facade != null) {
+            try {
+                // Buscar o card atualizado do banco
+                Optional<Card> cardOptional = facade.getCardById(cardData.id());
+                if (cardOptional.isPresent()) {
+                    Card card = cardOptional.get();
+                    System.out.println("Card encontrado no banco:");
+                    System.out.println("  - Agendamento: " + card.getScheduledDate());
+                    System.out.println("  - Vencimento: " + card.getDueDate());
+                    
+                    // Carregar data de agendamento
+                    if (card.getScheduledDate() != null) {
+                        LocalDateTime scheduledDateTime = card.getScheduledDate();
+                        scheduledDatePicker.setValue(scheduledDateTime.toLocalDate());
+                        scheduledHourSpinner.getValueFactory().setValue(scheduledDateTime.getHour());
+                        scheduledMinuteSpinner.getValueFactory().setValue(scheduledDateTime.getMinute());
+                        System.out.println("Data de agendamento carregada: " + scheduledDateTime);
+                    } else {
+                        // Limpar campos se não houver data
+                        scheduledDatePicker.setValue(null);
+                        scheduledHourSpinner.getValueFactory().setValue(12);
+                        scheduledMinuteSpinner.getValueFactory().setValue(0);
+                        System.out.println("Nenhuma data de agendamento encontrada - campos limpos");
+                    }
+                    
+                    // Carregar data de vencimento
+                    if (card.getDueDate() != null) {
+                        LocalDateTime dueDateTime = card.getDueDate();
+                        dueDatePicker.setValue(dueDateTime.toLocalDate());
+                        dueHourSpinner.getValueFactory().setValue(dueDateTime.getHour());
+                        dueMinuteSpinner.getValueFactory().setValue(dueDateTime.getMinute());
+                        System.out.println("Data de vencimento carregada: " + dueDateTime);
+                    } else {
+                        // Limpar campos se não houver data
+                        dueDatePicker.setValue(null);
+                        dueHourSpinner.getValueFactory().setValue(18);
+                        dueMinuteSpinner.getValueFactory().setValue(0);
+                        System.out.println("Nenhuma data de vencimento encontrada - campos limpos");
+                    }
+                    
+                    // Atualizar exibição de urgência
+                    updateUrgencyDisplay();
+                    
+                    // Atualizar estilos dos spinners
+                    updateTimeSpinnerStyles();
+                    
+                } else {
+                    System.out.println("ERRO: Card não encontrado no banco de dados");
+                }
+            } catch (Exception e) {
+                System.out.println("ERRO ao carregar datas do banco: " + e.getMessage());
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("ERRO: facade é null");
+        }
+    }
+
+    /**
+     * Atualiza os campos de agendamento e vencimento
+     */
+    private void updateSchedulingFields(CardDetailDTO card) {
+        System.out.println("=== ATUALIZANDO CAMPOS DE AGENDAMENTO ===");
+        System.out.println("Card ID: " + card.id());
+        System.out.println("Data de agendamento do DTO: " + card.scheduledDate());
+        System.out.println("Data de vencimento do DTO: " + card.dueDate());
+        
+        // Atualizar campos de data e horário para agendamento
+        if (card.scheduledDate() != null && !card.scheduledDate().trim().isEmpty()) {
+            try {
+                LocalDateTime dateTime = LocalDateTime.parse(card.scheduledDate(), DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+                scheduledDatePicker.setValue(dateTime.toLocalDate());
+                scheduledHourSpinner.getValueFactory().setValue(dateTime.getHour());
+                scheduledMinuteSpinner.getValueFactory().setValue(dateTime.getMinute());
+            } catch (DateTimeParseException e) {
+                scheduledDatePicker.setValue(null);
+                scheduledHourSpinner.getValueFactory().setValue(12);
+                scheduledMinuteSpinner.getValueFactory().setValue(0);
+            }
+        } else {
+            scheduledDatePicker.setValue(null);
+            scheduledHourSpinner.getValueFactory().setValue(12);
+            scheduledMinuteSpinner.getValueFactory().setValue(0);
+        }
+        
+        // Atualizar campos de data e horário para vencimento
+        if (card.dueDate() != null && !card.dueDate().trim().isEmpty()) {
+            try {
+                LocalDateTime dateTime = LocalDateTime.parse(card.dueDate(), DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+                dueDatePicker.setValue(dateTime.toLocalDate());
+                dueHourSpinner.getValueFactory().setValue(dateTime.getHour());
+                dueMinuteSpinner.getValueFactory().setValue(dateTime.getMinute());
+            } catch (DateTimeParseException e) {
+                dueDatePicker.setValue(null);
+                dueHourSpinner.getValueFactory().setValue(18);
+                dueMinuteSpinner.getValueFactory().setValue(0);
+            }
+        } else {
+            dueDatePicker.setValue(null);
+            dueHourSpinner.getValueFactory().setValue(18);
+            dueMinuteSpinner.getValueFactory().setValue(0);
+        }
+        
+        // Atualizar exibição da urgência
+        updateUrgencyDisplay();
+        
+        // Mostrar seção de agendamento se houver dados ou estiver em modo de edição
+        boolean hasSchedulingData = (card.scheduledDate() != null && !card.scheduledDate().isEmpty()) || 
+                                   (card.dueDate() != null && !card.dueDate().isEmpty());
+        boolean isEditing = editControlsBox.isVisible();
+        
+        if (hasSchedulingData || isEditing) {
+            schedulingContainer.setVisible(true);
+            schedulingContainer.setManaged(true);
+        } else {
+            schedulingContainer.setVisible(false);
+            schedulingContainer.setManaged(false);
         }
     }
 
@@ -633,12 +957,24 @@ public class CardViewController {
      * Lógica atualizada para gerenciar a visibilidade de cada linha de data.
      */
     private void updateFooter(CardDetailDTO card) {
+        System.out.println("=== ATUALIZANDO RODAPÉ DO CARD ===");
+        System.out.println("Card ID: " + card.id());
+        System.out.println("Data de agendamento do DTO: " + card.scheduledDate());
+        System.out.println("Data de vencimento do DTO: " + card.dueDate());
+        
+        boolean scheduledVisible = setDateRow(scheduledDateBox, scheduledDateLabel, card.scheduledDate());
+        boolean dueVisible = setDateRow(dueDateBox, dueDateLabel, card.dueDate());
         boolean creationVisible = setDateRow(creationDateBox, creationDateLabel, card.creationDate());
         boolean updateVisible = setDateRow(lastUpdateDateBox, lastUpdateDateLabel, card.lastUpdateDate());
         boolean completionVisible = setDateRow(completionDateBox, completionDateLabel, card.completionDate());
 
+        System.out.println("Visibilidade - Agendamento: " + scheduledVisible + ", Vencimento: " + dueVisible);
+        System.out.println("Visibilidade - Criação: " + creationVisible + ", Atualização: " + updateVisible + ", Conclusão: " + completionVisible);
+
         // Torna o rodapé e o separador visíveis apenas se houver alguma data para mostrar
-        boolean hasAnyDate = creationVisible || updateVisible || completionVisible;
+        boolean hasAnyDate = scheduledVisible || dueVisible || creationVisible || updateVisible || completionVisible;
+        System.out.println("Rodapé visível: " + hasAnyDate);
+        
         footerSeparator.setVisible(hasAnyDate);
         footerSeparator.setManaged(hasAnyDate);
         footerPane.setVisible(hasAnyDate);
@@ -646,14 +982,17 @@ public class CardViewController {
     }
 
     private boolean setDateRow(HBox container, Label dateLabel, String dateValue) {
+        System.out.println("setDateRow() - Valor da data: '" + dateValue + "'");
         if (dateValue != null && !dateValue.trim().isEmpty()) {
             dateLabel.setText(dateValue);
             container.setVisible(true);
             container.setManaged(true);
+            System.out.println("setDateRow() - Linha visível: true");
             return true;
         } else {
             container.setVisible(false);
             container.setManaged(false);
+            System.out.println("setDateRow() - Linha visível: false");
             return false;
         }
     }
@@ -742,6 +1081,21 @@ public class CardViewController {
         // Ocultar controles de movimentação em modo de edição
         moveControlsBox.setVisible(false);
         moveControlsBox.setManaged(false);
+        
+        // Mostrar seção de agendamento em modo de edição
+        schedulingSection.setVisible(true);
+        schedulingSection.setManaged(true);
+        
+        // Carregar datas salvas do banco de dados
+        loadSchedulingDatesFromDatabase();
+        
+        // Adicionar listeners para atualizar urgência em tempo real
+        scheduledDatePicker.valueProperty().addListener((obs, oldVal, newVal) -> updateUrgencyDisplay());
+        scheduledHourSpinner.valueProperty().addListener((obs, oldVal, newVal) -> updateUrgencyDisplay());
+        scheduledMinuteSpinner.valueProperty().addListener((obs, oldVal, newVal) -> updateUrgencyDisplay());
+        dueDatePicker.valueProperty().addListener((obs, oldVal, newVal) -> updateUrgencyDisplay());
+        dueHourSpinner.valueProperty().addListener((obs, oldVal, newVal) -> updateUrgencyDisplay());
+        dueMinuteSpinner.valueProperty().addListener((obs, oldVal, newVal) -> updateUrgencyDisplay());
         
         // Mostrar campos de progresso em modo de edição e torná-los editáveis
         if (progressContainer.isVisible()) {
@@ -842,6 +1196,10 @@ public class CardViewController {
         moveControlsBox.setVisible(true);
         moveControlsBox.setManaged(true);
         
+        // Ocultar seção de agendamento em modo de visualização
+        schedulingSection.setVisible(false);
+        schedulingSection.setManaged(false);
+        
         // Configurar campos de progresso baseado no tipo de progresso
         if (progressContainer.isVisible()) {
             progressContainer.setVisible(true);
@@ -909,6 +1267,7 @@ public class CardViewController {
 
     @FXML
     private void handleSave() {
+        System.out.println("=== MÉTODO handleSave() CHAMADO ===");
         String newTitle = titleField.getText().trim();
         String newDescription = descriptionArea.getText().trim();
         
@@ -945,6 +1304,15 @@ public class CardViewController {
         progressContext.setStrategy(selectedProgressType);
         ProgressValidationResult validationResult = progressContext.validate(inputData);
         
+        System.out.println("=== VALIDAÇÃO DE PROGRESSO ===");
+        System.out.println("Tipo de progresso: " + selectedProgressType);
+        System.out.println("Total units: " + totalUnits);
+        System.out.println("Current units: " + currentUnits);
+        System.out.println("Validação válida: " + validationResult.isValid());
+        if (!validationResult.isValid()) {
+            System.out.println("Erro de validação: " + validationResult.getErrorMessage());
+        }
+        
         if (!validationResult.isValid()) {
             showAlert("Erro", validationResult.getErrorMessage(), Alert.AlertType.ERROR);
             return;
@@ -954,8 +1322,9 @@ public class CardViewController {
         if (facade != null) {
             try {
                 CardDetailDTO updatedCard = facade.updateCardType(cardData.id(), selectedCardType.getId());
-                // Atualizar os dados do card com o tipo atualizado
-                updateDisplayData(updatedCard);
+                // Atualizar apenas os dados necessários sem limpar os DatePickers
+                this.cardData = updatedCard;
+                updateCardTypeLabel(updatedCard);
             } catch (Exception e) {
                 showAlert("Erro", "Erro ao atualizar tipo do card: " + e.getMessage(), Alert.AlertType.ERROR);
                 return;
@@ -965,8 +1334,95 @@ public class CardViewController {
         // Criar DTO de atualização com progresso
         UpdateCardDetailsDTO updateData = new UpdateCardDetailsDTO(newTitle, newDescription, totalUnits, currentUnits, selectedProgressType);
         
+        // Salvar campos de agendamento e vencimento
+        try {
+            // Log do estado dos DatePickers antes de coletar
+            System.out.println("=== ESTADO DOS DATEPICKERS ANTES DE COLETAR ===");
+            System.out.println("Scheduled DatePicker value: " + scheduledDatePicker.getValue());
+            System.out.println("Due DatePicker value: " + dueDatePicker.getValue());
+            System.out.println("Scheduled Hour: " + scheduledHourSpinner.getValue());
+            System.out.println("Scheduled Minute: " + scheduledMinuteSpinner.getValue());
+            System.out.println("Due Hour: " + dueHourSpinner.getValue());
+            System.out.println("Due Minute: " + dueMinuteSpinner.getValue());
+            
+            LocalDateTime scheduledDate = getScheduledDateTime();
+            LocalDateTime dueDate = getDueDateTime();
+            
+            // Log das datas coletadas
+            System.out.println("=== SALVANDO DATAS DO CARD ===");
+            System.out.println("Card ID: " + cardData.id());
+            System.out.println("Data de agendamento coletada: " + scheduledDate);
+            System.out.println("Data de vencimento coletada: " + dueDate);
+            
+            // Validar datas se ambas estiverem preenchidas
+            if (scheduledDate != null && dueDate != null && dueDate.isBefore(scheduledDate)) {
+                showAlert("Erro", "Data de vencimento não pode ser anterior à data de agendamento", Alert.AlertType.ERROR);
+                return;
+            }
+            
+            // Atualizar datas no card PRIMEIRO
+            if (facade != null) {
+                System.out.println("Chamando facade.setSchedulingDates()...");
+                
+                // Obter as datas atuais do card para preservar as que não foram alteradas
+                Optional<Card> currentCardOptional = facade.getCardById(cardData.id());
+                LocalDateTime currentScheduledDate = null;
+                LocalDateTime currentDueDate = null;
+                
+                if (currentCardOptional.isPresent()) {
+                    Card currentCard = currentCardOptional.get();
+                    currentScheduledDate = currentCard.getScheduledDate();
+                    currentDueDate = currentCard.getDueDate();
+                    System.out.println("Datas atuais no banco:");
+                    System.out.println("  - Agendamento atual: " + currentScheduledDate);
+                    System.out.println("  - Vencimento atual: " + currentDueDate);
+                }
+                
+                // Usar as datas atuais se as novas forem null (preservar dados existentes)
+                LocalDateTime finalScheduledDate = (scheduledDate != null) ? scheduledDate : currentScheduledDate;
+                LocalDateTime finalDueDate = (dueDate != null) ? dueDate : currentDueDate;
+                
+                System.out.println("Datas finais para salvar:");
+                System.out.println("  - Agendamento final: " + finalScheduledDate);
+                System.out.println("  - Vencimento final: " + finalDueDate);
+                
+                facade.setSchedulingDates(cardData.id(), finalScheduledDate, finalDueDate);
+                System.out.println("facade.setSchedulingDates() executado com sucesso");
+                
+                // Verificar se as datas foram realmente salvas
+                try {
+                    Optional<Card> cardOptional = facade.getCardById(cardData.id());
+                    if (cardOptional.isPresent()) {
+                        Card card = cardOptional.get();
+                        System.out.println("VERIFICAÇÃO PÓS-SALVAMENTO:");
+                        System.out.println("  - Agendamento salvo: " + card.getScheduledDate());
+                        System.out.println("  - Vencimento salvo: " + card.getDueDate());
+                    } else {
+                        System.out.println("ERRO: Não foi possível verificar o card após salvamento");
+                    }
+                } catch (Exception e) {
+                    System.out.println("ERRO ao verificar card após salvamento: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            } else {
+                System.out.println("ERRO: facade é null!");
+            }
+        } catch (IllegalArgumentException e) {
+            System.out.println("ERRO ao salvar datas: " + e.getMessage());
+            showAlert("Erro", e.getMessage(), Alert.AlertType.ERROR);
+            return;
+        } catch (Exception e) {
+            System.out.println("ERRO inesperado ao salvar datas: " + e.getMessage());
+            e.printStackTrace();
+            showAlert("Erro", "Erro inesperado ao salvar datas: " + e.getMessage(), Alert.AlertType.ERROR);
+            return;
+        }
+        
         // Verificar se houve mudança significativa no progresso para mostrar feedback
         String progressChangeMessage = getProgressChangeMessage(cardData, updateData);
+        
+        // As datas foram salvas - deixar o callback recarregar a interface
+        System.out.println("Datas salvas com sucesso. Callback será chamado para recarregar a interface.");
         
         if (onSaveCallback != null) {
             onSaveCallback.accept(cardData.id(), updateData);
@@ -1200,6 +1656,197 @@ public class CardViewController {
             showAlert("Erro", "Falha ao mover card para baixo: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
+
+    /**
+     * Limpa o campo de data de agendamento.
+     */
+    @FXML
+    private void handleClearScheduledDate() {
+        System.out.println("=== LIMPANDO DATA DE AGENDAMENTO ===");
+        
+        // Verificar se há uma data de agendamento salva no banco
+        Optional<Card> currentCardOptional = facade.getCardById(cardData.id());
+        boolean hasScheduledDate = currentCardOptional.isPresent() && 
+                                 currentCardOptional.get().getScheduledDate() != null;
+        
+        if (hasScheduledDate) {
+            // Exibir confirmação antes de remover
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Confirmar Remoção");
+            alert.setHeaderText("Remover Data de Agendamento");
+            alert.setContentText("Deseja realmente remover a data de agendamento?");
+            
+            Optional<ButtonType> result = alert.showAndWait();
+            if (result.isPresent() && result.get() == ButtonType.OK) {
+                // Usuário confirmou - limpar e salvar
+                scheduledDatePicker.setValue(null);
+                scheduledHourSpinner.getValueFactory().setValue(12);
+                scheduledMinuteSpinner.getValueFactory().setValue(0);
+                
+                // Salvar a remoção no banco - preservar data de vencimento
+                try {
+                    // Obter a data de vencimento atual para preservá-la
+                    Optional<Card> currentCard = facade.getCardById(cardData.id());
+                    LocalDateTime currentDueDate = currentCard.isPresent() ? currentCard.get().getDueDate() : null;
+                    
+                    facade.setSchedulingDates(cardData.id(), null, currentDueDate);
+                    System.out.println("Data de agendamento removida e salva no banco (data de vencimento preservada)");
+                    
+                    // Atualizar a urgência e estilos
+                    updateUrgencyDisplay();
+                    updateTimeSpinnerStyles();
+                    
+                    // Notificar o callback para atualizar a UI
+                    if (onSaveCallback != null) {
+                        onSaveCallback.accept(cardData.id(), null);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Erro ao remover data de agendamento: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            } else {
+                // Usuário cancelou - não fazer nada
+                System.out.println("Remoção de data de agendamento cancelada pelo usuário");
+            }
+        } else {
+            // Não há data salva - apenas limpar os campos
+            scheduledDatePicker.setValue(null);
+            scheduledHourSpinner.getValueFactory().setValue(12);
+            scheduledMinuteSpinner.getValueFactory().setValue(0);
+            updateUrgencyDisplay();
+            updateTimeSpinnerStyles();
+            System.out.println("Data de agendamento limpa (não havia data salva)");
+        }
+    }
+
+    /**
+     * Limpa o campo de data de vencimento.
+     */
+    @FXML
+    private void handleClearDueDate() {
+        System.out.println("=== LIMPANDO DATA DE VENCIMENTO ===");
+        
+        // Verificar se há uma data de vencimento salva no banco
+        Optional<Card> currentCardOptional = facade.getCardById(cardData.id());
+        boolean hasDueDate = currentCardOptional.isPresent() && 
+                           currentCardOptional.get().getDueDate() != null;
+        
+        if (hasDueDate) {
+            // Exibir confirmação antes de remover
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Confirmar Remoção");
+            alert.setHeaderText("Remover Data de Vencimento");
+            alert.setContentText("Deseja realmente remover a data de vencimento?");
+            
+            Optional<ButtonType> result = alert.showAndWait();
+            if (result.isPresent() && result.get() == ButtonType.OK) {
+                // Usuário confirmou - limpar e salvar
+                dueDatePicker.setValue(null);
+                dueHourSpinner.getValueFactory().setValue(18);
+                dueMinuteSpinner.getValueFactory().setValue(0);
+                
+                // Salvar a remoção no banco - preservar data de agendamento
+                try {
+                    // Obter a data de agendamento atual para preservá-la
+                    Optional<Card> currentCard = facade.getCardById(cardData.id());
+                    LocalDateTime currentScheduledDate = currentCard.isPresent() ? currentCard.get().getScheduledDate() : null;
+                    
+                    facade.setSchedulingDates(cardData.id(), currentScheduledDate, null);
+                    System.out.println("Data de vencimento removida e salva no banco (data de agendamento preservada)");
+                    
+                    // Atualizar a urgência e estilos
+                    updateUrgencyDisplay();
+                    updateTimeSpinnerStyles();
+                    
+                    // Notificar o callback para atualizar a UI
+                    if (onSaveCallback != null) {
+                        onSaveCallback.accept(cardData.id(), null);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Erro ao remover data de vencimento: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            } else {
+                // Usuário cancelou - não fazer nada
+                System.out.println("Remoção de data de vencimento cancelada pelo usuário");
+            }
+        } else {
+            // Não há data salva - apenas limpar os campos
+            dueDatePicker.setValue(null);
+            dueHourSpinner.getValueFactory().setValue(18);
+            dueMinuteSpinner.getValueFactory().setValue(0);
+            updateUrgencyDisplay();
+            updateTimeSpinnerStyles();
+            System.out.println("Data de vencimento limpa (não havia data salva)");
+        }
+    }
+
+    /**
+     * Atualiza a exibição da urgência baseada nas datas inseridas.
+     */
+    private void updateUrgencyDisplay() {
+        try {
+            LocalDateTime scheduledDate = getScheduledDateTime();
+            LocalDateTime dueDate = getDueDateTime();
+            
+            // Criar um card temporário para calcular a urgência
+            if (cardData != null) {
+                // Simular um card com as datas inseridas para calcular urgência
+                int urgencyLevel = calculateUrgencyLevel(scheduledDate, dueDate);
+                String urgencyText = getUrgencyText(urgencyLevel);
+                urgencyLabel.setText(urgencyText);
+                
+                // Aplicar estilo baseado na urgência
+                urgencyLabel.getStyleClass().clear();
+                urgencyLabel.getStyleClass().add("urgency-value");
+                urgencyLabel.getStyleClass().add("urgency-level-" + urgencyLevel);
+            }
+        } catch (Exception e) {
+            urgencyLabel.setText("Data inválida");
+            urgencyLabel.getStyleClass().clear();
+            urgencyLabel.getStyleClass().add("urgency-value");
+            urgencyLabel.getStyleClass().add("urgency-error");
+        }
+    }
+
+    /**
+     * Calcula o nível de urgência baseado nas datas.
+     */
+    private int calculateUrgencyLevel(LocalDateTime scheduledDate, LocalDateTime dueDate) {
+        if (dueDate == null) {
+            return 0; // Sem urgência se não há prazo
+        }
+        
+        LocalDateTime now = LocalDateTime.now();
+        long daysUntilDue = java.time.temporal.ChronoUnit.DAYS.between(now.toLocalDate(), dueDate.toLocalDate());
+        
+        if (daysUntilDue < 0) {
+            return 4; // Crítica - vencido
+        } else if (daysUntilDue == 0) {
+            return 3; // Alta - vence hoje
+        } else if (daysUntilDue <= 1) {
+            return 2; // Média - vence em 1 dia
+        } else if (daysUntilDue <= 3) {
+            return 1; // Baixa - vence em 2-3 dias
+        }
+        
+        return 0; // Sem urgência
+    }
+
+    /**
+     * Obtém o texto de urgência baseado no nível.
+     */
+    private String getUrgencyText(int urgencyLevel) {
+        return switch (urgencyLevel) {
+            case 4 -> "CRÍTICA - Vencido";
+            case 3 -> "ALTA - Vence hoje";
+            case 2 -> "MÉDIA - Vence em 1 dia";
+            case 1 -> "BAIXA - Vence em 2-3 dias";
+            default -> "Sem urgência";
+        };
+    }
+
+
 
     private void showAlert(String title, String content, Alert.AlertType alertType) {
         Platform.runLater(() -> {

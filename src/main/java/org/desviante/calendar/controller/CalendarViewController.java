@@ -2,7 +2,6 @@ package org.desviante.calendar.controller;
 
 import com.calendarfx.model.Calendar;
 import com.calendarfx.model.CalendarSource;
-import com.calendarfx.model.Entry;
 import com.calendarfx.view.CalendarView;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;

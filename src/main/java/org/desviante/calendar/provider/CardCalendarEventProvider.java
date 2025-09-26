@@ -14,16 +14,16 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Provedor de eventos do calendário para tarefas (Provider para tasks).
+ * Provedor de eventos do calendário para cards (tarefas).
  * 
- * <p>Este provedor integra as tarefas do sistema com o calendário,
+ * <p>Este provedor integra os cards do sistema com o calendário,
  * criando eventos baseados na data de agendamento (scheduledDate)
- * dos cards que representam tarefas. Os eventos são gerados automaticamente
- * e sincronizados com as alterações nos cards.</p>
+ * dos cards. Os eventos são gerados automaticamente e sincronizados
+ * com as alterações nos cards.</p>
  * 
  * <p><strong>Características Principais:</strong></p>
  * <ul>
- *   <li>Eventos baseados na data de agendamento dos cards de tarefas</li>
+ *   <li>Eventos baseados na data de agendamento dos cards</li>
  *   <li>Prioridade calculada baseada na data de vencimento</li>
  *   <li>Sincronização automática com alterações nos cards</li>
  *   <li>Suporte a eventos de dia inteiro e com horário específico</li>
@@ -38,33 +38,31 @@ import java.util.stream.Collectors;
  */
 @Component
 @RequiredArgsConstructor
-public class TaskCalendarEventProvider implements CalendarEventProvider {
+public class CardCalendarEventProvider implements CalendarEventProvider {
 
     private final CardService cardService;
 
     @Override
     public List<CalendarEventDTO> getEventsForDateRange(LocalDate start, LocalDate end) {
-        // Buscar cards agendados no período que representam tarefas
         List<Card> cards = cardService.getCardsScheduledBetween(start, end);
         
         return cards.stream()
                 .filter(card -> card.getScheduledDate() != null)
-                .filter(this::isTaskCard) // Filtrar apenas cards que são tarefas
                 .map(this::convertCardToEventDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
     public CalendarEventDTO createEvent(CalendarEventDTO event) {
-        // Para tasks, não criamos eventos diretamente - eles são criados
-        // quando um card de tarefa é agendado através do CardService
-        throw new UnsupportedOperationException("Eventos de task são criados automaticamente quando um card de tarefa é agendado");
+        // Para cards, não criamos eventos diretamente - eles são criados
+        // quando um card é agendado através do CardService
+        throw new UnsupportedOperationException("Eventos de card são criados automaticamente quando um card é agendado");
     }
 
     @Override
     public void updateEvent(CalendarEventDTO event) {
-        // Para tasks, atualizamos o card correspondente
-        if (event.getRelatedEntityType() != null && event.getRelatedEntityType().equals("TASK")) {
+        // Para cards, atualizamos o card correspondente
+        if (event.getRelatedEntityType() != null && event.getRelatedEntityType().equals("CARD")) {
             Long cardId = event.getRelatedEntityId();
             if (cardId != null && event.getStartDateTime() != null) {
                 cardService.setScheduledDate(cardId, event.getStartDateTime());
@@ -74,23 +72,10 @@ public class TaskCalendarEventProvider implements CalendarEventProvider {
 
     @Override
     public void deleteEvent(Long eventId) {
-        // Para tasks, removemos a data de agendamento do card correspondente
-        throw new UnsupportedOperationException("Remoção de eventos de task deve ser feita através do CardService");
-    }
-
-    /**
-     * Verifica se um card representa uma tarefa.
-     * 
-     * @param card card a ser verificado
-     * @return true se o card é uma tarefa
-     */
-    private boolean isTaskCard(Card card) {
-        // Aqui você pode implementar lógica específica para identificar
-        // se um card é uma tarefa. Por exemplo, baseado no tipo do card
-        // ou em algum campo específico.
-        return card.getCardType() != null && 
-               (card.getCardType().getName().equals("TASK") || 
-                card.getCardType().getName().equals("TODO"));
+        // Para cards, removemos a data de agendamento do card correspondente
+        // Este método seria chamado quando um evento é removido do calendário
+        // Por simplicidade, não implementamos a busca reversa aqui
+        throw new UnsupportedOperationException("Remoção de eventos de card deve ser feita através do CardService");
     }
 
     /**
@@ -119,11 +104,11 @@ public class TaskCalendarEventProvider implements CalendarEventProvider {
                 .startDateTime(scheduledDate)
                 .endDateTime(allDay ? scheduledDate.plusHours(1) : dueDate)
                 .allDay(allDay)
-                .type(CalendarEventType.TASK)
+                .type(CalendarEventType.CARD)
                 .priority(priority)
                 .color(color)
                 .relatedEntityId(card.getId())
-                .relatedEntityType("TASK")
+                .relatedEntityType("CARD")
                 .active(true)
                 .build();
     }
@@ -173,5 +158,49 @@ public class TaskCalendarEventProvider implements CalendarEventProvider {
             case 1 -> "#00AAFF";  // Azul - vence em 2-3 dias
             default -> "#00AA00"; // Verde - sem urgência
         };
+    }
+
+    /**
+     * Obtém eventos de cards para uma data específica.
+     * 
+     * @param date data para busca
+     * @return lista de eventos de cards para a data
+     */
+    public List<CalendarEventDTO> getEventsForDate(LocalDate date) {
+        List<Card> cards = cardService.getCardsScheduledForDate(date);
+        
+        return cards.stream()
+                .filter(card -> card.getScheduledDate() != null)
+                .map(this::convertCardToEventDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Obtém eventos de cards próximos do vencimento.
+     * 
+     * @param daysThreshold número de dias para considerar "próximo do vencimento"
+     * @return lista de eventos de cards próximos do vencimento
+     */
+    public List<CalendarEventDTO> getEventsNearDue(int daysThreshold) {
+        List<Card> cards = cardService.getCardsNearDue(daysThreshold);
+        
+        return cards.stream()
+                .filter(card -> card.getScheduledDate() != null)
+                .map(this::convertCardToEventDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Obtém eventos de cards vencidos.
+     * 
+     * @return lista de eventos de cards vencidos
+     */
+    public List<CalendarEventDTO> getOverdueEvents() {
+        List<Card> cards = cardService.getOverdueCards();
+        
+        return cards.stream()
+                .filter(card -> card.getScheduledDate() != null)
+                .map(this::convertCardToEventDTO)
+                .collect(Collectors.toList());
     }
 }

@@ -333,6 +333,8 @@ public class TaskManagerFacade {
                                     formatDateTime(card.getCreationDate()),
                                     formatDateTime(card.getLastUpdateDate()),
                                     formatDateTime(card.getCompletionDate()),
+                                    formatDateTime(card.getScheduledDate()),
+                                    formatDateTime(card.getDueDate()),
                                     column.getKind(), // Adicionar o tipo da coluna
                                     card.getProgressTypeOrDefault() // Adicionar o tipo de progresso
                             ))
@@ -382,6 +384,8 @@ public class TaskManagerFacade {
                 formatDateTime(newCard.getCreationDate()),
                 formatDateTime(newCard.getLastUpdateDate()),
                 formatDateTime(newCard.getCompletionDate()),
+                formatDateTime(newCard.getScheduledDate()),
+                formatDateTime(newCard.getDueDate()),
                 column.getKind(), // Adicionar o tipo da coluna
                 newCard.getProgressTypeOrDefault() // Adicionar o tipo de progresso
         );
@@ -419,6 +423,8 @@ public class TaskManagerFacade {
                 formatDateTime(updatedCard.getCreationDate()),
                 formatDateTime(updatedCard.getLastUpdateDate()),
                 formatDateTime(updatedCard.getCompletionDate()),
+                formatDateTime(updatedCard.getScheduledDate()),
+                formatDateTime(updatedCard.getDueDate()),
                 newColumn.getKind(), // Adicionar o tipo da nova coluna
                 updatedCard.getProgressTypeOrDefault() // Adicionar o tipo de progresso
         );
@@ -519,6 +525,8 @@ public class TaskManagerFacade {
                 formatDateTime(updatedCard.getCreationDate()),
                 formatDateTime(updatedCard.getLastUpdateDate()),
                 formatDateTime(updatedCard.getCompletionDate()),
+                formatDateTime(updatedCard.getScheduledDate()),
+                formatDateTime(updatedCard.getDueDate()),
                 column.getKind(), // Adicionar o tipo da coluna
                 updatedCard.getProgressTypeOrDefault() // Adicionar o tipo de progresso
         );
@@ -552,6 +560,8 @@ public class TaskManagerFacade {
                 formatDateTime(updatedCard.getCreationDate()),
                 formatDateTime(updatedCard.getLastUpdateDate()),
                 formatDateTime(updatedCard.getCompletionDate()),
+                formatDateTime(updatedCard.getScheduledDate()),
+                formatDateTime(updatedCard.getDueDate()),
                 column.getKind(),
                 updatedCard.getProgressTypeOrDefault()
         );
@@ -593,6 +603,24 @@ public class TaskManagerFacade {
                 request.cardId()
         );
         System.out.println("Fachada: Criando tarefa para o card ID " + request.cardId());
+    }
+
+    /**
+     * Define as datas de agendamento e vencimento de um card.
+     * 
+     * <p>Permite definir quando um card deve ser agendado e qual é o prazo
+     * limite para sua conclusão. Essas datas são usadas para sincronização
+     * com o calendário e cálculo de urgência.</p>
+     * 
+     * @param cardId identificador do card
+     * @param scheduledDate data de agendamento (pode ser null)
+     * @param dueDate data de vencimento (pode ser null)
+     * @throws ResourceNotFoundException se o card não for encontrado
+     * @throws IllegalArgumentException se as datas forem inválidas
+     */
+    @Transactional
+    public void setSchedulingDates(Long cardId, LocalDateTime scheduledDate, LocalDateTime dueDate) {
+        cardService.setSchedulingDates(cardId, scheduledDate, dueDate);
     }
 
     /**
@@ -898,6 +926,8 @@ public class TaskManagerFacade {
                             formatDateTime(card.getCreationDate()),
                             formatDateTime(card.getLastUpdateDate()),
                             formatDateTime(card.getCompletionDate()),
+                            formatDateTime(card.getScheduledDate()),
+                            formatDateTime(card.getDueDate()),
                             column != null ? column.getKind() : null,
                             card.getProgressTypeOrDefault()
                     );
