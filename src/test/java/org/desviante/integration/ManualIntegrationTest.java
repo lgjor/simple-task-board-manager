@@ -8,6 +8,8 @@ import org.desviante.integration.observer.CalendarSyncObserver;
 import org.desviante.model.Card;
 import org.desviante.service.TaskService;
 import org.desviante.service.DatabaseMigrationService;
+import org.desviante.service.BoardService;
+import org.desviante.service.BoardColumnService;
 import org.desviante.calendar.CalendarService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -64,7 +66,24 @@ class ManualIntegrationTest {
         eventPublisher = new SimpleEventPublisher();
         DatabaseMigrationService migrationService = mock(DatabaseMigrationService.class);
         integrationCoordinator = new DefaultIntegrationCoordinator(eventPublisher, migrationService);
-        googleTasksSyncObserver = new GoogleTasksSyncObserver(mockTaskService);
+        
+        // Mock dos serviços necessários para GoogleTasksSyncObserver
+        BoardService mockBoardService = mock(BoardService.class);
+        BoardColumnService mockBoardColumnService = mock(BoardColumnService.class);
+        
+        // Configurar mocks para retornar valores válidos
+        org.desviante.model.Board mockBoard = new org.desviante.model.Board();
+        mockBoard.setId(1L);
+        mockBoard.setName("Test Board");
+        
+        org.desviante.model.BoardColumn mockColumn = new org.desviante.model.BoardColumn();
+        mockColumn.setId(1L);
+        mockColumn.setBoardId(1L);
+        
+        when(mockBoardService.getBoardById(anyLong())).thenReturn(java.util.Optional.of(mockBoard));
+        when(mockBoardColumnService.getColumnById(anyLong())).thenReturn(java.util.Optional.of(mockColumn));
+        
+        googleTasksSyncObserver = new GoogleTasksSyncObserver(mockTaskService, mockBoardService, mockBoardColumnService);
         calendarSyncObserver = new CalendarSyncObserver(mockCalendarService);
         
         // Inscrever observadores

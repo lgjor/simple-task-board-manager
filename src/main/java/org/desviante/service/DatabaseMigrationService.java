@@ -60,11 +60,15 @@ public class DatabaseMigrationService {
      * tenha a estrutura correta com a coluna last_sync_date.</p>
      */
     public void ensureIntegrationSyncStatusTable() {
-        // Para H2 com persistência local, sempre recriar a tabela para garantir estrutura correta
         if (tableExists("INTEGRATION_SYNC_STATUS")) {
-            log.warn("⚠️ Tabela INTEGRATION_SYNC_STATUS existe. Recriando para garantir estrutura correta...");
-            dropAndRecreateTable();
-            return;
+            if (hasCorrectColumnStructure()) {
+                log.info("✅ Tabela INTEGRATION_SYNC_STATUS já existe com estrutura correta");
+                return;
+            } else {
+                log.warn("⚠️ Tabela INTEGRATION_SYNC_STATUS existe mas com estrutura incorreta. Recriando...");
+                dropAndRecreateTable();
+                return;
+            }
         }
 
         log.info("🔧 Criando tabela INTEGRATION_SYNC_STATUS...");

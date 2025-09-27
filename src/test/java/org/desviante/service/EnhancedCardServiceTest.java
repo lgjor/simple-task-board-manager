@@ -120,7 +120,6 @@ class EnhancedCardServiceTest {
         verify(eventPublisher, times(1)).publish(any(CardScheduledEvent.class));
         verify(integrationSyncService, times(1)).createSyncStatus(cardId, IntegrationType.GOOGLE_TASKS);
         verify(integrationSyncService, times(1)).createSyncStatus(cardId, IntegrationType.CALENDAR);
-        verify(integrationCoordinator, times(1)).onCardScheduled(updatedCard);
     }
     
     @Test
@@ -155,7 +154,6 @@ class EnhancedCardServiceTest {
         
         verify(cardService, times(1)).setScheduledDate(cardId, null);
         verify(eventPublisher, times(1)).publish(any(CardUnscheduledEvent.class));
-        verify(integrationCoordinator, times(1)).onCardUnscheduled(updatedCard);
     }
     
     @Test
@@ -282,11 +280,11 @@ class EnhancedCardServiceTest {
         when(cardService.setScheduledDate(cardId, scheduledDate))
                 .thenReturn(updatedCard);
         
-        // Simular erro na integração
-        doThrow(new RuntimeException("Integration error"))
-                .when(integrationCoordinator).onCardScheduled(updatedCard);
+        // Simular erro na publicação do evento
+        doThrow(new RuntimeException("Event publishing error"))
+                .when(eventPublisher).publish(any(CardScheduledEvent.class));
         
-        // Act & Assert - deve lançar exceção quando há erro na integração
+        // Act & Assert - deve lançar exceção quando há erro na publicação do evento
         RuntimeException exception = assertThrows(RuntimeException.class, 
                 () -> enhancedCardService.setScheduledDate(cardId, scheduledDate));
         

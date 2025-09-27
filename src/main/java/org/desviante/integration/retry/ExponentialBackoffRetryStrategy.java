@@ -3,8 +3,6 @@ package org.desviante.integration.retry;
 import lombok.RequiredArgsConstructor;
 
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Estratégia de retry com backoff exponencial.
@@ -34,16 +32,6 @@ public class ExponentialBackoffRetryStrategy implements RetryStrategy {
     
     private final RetryConfig config;
     
-    /**
-     * Lista padrão de exceções que permitem retry.
-     */
-    private static final List<Class<? extends Exception>> DEFAULT_RETRYABLE_EXCEPTIONS = Arrays.asList(
-        java.net.ConnectException.class,
-        java.net.SocketTimeoutException.class,
-        java.io.IOException.class,
-        java.util.concurrent.TimeoutException.class,
-        java.util.concurrent.CompletionException.class
-    );
     
     @Override
     public Duration calculateDelay(RetryContext context) {

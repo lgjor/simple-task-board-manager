@@ -62,11 +62,16 @@ public class GoogleTasksSyncObserver implements EventObserver<DomainEvent> {
     
     @Override
     public void handle(DomainEvent event) throws Exception {
+        if (event == null) {
+            log.warn("GOOGLE TASKS OBSERVER - Evento nulo recebido, ignorando");
+            return;
+        }
+        
         log.info("GOOGLE TASKS OBSERVER - Recebido evento: {} para card: {}", 
                 event.getClass().getSimpleName(), 
-                event instanceof CardScheduledEvent ? ((CardScheduledEvent) event).getCard().getId() :
-                event instanceof CardUnscheduledEvent ? ((CardUnscheduledEvent) event).getCard().getId() :
-                event instanceof CardUpdatedEvent ? ((CardUpdatedEvent) event).getCard().getId() : "unknown");
+                event instanceof CardScheduledEvent ? ((CardScheduledEvent) event).getCard() != null ? ((CardScheduledEvent) event).getCard().getId() : "null" :
+                event instanceof CardUnscheduledEvent ? ((CardUnscheduledEvent) event).getCard() != null ? ((CardUnscheduledEvent) event).getCard().getId() : "null" :
+                event instanceof CardUpdatedEvent ? ((CardUpdatedEvent) event).getCard() != null ? ((CardUpdatedEvent) event).getCard().getId() : "null" : "unknown");
         
         if (event instanceof CardScheduledEvent scheduledEvent) {
             handleScheduledEvent(scheduledEvent);

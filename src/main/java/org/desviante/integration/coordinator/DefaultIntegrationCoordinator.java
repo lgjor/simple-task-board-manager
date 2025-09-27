@@ -83,6 +83,9 @@ public class DefaultIntegrationCoordinator implements IntegrationCoordinator {
         log.info("Coordenando integrações para card agendado: {} em {}", 
                 card.getId(), card.getScheduledDate());
         
+        // Garantir que a tabela existe antes da operação
+        ensureTableExists();
+        
         try {
             // Publicar evento de agendamento
             CardScheduledEvent event = CardScheduledEvent.builder()
@@ -118,6 +121,9 @@ public class DefaultIntegrationCoordinator implements IntegrationCoordinator {
         
         log.info("Coordenando integrações para card desagendado: {}", card.getId());
         
+        // Garantir que a tabela existe antes da operação
+        ensureTableExists();
+        
         try {
             // Publicar evento de desagendamento
             CardUnscheduledEvent event = CardUnscheduledEvent.builder()
@@ -152,6 +158,9 @@ public class DefaultIntegrationCoordinator implements IntegrationCoordinator {
         }
         
         log.info("Coordenando integrações para card atualizado: {}", card.getId());
+        
+        // Garantir que a tabela existe antes da operação
+        ensureTableExists();
         
         try {
             // Determinar campos alterados
@@ -196,6 +205,7 @@ public class DefaultIntegrationCoordinator implements IntegrationCoordinator {
         
         try {
             // Para movimentação, tratamos como uma atualização especial
+            // onCardUpdated já garante que a tabela existe
             onCardUpdated(card, null);
             
             // Atualizar estatísticas específicas de movimentação
@@ -229,6 +239,7 @@ public class DefaultIntegrationCoordinator implements IntegrationCoordinator {
                     .build();
             
             // Tratamos como desagendamento para limpar integrações
+            // onCardUnscheduled já garante que a tabela existe
             onCardUnscheduled(deletedCard);
             
             // Atualizar estatísticas específicas de exclusão

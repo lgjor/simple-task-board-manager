@@ -5,6 +5,8 @@ import org.desviante.integration.event.card.CardUnscheduledEvent;
 import org.desviante.integration.event.card.CardUpdatedEvent;
 import org.desviante.model.Card;
 import org.desviante.service.TaskService;
+import org.desviante.service.BoardService;
+import org.desviante.service.BoardColumnService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -36,7 +38,24 @@ class GoogleTasksSyncObserverTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        observer = new GoogleTasksSyncObserver(taskService);
+        
+        // Mock dos serviços necessários
+        BoardService mockBoardService = mock(BoardService.class);
+        BoardColumnService mockBoardColumnService = mock(BoardColumnService.class);
+        
+        // Configurar mocks para retornar valores válidos
+        org.desviante.model.Board mockBoard = new org.desviante.model.Board();
+        mockBoard.setId(1L);
+        mockBoard.setName("Test Board");
+        
+        org.desviante.model.BoardColumn mockColumn = new org.desviante.model.BoardColumn();
+        mockColumn.setId(1L);
+        mockColumn.setBoardId(1L);
+        
+        when(mockBoardService.getBoardById(anyLong())).thenReturn(java.util.Optional.of(mockBoard));
+        when(mockBoardColumnService.getColumnById(anyLong())).thenReturn(java.util.Optional.of(mockColumn));
+        
+        observer = new GoogleTasksSyncObserver(taskService, mockBoardService, mockBoardColumnService);
         
         // Configurar mock para retornar Task válido
         org.desviante.model.Task mockTask = new org.desviante.model.Task();

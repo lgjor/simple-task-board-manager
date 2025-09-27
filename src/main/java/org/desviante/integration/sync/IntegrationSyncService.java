@@ -75,6 +75,9 @@ public class IntegrationSyncService {
     public IntegrationSyncStatus createSyncStatus(Long cardId, IntegrationType integrationType, Integer maxRetries) {
         log.info("🔧 INTEGRATION SYNC SERVICE - Criando status de sincronização para card {} e tipo {}", cardId, integrationType);
         
+        // Garantir que a tabela existe antes da operação
+        ensureTableExists();
+        
         try {
             // Verificar se já existe um status para este card e tipo
             log.info("🔧 INTEGRATION SYNC SERVICE - Verificando se já existe status para card {} e tipo {}", cardId, integrationType);
@@ -130,6 +133,9 @@ public class IntegrationSyncService {
     public void markAsSynced(Long cardId, IntegrationType integrationType, String externalId) {
         log.debug("Marcando sincronização como bem-sucedida para card {} e tipo {}", cardId, integrationType);
         
+        // Garantir que a tabela existe antes da operação
+        ensureTableExists();
+        
         Optional<IntegrationSyncStatus> statusOpt = repository.findByCardIdAndType(cardId, integrationType);
         if (statusOpt.isEmpty()) {
             log.warn("Status de sincronização não encontrado para card {} e tipo {}", cardId, integrationType);
@@ -155,6 +161,9 @@ public class IntegrationSyncService {
     public void markAsError(Long cardId, IntegrationType integrationType, String errorMessage) {
         log.debug("Marcando sincronização como erro para card {} e tipo {}", cardId, integrationType);
         
+        // Garantir que a tabela existe antes da operação
+        ensureTableExists();
+        
         Optional<IntegrationSyncStatus> statusOpt = repository.findByCardIdAndType(cardId, integrationType);
         if (statusOpt.isEmpty()) {
             log.warn("Status de sincronização não encontrado para card {} e tipo {}", cardId, integrationType);
@@ -179,6 +188,9 @@ public class IntegrationSyncService {
     @Transactional
     public boolean markForRetry(Long cardId, IntegrationType integrationType) {
         log.debug("Marcando sincronização para retry para card {} e tipo {}", cardId, integrationType);
+        
+        // Garantir que a tabela existe antes da operação
+        ensureTableExists();
         
         Optional<IntegrationSyncStatus> statusOpt = repository.findByCardIdAndType(cardId, integrationType);
         if (statusOpt.isEmpty()) {
@@ -251,6 +263,9 @@ public class IntegrationSyncService {
     @Transactional
     public void removeSyncStatusesForCard(Long cardId) {
         log.info("Removendo todos os status de sincronização para card {}", cardId);
+        
+        // Garantir que a tabela existe antes da operação
+        ensureTableExists();
         repository.deleteByCardId(cardId);
     }
     

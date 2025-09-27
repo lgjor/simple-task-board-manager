@@ -10,6 +10,8 @@ import org.desviante.integration.observer.CalendarSyncObserver;
 import org.desviante.integration.sync.IntegrationSyncService;
 import org.desviante.service.TaskService;
 import org.desviante.service.DatabaseMigrationService;
+import org.desviante.service.BoardService;
+import org.desviante.service.BoardColumnService;
 import org.desviante.calendar.CalendarService;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -18,9 +20,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.mockito.Mockito;
 
 import java.time.Duration;
-
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.when;
 
 /**
  * Configuração para testes de integração.
@@ -116,9 +115,9 @@ public class IntegrationTestConfig {
      */
     @Bean
     @Primary
-    public GoogleTasksSyncObserver testGoogleTasksSyncObserver(TaskService taskService) {
+    public GoogleTasksSyncObserver testGoogleTasksSyncObserver(TaskService taskService, BoardService boardService, BoardColumnService boardColumnService) {
         System.out.println("🔧 INTEGRATION TEST CONFIG - Criando GoogleTasksSyncObserver com TaskService: " + taskService.getClass().getName());
-        return new GoogleTasksSyncObserver(taskService);
+        return new GoogleTasksSyncObserver(taskService, boardService, boardColumnService);
     }
     
     /**
