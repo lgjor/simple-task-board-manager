@@ -50,8 +50,12 @@ class ManualIntegrationTest {
         MockitoAnnotations.openMocks(this);
         
         // Configurar mocks
+        org.desviante.model.Task mockTask = new org.desviante.model.Task();
+        mockTask.setId(1L);
+        mockTask.setGoogleTaskId("google-task-123");
+        
         when(mockTaskService.createTask(anyString(), anyString(), anyString(), any(LocalDateTime.class), anyLong()))
-                .thenReturn(new org.desviante.model.Task());
+                .thenReturn(mockTask);
         when(mockCalendarService.createEvent(any(org.desviante.calendar.dto.CalendarEventDTO.class)))
                 .thenReturn(new org.desviante.calendar.dto.CalendarEventDTO());
         

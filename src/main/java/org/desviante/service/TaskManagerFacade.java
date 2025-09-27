@@ -65,6 +65,7 @@ public class TaskManagerFacade {
     private final BoardService boardService;
     private final BoardColumnService columnService;
     private final CardService cardService;
+    private final EnhancedCardService enhancedCardService;
     private final TaskService taskService;
     private final BoardGroupService boardGroupService;
     private final CardTypeService cardTypeService;
@@ -620,7 +621,7 @@ public class TaskManagerFacade {
      */
     @Transactional
     public void setSchedulingDates(Long cardId, LocalDateTime scheduledDate, LocalDateTime dueDate) {
-        cardService.setSchedulingDates(cardId, scheduledDate, dueDate);
+        enhancedCardService.setSchedulingDates(cardId, scheduledDate, dueDate);
     }
 
     /**

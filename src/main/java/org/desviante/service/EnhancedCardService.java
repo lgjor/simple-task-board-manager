@@ -239,7 +239,7 @@ public class EnhancedCardService {
      */
     @Transactional
     public Card setSchedulingDates(Long cardId, LocalDateTime scheduledDate, LocalDateTime dueDate) {
-        log.debug("Definindo datas de agendamento e vencimento para card {}: {} / {}", cardId, scheduledDate, dueDate);
+        log.info("📅 ENHANCED CARD SERVICE - Definindo datas de agendamento e vencimento para card {}: {} / {}", cardId, scheduledDate, dueDate);
         
         // Obter card atual antes da atualização
         Optional<Card> currentCardOpt = cardService.getCardById(cardId);
@@ -328,10 +328,14 @@ public class EnhancedCardService {
                     .previousScheduledDate(null)
                     .build();
             
+            log.info("🚀 PUBLICANDO EVENTO CardScheduledEvent para card {} com data: {}", card.getId(), card.getScheduledDate());
             eventPublisher.publish(event);
+            log.info("✅ Evento CardScheduledEvent publicado com sucesso para card {}", card.getId());
             
             // Coordenar integrações
+            log.info("🔄 Coordenando integrações para card {} com data: {}", card.getId(), card.getScheduledDate());
             integrationCoordinator.onCardScheduled(card);
+            log.info("✅ Integrações coordenadas com sucesso para card {}", card.getId());
             
             log.debug("Card {} processado como agendado", card.getId());
             

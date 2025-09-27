@@ -18,6 +18,9 @@ import org.mockito.Mockito;
 
 import java.time.Duration;
 
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.when;
+
 /**
  * Configuração para testes de integração.
  * 
@@ -67,14 +70,6 @@ public class IntegrationTestConfig {
         return new RetryExecutor(testRetryStrategy);
     }
     
-    /**
-     * Mock do TaskService para testes.
-     */
-    @Bean
-    @Primary
-    public TaskService mockTaskService() {
-        return Mockito.mock(TaskService.class);
-    }
     
     /**
      * Mock do CalendarService para testes.
@@ -120,8 +115,9 @@ public class IntegrationTestConfig {
      */
     @Bean
     @Primary
-    public GoogleTasksSyncObserver testGoogleTasksSyncObserver(TaskService mockTaskService) {
-        return new GoogleTasksSyncObserver(mockTaskService);
+    public GoogleTasksSyncObserver testGoogleTasksSyncObserver(TaskService taskService) {
+        System.out.println("🔧 INTEGRATION TEST CONFIG - Criando GoogleTasksSyncObserver com TaskService: " + taskService.getClass().getName());
+        return new GoogleTasksSyncObserver(taskService);
     }
     
     /**

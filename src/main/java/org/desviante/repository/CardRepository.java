@@ -478,7 +478,8 @@ public class CardRepository {
      * @return lista de cards agendados para a data especificada
      */
     public List<Card> findByScheduledDate(java.time.LocalDate date) {
-        String sql = "SELECT * FROM cards WHERE DATE(scheduled_date) = :date ORDER BY scheduled_date ASC";
+        // Usar sintaxe compatível com H2: CAST para DATE ou comparação direta com TIMESTAMP
+        String sql = "SELECT * FROM cards WHERE CAST(scheduled_date AS DATE) = :date ORDER BY scheduled_date ASC";
         var params = new MapSqlParameterSource("date", date);
         return jdbcTemplate.query(sql, params, cardRowMapper);
     }
@@ -535,7 +536,7 @@ public class CardRepository {
                 AND (
                     CASE 
                         WHEN due_date < :now THEN 4
-                        WHEN DATE(due_date) = DATE(:now) THEN 3
+                        WHEN CAST(due_date AS DATE) = CAST(:now AS DATE) THEN 3
                         WHEN due_date <= :now + INTERVAL 1 DAY THEN 2
                         WHEN due_date <= :now + INTERVAL 3 DAY THEN 1
                         ELSE 0
@@ -557,10 +558,11 @@ public class CardRepository {
      * @return lista de cards agendados no período
      */
     public List<Card> findByScheduledDateBetween(java.time.LocalDate startDate, java.time.LocalDate endDate) {
+        // Usar sintaxe compatível com H2: CAST para DATE
         String sql = """
                 SELECT * FROM cards 
                 WHERE scheduled_date IS NOT NULL 
-                AND DATE(scheduled_date) BETWEEN :startDate AND :endDate
+                AND CAST(scheduled_date AS DATE) BETWEEN :startDate AND :endDate
                 ORDER BY scheduled_date ASC
                 """;
         var params = new MapSqlParameterSource()
@@ -577,10 +579,11 @@ public class CardRepository {
      * @return lista de cards com vencimento no período
      */
     public List<Card> findByDueDateBetween(java.time.LocalDate startDate, java.time.LocalDate endDate) {
+        // Usar sintaxe compatível com H2: CAST para DATE
         String sql = """
                 SELECT * FROM cards 
                 WHERE due_date IS NOT NULL 
-                AND DATE(due_date) BETWEEN :startDate AND :endDate
+                AND CAST(due_date AS DATE) BETWEEN :startDate AND :endDate
                 ORDER BY due_date ASC
                 """;
         var params = new MapSqlParameterSource()

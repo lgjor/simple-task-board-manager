@@ -56,6 +56,8 @@ public class CalendarSyncObserver implements EventObserver<CardScheduledEvent> {
     
     @Override
     public void handle(CardScheduledEvent event) throws Exception {
+        log.info("🎯 CALENDAR OBSERVER - Recebido evento CardScheduledEvent para card: {}", event != null && event.getCard() != null ? event.getCard().getId() : "null");
+        
         if (event == null || event.getCard() == null) {
             log.warn("Evento de agendamento inválido recebido");
             return;
@@ -69,7 +71,7 @@ public class CalendarSyncObserver implements EventObserver<CardScheduledEvent> {
             return;
         }
         
-        log.info("Processando sincronização com calendário para card agendado: {}", card.getId());
+        log.info("🔄 CALENDAR OBSERVER - Processando sincronização com calendário para card agendado: {} com data: {}", card.getId(), card.getScheduledDate());
         
         try {
             if (event.isFirstScheduling()) {

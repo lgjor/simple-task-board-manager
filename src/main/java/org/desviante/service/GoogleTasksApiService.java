@@ -71,6 +71,11 @@ public class GoogleTasksApiService {
             @Autowired(required = false) GoogleApiConfig googleApiConfig,
             @Autowired(required = false) NetHttpTransport httpTransport
     ) {
+        log.info("GoogleTasksApiService sendo inicializado!");
+        log.info("tasksService: {}", tasksService != null ? "disponível" : "null");
+        log.info("googleApiConfig: {}", googleApiConfig != null ? "disponível" : "null");
+        log.info("httpTransport: {}", httpTransport != null ? "disponível" : "null");
+        
         this.tasksService = tasksService;
         this.googleApiConfig = googleApiConfig;
         this.httpTransport = httpTransport;

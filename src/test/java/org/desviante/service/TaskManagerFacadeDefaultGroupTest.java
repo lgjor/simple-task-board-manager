@@ -41,6 +41,9 @@ class TaskManagerFacadeDefaultGroupTest {
     private CardService cardService;
     
     @Mock
+    private EnhancedCardService enhancedCardService;
+    
+    @Mock
     private TaskService taskService;
     
     @Mock
@@ -60,7 +63,7 @@ class TaskManagerFacadeDefaultGroupTest {
     @BeforeEach
     void setUp() {
         taskManagerFacade = new TaskManagerFacade(
-            boardService, columnService, cardService, taskService,
+            boardService, columnService, cardService, enhancedCardService, taskService,
             boardGroupService, cardTypeService, checkListItemRepository, appMetadataConfig
         );
     }

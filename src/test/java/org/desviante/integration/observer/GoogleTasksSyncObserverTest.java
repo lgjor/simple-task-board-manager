@@ -37,6 +37,14 @@ class GoogleTasksSyncObserverTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         observer = new GoogleTasksSyncObserver(taskService);
+        
+        // Configurar mock para retornar Task válido
+        org.desviante.model.Task mockTask = new org.desviante.model.Task();
+        mockTask.setId(1L);
+        mockTask.setGoogleTaskId("google-task-123");
+        
+        when(taskService.createTask(anyString(), anyString(), anyString(), any(LocalDateTime.class), anyLong()))
+                .thenReturn(mockTask);
     }
     
     @Test

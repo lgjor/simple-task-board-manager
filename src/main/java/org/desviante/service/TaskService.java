@@ -1,5 +1,6 @@
 package org.desviante.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.desviante.exception.ResourceNotFoundException;
 import org.desviante.model.Task;
 import org.desviante.repository.CardRepository;
@@ -36,6 +37,7 @@ import java.time.ZoneOffset;
  * @see TaskRepository
  */
 @Service
+@Slf4j
 public class TaskService {
 
     private final TaskRepository taskRepository;
@@ -87,6 +89,7 @@ public class TaskService {
 
         // Verifica se o Google API está disponível
         if (googleApiService == null) {
+            log.warn("GoogleTasksApiService não está disponível! Criando apenas task local.");
             // Cria apenas a entidade local sem sincronização com Google Tasks
             Task localTask = new Task();
             localTask.setCardId(cardId);
@@ -101,12 +104,15 @@ public class TaskService {
                 localTask.setDue(due.atOffset(ZoneOffset.UTC));
             }
 
+            log.info("Task local criada com sucesso (ID: {})", localTask.getId());
             return taskRepository.save(localTask);
         }
 
+        log.info("Criando task no Google Tasks: {} - {}", title, due);
         // 1. Chama a API externa PRIMEIRO.
         var createTaskRequest = new CreateTaskRequest(listTitle, title, notes, due); // Passa o LocalDateTime
         com.google.api.services.tasks.model.Task googleTask = googleApiService.createTaskInList(createTaskRequest);
+        log.info("Task criada no Google Tasks com ID: {}", googleTask.getId());
 
         // 2. SOMENTE se a chamada externa for bem-sucedida, criamos e salvamos a entidade local.
         Task localTask = new Task();

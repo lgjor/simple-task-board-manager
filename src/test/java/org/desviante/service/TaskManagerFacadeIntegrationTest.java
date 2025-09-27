@@ -131,11 +131,16 @@ class TaskManagerFacadeIntegrationTest {
         }
         
         @Bean
+        public EnhancedCardService enhancedCardService() {
+            return mock(EnhancedCardService.class);
+        }
+        
+        @Bean
         public TaskManagerFacade taskManagerFacade(BoardService boardService, BoardColumnService boardColumnService, 
-                                                   CardService cardService, TaskService taskService, 
+                                                   CardService cardService, EnhancedCardService enhancedCardService, TaskService taskService, 
                                                    BoardGroupService boardGroupService, CardTypeService cardTypeService,
                                                    CheckListItemRepository checkListItemRepository) {
-            return new TaskManagerFacade(boardService, boardColumnService, cardService, taskService, boardGroupService, cardTypeService, checkListItemRepository, mock(AppMetadataConfig.class));
+            return new TaskManagerFacade(boardService, boardColumnService, cardService, enhancedCardService, taskService, boardGroupService, cardTypeService, checkListItemRepository, mock(AppMetadataConfig.class));
         }
         
         @Bean

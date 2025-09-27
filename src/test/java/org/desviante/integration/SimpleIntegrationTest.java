@@ -11,10 +11,9 @@ import org.desviante.calendar.CalendarService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
 import java.time.LocalDateTime;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -34,7 +33,11 @@ import static org.mockito.Mockito.*;
  * @version 1.0
  * @since 1.0
  */
-@SpringJUnitConfig(classes = IntegrationTestConfig.class)
+@SpringBootTest(classes = IntegrationTestConfig.class)
+@TestPropertySource(properties = {
+    "spring.main.allow-bean-definition-overriding=true",
+    "google.api.enabled=false"
+})
 class SimpleIntegrationTest {
     
     @Autowired
@@ -49,20 +52,22 @@ class SimpleIntegrationTest {
     @Autowired
     private CalendarSyncObserver calendarSyncObserver;
     
-    @Autowired
+    @MockBean
     private TaskService mockTaskService;
     
-    @Autowired
+    @MockBean
     private CalendarService mockCalendarService;
     
     @BeforeEach
     void setUp() {
-        // Resetar mocks para garantir estado limpo
-        reset(mockTaskService, mockCalendarService);
-        
-        // Configurar mocks para retornar sucesso
+        // Configurar mock para retornar Task válido
+        org.desviante.model.Task mockTask = new org.desviante.model.Task();
+        mockTask.setId(1L);
+        mockTask.setGoogleTaskId("google-task-123");
+
         when(mockTaskService.createTask(anyString(), anyString(), anyString(), any(LocalDateTime.class), anyLong()))
-                .thenReturn(new org.desviante.model.Task());
+                .thenReturn(mockTask);
+        
         when(mockCalendarService.createEvent(any(org.desviante.calendar.dto.CalendarEventDTO.class)))
                 .thenReturn(new org.desviante.calendar.dto.CalendarEventDTO());
     }
