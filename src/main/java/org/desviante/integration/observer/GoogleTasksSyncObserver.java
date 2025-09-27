@@ -3,12 +3,15 @@ package org.desviante.integration.observer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.desviante.integration.event.EventObserver;
+import org.desviante.integration.event.DomainEvent;
 import org.desviante.integration.event.card.CardScheduledEvent;
 import org.desviante.integration.event.card.CardUnscheduledEvent;
 import org.desviante.integration.event.card.CardUpdatedEvent;
 import org.desviante.model.Card;
 import org.desviante.model.Task;
 import org.desviante.service.TaskService;
+import org.desviante.service.BoardService;
+import org.desviante.service.BoardColumnService;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -48,15 +51,38 @@ import java.time.LocalDateTime;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class GoogleTasksSyncObserver implements EventObserver<CardScheduledEvent> {
+public class GoogleTasksSyncObserver implements EventObserver<DomainEvent> {
     
     private final TaskService taskService;
+    private final BoardService boardService;
+    private final BoardColumnService boardColumnService;
     
     // TODO: Injetar RetryExecutor quando implementado
     // private final RetryExecutor retryExecutor;
     
     @Override
-    public void handle(CardScheduledEvent event) throws Exception {
+    public void handle(DomainEvent event) throws Exception {
+        log.info("GOOGLE TASKS OBSERVER - Recebido evento: {} para card: {}", 
+                event.getClass().getSimpleName(), 
+                event instanceof CardScheduledEvent ? ((CardScheduledEvent) event).getCard().getId() :
+                event instanceof CardUnscheduledEvent ? ((CardUnscheduledEvent) event).getCard().getId() :
+                event instanceof CardUpdatedEvent ? ((CardUpdatedEvent) event).getCard().getId() : "unknown");
+        
+        if (event instanceof CardScheduledEvent scheduledEvent) {
+            handleScheduledEvent(scheduledEvent);
+        } else if (event instanceof CardUnscheduledEvent unscheduledEvent) {
+            handleUnscheduledEvent(unscheduledEvent);
+        } else if (event instanceof CardUpdatedEvent updatedEvent) {
+            handleUpdatedEvent(updatedEvent);
+        } else {
+            log.warn("Evento não suportado pelo GoogleTasksSyncObserver: {}", event.getClass().getName());
+        }
+    }
+    
+    /**
+     * Processa eventos de agendamento de cards.
+     */
+    public void handleScheduledEvent(CardScheduledEvent event) throws Exception {
         log.info("GOOGLE TASKS OBSERVER - Recebido evento CardScheduledEvent para card: {}", event != null && event.getCard() != null ? event.getCard().getId() : "null");
         
         if (event == null || event.getCard() == null) {
@@ -91,12 +117,59 @@ public class GoogleTasksSyncObserver implements EventObserver<CardScheduledEvent
         }
     }
     
+    /**
+     * Processa eventos de desagendamento de cards.
+     */
+    public void handleUnscheduledEvent(CardUnscheduledEvent event) throws Exception {
+        log.info("GOOGLE TASKS OBSERVER - Recebido evento CardUnscheduledEvent para card: {}", event != null && event.getCard() != null ? event.getCard().getId() : "null");
+        
+        if (event == null || event.getCard() == null) {
+            log.warn("Evento de desagendamento inválido recebido");
+            return;
+        }
+        
+        Card card = event.getCard();
+        removeGoogleTask(card);
+    }
+    
+    /**
+     * Processa eventos de atualização de cards.
+     */
+    public void handleUpdatedEvent(CardUpdatedEvent event) throws Exception {
+        log.info("GOOGLE TASKS OBSERVER - Recebido evento CardUpdatedEvent para card: {}", event != null && event.getCard() != null ? event.getCard().getId() : "null");
+        
+        if (event == null || event.getCard() == null) {
+            log.warn("Evento de atualização inválido recebido");
+            return;
+        }
+        
+        Card card = event.getCard();
+        Card previousCard = event.getPreviousCard();
+        
+        // Se o card foi desagendado (tinha data antes, não tem mais)
+        if (previousCard != null && previousCard.getScheduledDate() != null && card.getScheduledDate() == null) {
+            log.info("GOOGLE TASKS OBSERVER - Card {} foi desagendado, removendo task do Google Tasks", card.getId());
+            removeGoogleTask(card);
+        }
+        // Se o card foi agendado (não tinha data antes, tem agora)
+        else if (previousCard != null && previousCard.getScheduledDate() == null && card.getScheduledDate() != null) {
+            log.info("GOOGLE TASKS OBSERVER - Card {} foi agendado, criando task no Google Tasks", card.getId());
+            createGoogleTask(card);
+        }
+        // Se o card já estava agendado e foi atualizado
+        else if (card.getScheduledDate() != null) {
+            log.info("GOOGLE TASKS OBSERVER - Card {} foi atualizado, atualizando task no Google Tasks", card.getId());
+            updateGoogleTask(card);
+        }
+    }
+    
     @Override
-    public boolean canHandle(org.desviante.integration.event.DomainEvent event) {
+    public boolean canHandle(DomainEvent event) {
         return event instanceof CardScheduledEvent || 
                event instanceof CardUnscheduledEvent || 
                event instanceof CardUpdatedEvent;
     }
+    
     
     @Override
     public int getPriority() {
@@ -118,7 +191,8 @@ public class GoogleTasksSyncObserver implements EventObserver<CardScheduledEvent
         log.info("GOOGLE TASKS OBSERVER - Criando nova task no Google Tasks para card: {} - Título: {}", card.getId(), card.getTitle());
         log.info("GOOGLE TASKS OBSERVER - TaskService sendo usado: {}", taskService.getClass().getName());
 
-        String listTitle = "Simple Task Board Manager"; // Lista padrão
+        // Obter o título do board a partir do card
+        String listTitle = getBoardTitleForCard(card);
         String title = card.getTitle();
         String notes = buildTaskNotes(card);
         LocalDateTime due = card.getDueDate();
@@ -141,6 +215,52 @@ public class GoogleTasksSyncObserver implements EventObserver<CardScheduledEvent
         }
 
         log.info("GOOGLE TASKS OBSERVER - Task criada com sucesso! ID local: {}, Google ID: {}", createdTask.getId(), createdTask.getGoogleTaskId());
+    }
+    
+    /**
+     * Remove uma task do Google Tasks quando um card é desagendado.
+     * 
+     * @param card card desagendado
+     * @throws Exception se ocorrer erro durante a remoção
+     */
+    private void removeGoogleTask(Card card) throws Exception {
+        log.info("GOOGLE TASKS OBSERVER - Removendo task do Google Tasks para card: {}", card.getId());
+        
+        try {
+            taskService.deleteTaskByCardId(card.getId());
+            log.info("GOOGLE TASKS OBSERVER - Task removida com sucesso do Google Tasks para card: {}", card.getId());
+        } catch (Exception e) {
+            log.error("GOOGLE TASKS OBSERVER - Erro ao remover task do Google Tasks para card {}: {}", card.getId(), e.getMessage(), e);
+            throw e; // Re-throw para que o sistema de eventos possa tratar
+        }
+    }
+    
+    /**
+     * Obtém o título do board a partir de um card.
+     * 
+     * @param card card para obter o título do board
+     * @return título do board ou "Simple Task Board Manager" como fallback
+     */
+    private String getBoardTitleForCard(Card card) {
+        try {
+            // Obter a coluna do card
+            var column = boardColumnService.getColumnById(card.getBoardColumnId());
+            if (column.isPresent()) {
+                // Obter o board da coluna
+                var board = boardService.getBoardById(column.get().getBoardId());
+                if (board.isPresent()) {
+                    String boardName = board.get().getName();
+                    log.info("GOOGLE TASKS OBSERVER - Nome do board obtido: {}", boardName);
+                    return boardName;
+                }
+            }
+        } catch (Exception e) {
+            log.warn("GOOGLE TASKS OBSERVER - Erro ao obter título do board para card {}: {}", card.getId(), e.getMessage());
+        }
+        
+        // Fallback para nome padrão
+        log.warn("GOOGLE TASKS OBSERVER - Usando nome padrão da lista: Simple Task Board Manager");
+        return "Simple Task Board Manager";
     }
     
     /**

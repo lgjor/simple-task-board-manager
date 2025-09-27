@@ -350,11 +350,6 @@ public class EnhancedCardService {
             eventPublisher.publish(event);
             log.info("✅ Evento CardScheduledEvent publicado com sucesso para card {}", card.getId());
             
-            // Coordenar integrações
-            log.info("🔄 Coordenando integrações para card {} com data: {}", card.getId(), card.getScheduledDate());
-            integrationCoordinator.onCardScheduled(card);
-            log.info("✅ Integrações coordenadas com sucesso para card {}", card.getId());
-            
             log.info("🎉 PROCESSANDO CARD AGENDADO - Processamento concluído com sucesso para card {}", card.getId());
             
         } catch (Exception e) {
@@ -381,9 +376,6 @@ public class EnhancedCardService {
             
             eventPublisher.publish(event);
             
-            // Coordenar integrações
-            integrationCoordinator.onCardScheduled(card);
-            
             log.debug("Card {} processado como reagendado", card.getId());
             
         } catch (Exception e) {
@@ -406,9 +398,6 @@ public class EnhancedCardService {
                     .build();
             
             eventPublisher.publish(event);
-            
-            // Coordenar integrações
-            integrationCoordinator.onCardUnscheduled(card);
             
             log.debug("Card {} processado como desagendado", card.getId());
             

@@ -162,6 +162,22 @@ public class TaskRepository {
     }
 
     /**
+     * Busca uma tarefa pelo ID do card.
+     * 
+     * @param cardId ID do card
+     * @return Optional contendo a tarefa se encontrada, ou vazio caso contrário
+     */
+    public Optional<Task> findByCardId(Long cardId) {
+        String sql = "SELECT * FROM tasks WHERE card_id = :cardId";
+        var params = new MapSqlParameterSource("cardId", cardId);
+        try {
+            return Optional.ofNullable(jdbcTemplate.queryForObject(sql, params, taskRowMapper));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+    /**
      * Remove uma tarefa pelo ID.
      * 
      * @param id ID da tarefa a ser removida
@@ -170,6 +186,18 @@ public class TaskRepository {
     public void deleteById(Long id) {
         String sql = "DELETE FROM tasks WHERE id = :id";
         var params = new MapSqlParameterSource("id", id);
+        jdbcTemplate.update(sql, params);
+    }
+    
+    /**
+     * Remove uma tarefa pelo ID do card.
+     * 
+     * @param cardId ID do card
+     */
+    @Transactional
+    public void deleteByCardId(Long cardId) {
+        String sql = "DELETE FROM tasks WHERE card_id = :cardId";
+        var params = new MapSqlParameterSource("cardId", cardId);
         jdbcTemplate.update(sql, params);
     }
 }

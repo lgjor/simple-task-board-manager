@@ -63,15 +63,18 @@ public class SimpleEventPublisher implements EventPublisher {
             throw new IllegalArgumentException("Evento não pode ser null");
         }
         
-        log.debug("Publicando evento: {} para {} observadores", 
-                 event.getEventType(), observers.size());
+        log.info("🚀 EVENT PUBLISHER - Publicando evento: {} para {} observadores", 
+                 event.getClass().getSimpleName(), observers.size());
         
         List<EventObserver<?>> compatibleObservers = findCompatibleObservers(event);
         
         if (compatibleObservers.isEmpty()) {
-            log.debug("Nenhum observador compatível encontrado para evento: {}", event.getEventType());
+            log.warn("⚠️ EVENT PUBLISHER - Nenhum observador compatível encontrado para evento: {}", event.getClass().getSimpleName());
             return;
         }
+        
+        log.info("✅ EVENT PUBLISHER - Encontrados {} observadores compatíveis para evento: {}", 
+                 compatibleObservers.size(), event.getClass().getSimpleName());
         
         // Ordenar observadores por prioridade (maior primeiro)
         compatibleObservers.sort((o1, o2) -> Integer.compare(o2.getPriority(), o1.getPriority()));
@@ -80,12 +83,14 @@ public class SimpleEventPublisher implements EventPublisher {
         
         for (EventObserver<?> observer : compatibleObservers) {
             try {
-                log.debug("Notificando observador: {} para evento: {}", 
-                         observer.getObserverName(), event.getEventType());
+                log.info("📢 EVENT PUBLISHER - Notificando observador: {} para evento: {}", 
+                         observer.getObserverName(), event.getClass().getSimpleName());
                 handleEvent(observer, event);
+                log.info("✅ EVENT PUBLISHER - Observador {} processou evento {} com sucesso", 
+                         observer.getObserverName(), event.getClass().getSimpleName());
             } catch (Exception e) {
-                log.error("Erro ao processar evento {} no observador {}: {}", 
-                         event.getEventType(), observer.getObserverName(), e.getMessage(), e);
+                log.error("❌ EVENT PUBLISHER - Erro ao processar evento {} no observador {}: {}", 
+                         event.getClass().getSimpleName(), observer.getObserverName(), e.getMessage(), e);
                 errors.add(e);
             }
         }
@@ -165,9 +170,18 @@ public class SimpleEventPublisher implements EventPublisher {
      * @return lista de observadores compatíveis
      */
     private List<EventObserver<?>> findCompatibleObservers(DomainEvent event) {
-        return observers.stream()
-                .filter(observer -> observer.canHandle(event))
+        List<EventObserver<?>> compatible = observers.stream()
+                .filter(observer -> {
+                    boolean canHandle = observer.canHandle(event);
+                    log.debug("Observador {} pode lidar com evento {}: {}", 
+                             observer.getObserverName(), event.getClass().getSimpleName(), canHandle);
+                    return canHandle;
+                })
                 .collect(java.util.stream.Collectors.toList());
+        
+        log.debug("Encontrados {} observadores compatíveis para evento {}", 
+                 compatible.size(), event.getClass().getSimpleName());
+        return compatible;
     }
     
     /**
@@ -192,8 +206,7 @@ public class SimpleEventPublisher implements EventPublisher {
             } else if (event instanceof CardScheduledEvent && observer instanceof org.desviante.integration.observer.GoogleTasksSyncObserver) {
                 ((org.desviante.integration.observer.GoogleTasksSyncObserver) observer).handle((CardScheduledEvent) event);
             } else if (event instanceof CardUnscheduledEvent && observer instanceof org.desviante.integration.observer.GoogleTasksSyncObserver) {
-                // GoogleTasksSyncObserver não precisa processar eventos de desagendamento
-                log.debug("GoogleTasksSyncObserver ignorando evento CardUnscheduledEvent");
+                ((org.desviante.integration.observer.GoogleTasksSyncObserver) observer).handleUnscheduledEvent((CardUnscheduledEvent) event);
             } else if (event instanceof CardUpdatedEvent && observer instanceof org.desviante.integration.observer.GoogleTasksSyncObserver) {
                 // GoogleTasksSyncObserver não precisa processar eventos de atualização
                 log.debug("GoogleTasksSyncObserver ignorando evento CardUpdatedEvent");

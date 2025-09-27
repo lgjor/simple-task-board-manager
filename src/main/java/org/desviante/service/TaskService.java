@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Optional;
 
 /**
  * Gerencia as operações de negócio relacionadas à sincronização com Google Tasks.
@@ -130,5 +131,54 @@ public class TaskService {
         }
 
         return taskRepository.save(localTask);
+    }
+    
+    /**
+     * Busca uma tarefa pelo ID do card.
+     * 
+     * @param cardId ID do card
+     * @return Optional contendo a tarefa se encontrada, ou vazio caso contrário
+     */
+    public Optional<Task> findByCardId(Long cardId) {
+        return taskRepository.findByCardId(cardId);
+    }
+    
+    /**
+     * Remove uma tarefa do Google Tasks e do banco local.
+     * 
+     * @param cardId ID do card
+     */
+    @Transactional
+    public void deleteTaskByCardId(Long cardId) {
+        log.info("Removendo task para card: {}", cardId);
+        
+        // Buscar a tarefa local
+        Optional<Task> taskOpt = taskRepository.findByCardId(cardId);
+        if (taskOpt.isEmpty()) {
+            log.warn("Nenhuma task encontrada para card: {}", cardId);
+            return;
+        }
+        
+        Task task = taskOpt.get();
+        
+        // Se tem Google Task ID, remover do Google Tasks
+        if (task.getGoogleTaskId() != null && !task.getGoogleTaskId().isEmpty()) {
+            try {
+                if (googleApiService != null) {
+                    log.info("Removendo task do Google Tasks: {}", task.getGoogleTaskId());
+                    googleApiService.deleteTask(task.getGoogleTaskId());
+                    log.info("Task removida do Google Tasks com sucesso");
+                } else {
+                    log.warn("GoogleTasksApiService não está disponível! Removendo apenas do banco local.");
+                }
+            } catch (Exception e) {
+                log.error("Erro ao remover task do Google Tasks: {}", e.getMessage(), e);
+                // Continua removendo do banco local mesmo se falhar no Google
+            }
+        }
+        
+        // Remover do banco local
+        taskRepository.deleteByCardId(cardId);
+        log.info("Task removida do banco local para card: {}", cardId);
     }
 }

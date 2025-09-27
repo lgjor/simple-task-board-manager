@@ -334,5 +334,80 @@ public class GoogleTasksApiService {
         
         log.info("🎉 GOOGLE TASKS API SERVICE - Serviço Tasks criado com sucesso!");
     }
+    
+    /**
+     * Remove uma tarefa do Google Tasks.
+     * 
+     * @param taskId ID da tarefa no Google Tasks
+     * @throws IOException se houver falha na comunicação com a API
+     * @throws GoogleApiServiceException se houver falha na operação
+     */
+    public void deleteTask(String taskId) throws IOException {
+        log.info("🔧 GOOGLE TASKS API SERVICE - Removendo task do Google Tasks: {}", taskId);
+        
+        if (tasksService == null) {
+            log.warn("⚠️ GOOGLE TASKS API SERVICE - Serviço do Google Tasks não inicializado. Tentando inicialização sob demanda...");
+            try {
+                createAndSetTasksService();
+                log.info("✅ GOOGLE TASKS API SERVICE - Serviço do Google Tasks inicializado com sucesso sob demanda.");
+            } catch (Exception e) {
+                log.error("❌ GOOGLE TASKS API SERVICE - Falha ao inicializar o serviço do Google Tasks sob demanda.", e);
+                throw new GoogleApiServiceException("A integração com Google Tasks não está configurada.", e);
+            }
+        }
+        
+        try {
+            // Buscar a tarefa em todas as listas para encontrar onde ela está
+            List<TaskList> lists = tasksService.tasklists().list().execute().getItems();
+            com.google.api.services.tasks.model.Task taskToDelete = null;
+            String listId = null;
+            
+            // Procurar a tarefa em todas as listas
+            for (TaskList list : lists) {
+                try {
+                    com.google.api.services.tasks.model.Task task = tasksService.tasks().get(list.getId(), taskId).execute();
+                    if (task != null) {
+                        taskToDelete = task;
+                        listId = list.getId();
+                        log.info("🔍 GOOGLE TASKS API SERVICE - Task encontrada na lista: {} (ID: {})", list.getTitle(), listId);
+                        break;
+                    }
+                } catch (GoogleJsonResponseException e) {
+                    if (e.getStatusCode() != 404) {
+                        // Se não for 404, re-lançar o erro
+                        throw e;
+                    }
+                    // Se for 404, continuar procurando na próxima lista
+                }
+            }
+            
+            if (taskToDelete == null || listId == null) {
+                log.warn("⚠️ GOOGLE TASKS API SERVICE - Task não encontrada em nenhuma lista do Google Tasks: {}", taskId);
+                // Não é um erro crítico, a task já foi removida
+                return;
+            }
+            
+            // Remover a tarefa da lista onde foi encontrada
+            tasksService.tasks().delete(listId, taskId).execute();
+            log.info("✅ GOOGLE TASKS API SERVICE - Task removida com sucesso do Google Tasks: {} da lista: {}", taskId, listId);
+            
+        } catch (GoogleJsonResponseException e) {
+            if (e.getStatusCode() == 404) {
+                log.warn("⚠️ GOOGLE TASKS API SERVICE - Task não encontrada no Google Tasks: {}", taskId);
+                // Não é um erro crítico, a task já foi removida
+                return;
+            }
+            String details = e.getDetails() != null ? e.getDetails().getMessage() : "Nenhum detalhe adicional da API.";
+            String userFriendlyMessage = String.format("Erro da API do Google ao remover task: %s (Código: %d). Detalhes: %s",
+                    e.getStatusMessage(), e.getStatusCode(), details);
+            log.error(userFriendlyMessage, e);
+            throw new GoogleApiServiceException(userFriendlyMessage, e);
+            
+        } catch (IOException e) {
+            String errorMessage = "Falha ao remover task do Google Tasks. Verifique sua conexão com a internet.";
+            log.error(errorMessage, e);
+            throw new GoogleApiServiceException(errorMessage, e);
+        }
+    }
 
 }
