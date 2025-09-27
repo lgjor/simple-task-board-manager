@@ -50,8 +50,9 @@ class EnhancedCardServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        DatabaseMigrationService migrationService = mock(DatabaseMigrationService.class);
         enhancedCardService = new EnhancedCardService(
-            cardService, eventPublisher, integrationCoordinator, integrationSyncService);
+            cardService, eventPublisher, integrationCoordinator, integrationSyncService, migrationService);
     }
     
     @Test
@@ -285,8 +286,11 @@ class EnhancedCardServiceTest {
         doThrow(new RuntimeException("Integration error"))
                 .when(integrationCoordinator).onCardScheduled(updatedCard);
         
-        // Act & Assert - não deve lançar exceção
-        assertDoesNotThrow(() -> enhancedCardService.setScheduledDate(cardId, scheduledDate));
+        // Act & Assert - deve lançar exceção quando há erro na integração
+        RuntimeException exception = assertThrows(RuntimeException.class, 
+                () -> enhancedCardService.setScheduledDate(cardId, scheduledDate));
+        
+        assertTrue(exception.getMessage().contains("Falha ao processar agendamento do card"));
         
         // Verificar que a operação principal foi executada
         verify(cardService, times(1)).setScheduledDate(cardId, scheduledDate);

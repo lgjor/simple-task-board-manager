@@ -7,6 +7,7 @@ import org.desviante.integration.observer.GoogleTasksSyncObserver;
 import org.desviante.integration.observer.CalendarSyncObserver;
 import org.desviante.model.Card;
 import org.desviante.service.TaskService;
+import org.desviante.service.DatabaseMigrationService;
 import org.desviante.calendar.CalendarService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,7 +62,8 @@ class ManualIntegrationTest {
         
         // Criar componentes
         eventPublisher = new SimpleEventPublisher();
-        integrationCoordinator = new DefaultIntegrationCoordinator(eventPublisher);
+        DatabaseMigrationService migrationService = mock(DatabaseMigrationService.class);
+        integrationCoordinator = new DefaultIntegrationCoordinator(eventPublisher, migrationService);
         googleTasksSyncObserver = new GoogleTasksSyncObserver(mockTaskService);
         calendarSyncObserver = new CalendarSyncObserver(mockCalendarService);
         

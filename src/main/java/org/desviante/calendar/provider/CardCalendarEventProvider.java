@@ -54,9 +54,9 @@ public class CardCalendarEventProvider implements CalendarEventProvider {
 
     @Override
     public CalendarEventDTO createEvent(CalendarEventDTO event) {
-        // Para cards, não criamos eventos diretamente - eles são criados
-        // quando um card é agendado através do CardService
-        throw new UnsupportedOperationException("Eventos de card são criados automaticamente quando um card é agendado");
+        // Para cards, retornamos o evento como está, pois ele já foi criado
+        // quando um card foi agendado através do CardService
+        return event;
     }
 
     @Override

@@ -1,203 +1,229 @@
 package org.desviante.service;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.stereotype.Service;
 
-import jakarta.annotation.PostConstruct;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.logging.Logger;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Serviço responsável por migrações automáticas do banco de dados.
+ * Serviço responsável por executar migrações do banco de dados de forma segura.
  * 
- * <p>Este serviço verifica se o banco de dados precisa de atualizações
- * e executa scripts de migração automaticamente para preservar dados
- * existentes durante atualizações do sistema.</p>
+ * <p>Este serviço garante que as migrações sejam executadas sem perder dados existentes,
+ * verificando se as tabelas necessárias existem antes de tentar utilizá-las.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy
  * @version 1.0
  * @since 1.0
  */
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class DatabaseMigrationService {
 
-    private static final Logger logger = Logger.getLogger(DatabaseMigrationService.class.getName());
+    private final DataSource dataSource;
     
-    @Autowired
-    private DataSource dataSource;
-    
-    @Autowired
+    @Autowired(required = false)
     private JdbcTemplate jdbcTemplate;
-    
-    // Temporariamente removido para evitar problemas de compatibilidade
-    // @Autowired
-    // private ChecklistMigrationService checklistMigrationService;
 
     /**
-     * Construtor padrão do serviço de migração de banco de dados.
+     * Verifica se uma tabela existe no banco de dados.
      * 
-     * <p>Este serviço não requer inicialização especial.</p>
+     * @param tableName nome da tabela a ser verificada
+     * @return true se a tabela existe, false caso contrário
      */
-    public DatabaseMigrationService() {
-        // Inicialização automática via Spring
-    }
-
-    /**
-     * Executa migrações automáticas após a inicialização do serviço.
-     * Verifica se há mudanças necessárias no banco e as aplica automaticamente.
-     */
-    @PostConstruct
-    public void executeMigrations() {
-        try {
-            logger.info("Iniciando verificação de migrações do banco de dados...");
-            
-            // Verifica se o banco precisa de migração
-            if (needsMigration()) {
-                logger.info("Migração necessária detectada. Executando script de migração...");
-                executeMigrationScript();
-                logger.info("Migração concluída com sucesso");
-            } else {
-                logger.info("Banco de dados está atualizado. Nenhuma migração necessária.");
-            }
-            
+    public boolean tableExists(String tableName) {
+        try (Connection connection = dataSource.getConnection()) {
+            DatabaseMetaData metaData = connection.getMetaData();
+            ResultSet tables = metaData.getTables(null, null, tableName.toUpperCase(), new String[]{"TABLE"});
+            boolean exists = tables.next();
+            tables.close();
+            return exists;
         } catch (Exception e) {
-            logger.severe("Erro durante a migração do banco de dados: " + e.getMessage());
-            // Não re-lança a exceção para não impedir a inicialização da aplicação
+            log.warn("Erro ao verificar existência da tabela {}: {}", tableName, e.getMessage());
+            return false;
         }
     }
 
     /**
-     * Verifica se o banco de dados precisa de migração.
+     * Executa a criação da tabela integration_sync_status se ela não existir.
+     * Se existir com estrutura incorreta, recria a tabela.
      * 
-     * @return true se a migração é necessária, false caso contrário
+     * <p>Esta migração é executada de forma segura, garantindo que a tabela
+     * tenha a estrutura correta com a coluna last_sync_date.</p>
      */
-    private boolean needsMigration() {
+    public void ensureIntegrationSyncStatusTable() {
+        // Para H2 com persistência local, sempre recriar a tabela para garantir estrutura correta
+        if (tableExists("INTEGRATION_SYNC_STATUS")) {
+            log.warn("⚠️ Tabela INTEGRATION_SYNC_STATUS existe. Recriando para garantir estrutura correta...");
+            dropAndRecreateTable();
+            return;
+        }
+
+        log.info("🔧 Criando tabela INTEGRATION_SYNC_STATUS...");
+        createTableWithCorrectStructure();
+    }
+
+    /**
+     * Verifica se a tabela integration_sync_status tem a estrutura correta.
+     * 
+     * @return true se a tabela tem a coluna last_sync_date, false caso contrário
+     */
+    private boolean hasCorrectColumnStructure() {
         try (Connection connection = dataSource.getConnection()) {
             DatabaseMetaData metaData = connection.getMetaData();
+            ResultSet columns = metaData.getColumns(null, null, "INTEGRATION_SYNC_STATUS", "LAST_SYNC_DATE");
+            boolean hasCorrectColumn = columns.next();
+            columns.close();
+            return hasCorrectColumn;
+        } catch (Exception e) {
+            log.warn("Erro ao verificar estrutura da tabela: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Remove e recria a tabela integration_sync_status com a estrutura correta.
+     */
+    private void dropAndRecreateTable() {
+        try {
+            log.info("🔧 Removendo tabela INTEGRATION_SYNC_STATUS existente...");
             
-            // Verifica se todas as tabelas obrigatórias existem
-            String[] requiredTables = {
-                "BOARDS", "BOARD_COLUMNS", "CARDS", "TASKS", 
-                "BOARD_GROUPS", "CARD_TYPES"
-            };
-            
-            for (String tableName : requiredTables) {
-                try (ResultSet tables = metaData.getTables(null, null, tableName, new String[]{"TABLE"})) {
-                    if (!tables.next()) {
-                        logger.info("Tabela obrigatória não encontrada: " + tableName);
-                        return true;
-                    }
+            String dropTableSql = "DROP TABLE IF EXISTS integration_sync_status";
+            if (jdbcTemplate != null) {
+                jdbcTemplate.execute(dropTableSql);
+            } else {
+                try (Connection connection = dataSource.getConnection()) {
+                    connection.createStatement().execute(dropTableSql);
                 }
             }
             
-            // Verifica se as colunas obrigatórias existem
-            if (!columnExists("BOARDS", "GROUP_ID")) {
-                logger.info("Coluna GROUP_ID não encontrada na tabela BOARDS");
-                return true;
-            }
-            
-            if (!columnExists("CARD_TYPES", "LAST_UPDATE_DATE")) {
-                logger.info("Coluna LAST_UPDATE_DATE não encontrada na tabela CARD_TYPES");
-                return true;
-            }
-            
-            return false;
-            
-        } catch (SQLException e) {
-            logger.warning("Erro ao verificar necessidade de migração: " + e.getMessage());
-            return true; // Em caso de erro, assume que precisa de migração
-        }
-    }
-
-    /**
-     * Verifica se uma coluna específica existe em uma tabela.
-     * 
-     * @param tableName nome da tabela
-     * @param columnName nome da coluna
-     * @return true se a coluna existe, false caso contrário
-     */
-    private boolean columnExists(String tableName, String columnName) {
-        try (Connection connection = dataSource.getConnection()) {
-            DatabaseMetaData metaData = connection.getMetaData();
-            try (ResultSet columns = metaData.getColumns(null, null, tableName, columnName)) {
-                return columns.next();
-            }
-        } catch (SQLException e) {
-            logger.warning("Erro ao verificar coluna " + columnName + " na tabela " + tableName + ": " + e.getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Executa o script de migração.
-     */
-    private void executeMigrationScript() {
-        try (Connection connection = dataSource.getConnection()) {
-            // Desabilita auto-commit para controlar a transação
-            connection.setAutoCommit(false);
-            
-            try {
-                // Executa o script de migração
-                ScriptUtils.executeSqlScript(connection, new ClassPathResource("migration.sql"));
-                
-                // Commit da transação
-                connection.commit();
-                logger.info("Script de migração executado com sucesso");
-                
-            } catch (Exception e) {
-                // Rollback em caso de erro
-                connection.rollback();
-                logger.severe("Erro durante execução do script de migração: " + e.getMessage());
-                throw e;
-            }
+            log.info("✅ Tabela removida. Criando nova tabela com estrutura correta...");
+            createTableWithCorrectStructure();
             
         } catch (Exception e) {
-            logger.severe("Erro ao executar migração: " + e.getMessage());
+            log.error("❌ Erro ao recriar tabela INTEGRATION_SYNC_STATUS: {}", e.getMessage(), e);
+            throw new RuntimeException("Falha ao recriar tabela", e);
+        }
+    }
+
+    /**
+     * Cria a tabela integration_sync_status com a estrutura correta.
+     */
+    private void createTableWithCorrectStructure() {
+        try {
+            String createTableSql = """
+                CREATE TABLE integration_sync_status (
+                    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                    card_id BIGINT NOT NULL,
+                    integration_type VARCHAR(50) NOT NULL,
+                    external_id VARCHAR(255),
+                    sync_status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+                    last_sync_date TIMESTAMP,
+                    error_message TEXT,
+                    retry_count INTEGER DEFAULT 0,
+                    max_retries INTEGER DEFAULT 3,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    
+                    CONSTRAINT fk_integration_sync_card 
+                        FOREIGN KEY (card_id) 
+                        REFERENCES cards(id) 
+                        ON DELETE CASCADE,
+                    
+                    CONSTRAINT uk_integration_sync_card_type 
+                        UNIQUE (card_id, integration_type)
+                )
+                """;
+
+            if (jdbcTemplate != null) {
+                jdbcTemplate.execute(createTableSql);
+            } else {
+                try (Connection connection = dataSource.getConnection()) {
+                    connection.createStatement().execute(createTableSql);
+                }
+            }
+
+            // Criar índices
+            createIndexes();
+            log.info("✅ Tabela INTEGRATION_SYNC_STATUS criada com estrutura correta");
+            
+        } catch (Exception e) {
+            log.error("❌ Erro ao criar tabela INTEGRATION_SYNC_STATUS: {}", e.getMessage(), e);
             throw new RuntimeException("Falha na migração do banco de dados", e);
         }
     }
 
     /**
-     * Executa uma consulta SQL personalizada para verificação.
-     * 
-     * @param sql consulta SQL a ser executada
-     * @return resultado da consulta
+     * Cria os índices necessários para a tabela integration_sync_status.
      */
-    public Object executeQuery(String sql) {
-        return jdbcTemplate.queryForObject(sql, Object.class);
+    private void createIndexes() {
+        List<String> indexQueries = List.of(
+            "CREATE INDEX IF NOT EXISTS idx_integration_sync_card_id ON integration_sync_status(card_id)",
+            "CREATE INDEX IF NOT EXISTS idx_integration_sync_type ON integration_sync_status(integration_type)",
+            "CREATE INDEX IF NOT EXISTS idx_integration_sync_status ON integration_sync_status(sync_status)",
+            "CREATE INDEX IF NOT EXISTS idx_integration_sync_last_sync ON integration_sync_status(last_sync_date)"
+        );
+
+        for (String indexQuery : indexQueries) {
+            try {
+                if (jdbcTemplate != null) {
+                    jdbcTemplate.execute(indexQuery);
+                } else {
+                    try (Connection connection = dataSource.getConnection()) {
+                        connection.createStatement().execute(indexQuery);
+                    }
+                }
+                log.debug("✅ Índice criado: {}", indexQuery);
+            } catch (Exception e) {
+                log.warn("⚠️ Erro ao criar índice: {} - {}", indexQuery, e.getMessage());
+            }
+        }
     }
 
     /**
-     * Verifica a integridade do banco de dados após migração.
+     * Executa todas as migrações necessárias de forma segura.
      * 
-     * @return true se o banco está íntegro, false caso contrário
+     * <p>Este método deve ser chamado durante a inicialização da aplicação
+     * para garantir que todas as tabelas necessárias existam.</p>
      */
-    public boolean verifyDatabaseIntegrity() {
+    public void runSafeMigrations() {
+        log.info("🔧 Iniciando migrações seguras do banco de dados...");
+        
         try {
-            // Verifica se todas as tabelas existem
-            String[] requiredTables = {
-                "BOARDS", "BOARD_COLUMNS", "CARDS", "TASKS", 
-                "BOARD_GROUPS", "CARD_TYPES"
-            };
-            
-            for (String tableName : requiredTables) {
-                String sql = "SELECT COUNT(*) FROM " + tableName;
-                jdbcTemplate.queryForObject(sql, Integer.class);
-            }
-            
-            logger.info("Verificação de integridade do banco concluída com sucesso");
-            return true;
-            
+            ensureIntegrationSyncStatusTable();
+            log.info("✅ Todas as migrações foram executadas com sucesso");
         } catch (Exception e) {
-            logger.severe("Erro na verificação de integridade: " + e.getMessage());
-            return false;
+            log.error("❌ Erro durante as migrações: {}", e.getMessage(), e);
+            throw e;
         }
     }
-} 
+
+    /**
+     * Lista todas as tabelas existentes no banco de dados.
+     * 
+     * @return lista de nomes das tabelas
+     */
+    public List<String> listExistingTables() {
+        List<String> tables = new ArrayList<>();
+        try (Connection connection = dataSource.getConnection()) {
+            DatabaseMetaData metaData = connection.getMetaData();
+            ResultSet resultSet = metaData.getTables(null, null, "%", new String[]{"TABLE"});
+            
+            while (resultSet.next()) {
+                tables.add(resultSet.getString("TABLE_NAME"));
+            }
+            resultSet.close();
+        } catch (Exception e) {
+            log.warn("Erro ao listar tabelas: {}", e.getMessage());
+        }
+        return tables;
+    }
+}

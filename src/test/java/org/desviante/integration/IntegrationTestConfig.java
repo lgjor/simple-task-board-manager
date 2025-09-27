@@ -9,6 +9,7 @@ import org.desviante.integration.observer.GoogleTasksSyncObserver;
 import org.desviante.integration.observer.CalendarSyncObserver;
 import org.desviante.integration.sync.IntegrationSyncService;
 import org.desviante.service.TaskService;
+import org.desviante.service.DatabaseMigrationService;
 import org.desviante.calendar.CalendarService;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -105,8 +106,8 @@ public class IntegrationTestConfig {
      */
     @Bean
     @Primary
-    public DefaultIntegrationCoordinator testIntegrationCoordinator(SimpleEventPublisher testEventPublisher) {
-        return new DefaultIntegrationCoordinator(testEventPublisher);
+    public DefaultIntegrationCoordinator testIntegrationCoordinator(SimpleEventPublisher testEventPublisher, DatabaseMigrationService migrationService) {
+        return new DefaultIntegrationCoordinator(testEventPublisher, migrationService);
     }
     
     /**

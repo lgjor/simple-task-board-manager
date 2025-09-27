@@ -90,6 +90,37 @@ public class CalendarSyncObserver implements EventObserver<CardScheduledEvent> {
         }
     }
     
+    /**
+     * Processa eventos de desagendamento de cards.
+     */
+    public void handleUnscheduledEvent(CardUnscheduledEvent event) throws Exception {
+        log.info("🎯 CALENDAR OBSERVER - Recebido evento CardUnscheduledEvent para card: {}", event != null && event.getCard() != null ? event.getCard().getId() : "null");
+        
+        if (event == null || event.getCard() == null) {
+            log.warn("Evento de desagendamento inválido recebido");
+            return;
+        }
+        
+        Card card = event.getCard();
+        handleUnscheduled(card);
+    }
+    
+    /**
+     * Processa eventos de atualização de cards.
+     */
+    public void handleUpdatedEvent(CardUpdatedEvent event) throws Exception {
+        log.info("🎯 CALENDAR OBSERVER - Recebido evento CardUpdatedEvent para card: {}", event != null && event.getCard() != null ? event.getCard().getId() : "null");
+        
+        if (event == null || event.getCard() == null) {
+            log.warn("Evento de atualização inválido recebido");
+            return;
+        }
+        
+        Card card = event.getCard();
+        Card previousCard = event.getPreviousCard();
+        handleUpdated(card, previousCard);
+    }
+    
     @Override
     public boolean canHandle(org.desviante.integration.event.DomainEvent event) {
         return event instanceof CardScheduledEvent || 

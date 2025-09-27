@@ -7,6 +7,7 @@ import org.desviante.integration.event.card.CardScheduledEvent;
 import org.desviante.integration.event.card.CardUnscheduledEvent;
 import org.desviante.integration.event.card.CardUpdatedEvent;
 import org.desviante.model.Card;
+import org.desviante.service.DatabaseMigrationService;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -41,6 +42,19 @@ import java.util.concurrent.atomic.AtomicLong;
 public class DefaultIntegrationCoordinator implements IntegrationCoordinator {
     
     private final EventPublisher eventPublisher;
+    private final DatabaseMigrationService migrationService;
+    
+    /**
+     * Garante que a tabela de sincronização existe antes de executar operações.
+     */
+    private void ensureTableExists() {
+        try {
+            migrationService.ensureIntegrationSyncStatusTable();
+        } catch (Exception e) {
+            log.error("Erro ao garantir existência da tabela de sincronização: {}", e.getMessage(), e);
+            throw new RuntimeException("Falha ao preparar banco de dados para sincronização", e);
+        }
+    }
     
     // Contadores thread-safe para estatísticas
     private final AtomicLong successfulIntegrations = new AtomicLong(0);

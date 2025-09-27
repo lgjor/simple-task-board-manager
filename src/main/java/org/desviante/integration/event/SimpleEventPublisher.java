@@ -2,6 +2,9 @@ package org.desviante.integration.event;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.desviante.integration.event.card.CardScheduledEvent;
+import org.desviante.integration.event.card.CardUnscheduledEvent;
+import org.desviante.integration.event.card.CardUpdatedEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -179,8 +182,25 @@ public class SimpleEventPublisher implements EventPublisher {
     @SuppressWarnings("unchecked")
     private void handleEvent(EventObserver<?> observer, DomainEvent event) throws Exception {
         try {
-            // Cast seguro baseado na verificação de canHandle
-            ((EventObserver<DomainEvent>) observer).handle(event);
+            // Tratar diferentes tipos de eventos baseado no tipo específico
+            if (event instanceof CardScheduledEvent && observer instanceof org.desviante.integration.observer.CalendarSyncObserver) {
+                ((org.desviante.integration.observer.CalendarSyncObserver) observer).handle((CardScheduledEvent) event);
+            } else if (event instanceof CardUnscheduledEvent && observer instanceof org.desviante.integration.observer.CalendarSyncObserver) {
+                ((org.desviante.integration.observer.CalendarSyncObserver) observer).handleUnscheduledEvent((CardUnscheduledEvent) event);
+            } else if (event instanceof CardUpdatedEvent && observer instanceof org.desviante.integration.observer.CalendarSyncObserver) {
+                ((org.desviante.integration.observer.CalendarSyncObserver) observer).handleUpdatedEvent((CardUpdatedEvent) event);
+            } else if (event instanceof CardScheduledEvent && observer instanceof org.desviante.integration.observer.GoogleTasksSyncObserver) {
+                ((org.desviante.integration.observer.GoogleTasksSyncObserver) observer).handle((CardScheduledEvent) event);
+            } else if (event instanceof CardUnscheduledEvent && observer instanceof org.desviante.integration.observer.GoogleTasksSyncObserver) {
+                // GoogleTasksSyncObserver não precisa processar eventos de desagendamento
+                log.debug("GoogleTasksSyncObserver ignorando evento CardUnscheduledEvent");
+            } else if (event instanceof CardUpdatedEvent && observer instanceof org.desviante.integration.observer.GoogleTasksSyncObserver) {
+                // GoogleTasksSyncObserver não precisa processar eventos de atualização
+                log.debug("GoogleTasksSyncObserver ignorando evento CardUpdatedEvent");
+            } else {
+                // Fallback para cast genérico
+                ((EventObserver<DomainEvent>) observer).handle(event);
+            }
         } catch (ClassCastException e) {
             log.error("Erro de tipo ao processar evento {} no observador {}: {}", 
                      event.getEventType(), observer.getObserverName(), e.getMessage());

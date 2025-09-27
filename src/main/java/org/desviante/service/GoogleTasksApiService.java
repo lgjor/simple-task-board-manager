@@ -98,15 +98,21 @@ public class GoogleTasksApiService {
      * @throws GoogleApiServiceException se houver falha na comunicação com a API
      */
     public Task createTaskInList(CreateTaskRequest request) {
+        log.info("🔧 GOOGLE TASKS API SERVICE - Iniciando criação de task: {}", request.title());
+        
         // Verifica se o serviço do Google está disponível, e tenta inicializar se não estiver.
         if (tasksService == null) {
-            log.warn("Serviço do Google Tasks não inicializado. Tentando inicialização sob demanda...");
+            log.warn("⚠️ GOOGLE TASKS API SERVICE - Serviço do Google Tasks não inicializado. Tentando inicialização sob demanda...");
+            log.warn("⚠️ GOOGLE TASKS API SERVICE - googleApiConfig disponível: {}", googleApiConfig != null ? "sim" : "não");
+            log.warn("⚠️ GOOGLE TASKS API SERVICE - httpTransport disponível: {}", httpTransport != null ? "sim" : "não");
+            
             try {
                 // Tenta criar o serviço, o que vai disparar a autenticação via navegador se necessário.
+                log.info("🔧 GOOGLE TASKS API SERVICE - Chamando createAndSetTasksService()...");
                 createAndSetTasksService();
-                log.info("Serviço do Google Tasks inicializado com sucesso sob demanda.");
+                log.info("✅ GOOGLE TASKS API SERVICE - Serviço do Google Tasks inicializado com sucesso sob demanda.");
             } catch (Exception e) {
-                log.error("Falha ao inicializar o serviço do Google Tasks sob demanda.", e);
+                log.error("❌ GOOGLE TASKS API SERVICE - Falha ao inicializar o serviço do Google Tasks sob demanda.", e);
                 // Monta a mensagem de erro informativa que o usuário está vendo.
                 String userMessage = "A integração com Google Tasks não está configurada.\n" +
                                      "Para habilitar:\n" +
@@ -116,6 +122,8 @@ public class GoogleTasksApiService {
                                      "A tarefa foi salva localmente, mas não foi sincronizada com o Google Tasks.";
                 throw new GoogleApiServiceException(userMessage, e);
             }
+        } else {
+            log.info("✅ GOOGLE TASKS API SERVICE - Serviço do Google Tasks já está disponível");
         }
 
         try {
@@ -161,11 +169,12 @@ public class GoogleTasksApiService {
         } catch (TokenResponseException e) {
             // Erro específico de token inválido (ex: revogado pelo usuário)
             if (e.getDetails() != null && "invalid_grant".equals(e.getDetails().getError())) {
-                log.warn("Token inválido detectado (invalid_grant). Tentando reautenticar automaticamente...");
+                log.warn("🔑 GOOGLE TASKS API SERVICE - Token inválido detectado (invalid_grant). Tentando reautenticar automaticamente...");
+                log.info("🌐 GOOGLE TASKS API SERVICE - O navegador será aberto para você fazer login novamente no Google.");
                 try {
                     return reAuthenticateAndRetry(request);
                 } catch (Exception ex) {
-                    log.error("Falha crítica durante o processo de reautenticação. A tarefa não pôde ser criada no Google.", ex);
+                    log.error("❌ GOOGLE TASKS API SERVICE - Falha crítica durante o processo de reautenticação. A tarefa não pôde ser criada no Google.", ex);
                     throw new GoogleApiServiceException("Falha ao tentar reautenticar com o Google. Por favor, reinicie a aplicação.", ex);
                 }
             }
@@ -302,15 +311,28 @@ public class GoogleTasksApiService {
      * @throws GeneralSecurityException se houver um erro de segurança ou de configuração.
      */
     private void createAndSetTasksService() throws IOException, GeneralSecurityException {
+        log.info("🔧 GOOGLE TASKS API SERVICE - Iniciando createAndSetTasksService()...");
+        
         if (googleApiConfig == null || httpTransport == null) {
+            log.error("❌ GOOGLE TASKS API SERVICE - Componentes de configuração do Google não estão disponíveis");
+            log.error("❌ GOOGLE TASKS API SERVICE - googleApiConfig: {}", googleApiConfig != null ? "disponível" : "null");
+            log.error("❌ GOOGLE TASKS API SERVICE - httpTransport: {}", httpTransport != null ? "disponível" : "null");
             throw new GeneralSecurityException("Componentes de configuração do Google não estão disponíveis. Verifique se 'google.api.enabled=true' está ativo.");
         }
 
+        log.info("✅ GOOGLE TASKS API SERVICE - Componentes de configuração disponíveis, iniciando autorização...");
+        log.info("🌐 GOOGLE TASKS API SERVICE - O navegador será aberto para você fazer login no Google Tasks.");
+        
         // O método authorize já abre o navegador e lida com o fluxo OAuth2.
+        log.info("🔧 GOOGLE TASKS API SERVICE - Chamando googleApiConfig.authorize()...");
         Credential credential = googleApiConfig.authorize(httpTransport);
+        
+        log.info("✅ GOOGLE TASKS API SERVICE - Credencial obtida, criando serviço Tasks...");
         this.tasksService = new Tasks.Builder(httpTransport, GsonFactory.getDefaultInstance(), credential)
                 .setApplicationName(GoogleApiConfig.APPLICATION_NAME)
                 .build();
+        
+        log.info("🎉 GOOGLE TASKS API SERVICE - Serviço Tasks criado com sucesso!");
     }
 
 }

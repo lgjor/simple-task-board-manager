@@ -2,6 +2,7 @@ package org.desviante.integration.sync;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.desviante.service.DatabaseMigrationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,6 +49,19 @@ import java.util.Optional;
 public class IntegrationSyncService {
     
     private final IntegrationSyncRepository repository;
+    private final DatabaseMigrationService migrationService;
+    
+    /**
+     * Garante que a tabela de sincronização existe antes de executar operações.
+     */
+    private void ensureTableExists() {
+        try {
+            migrationService.ensureIntegrationSyncStatusTable();
+        } catch (Exception e) {
+            log.error("Erro ao garantir existência da tabela de sincronização: {}", e.getMessage(), e);
+            throw new RuntimeException("Falha ao preparar banco de dados para sincronização", e);
+        }
+    }
     
     /**
      * Cria um novo status de sincronização para um card e tipo de integração.
@@ -59,29 +73,39 @@ public class IntegrationSyncService {
      */
     @Transactional
     public IntegrationSyncStatus createSyncStatus(Long cardId, IntegrationType integrationType, Integer maxRetries) {
-        log.debug("Criando status de sincronização para card {} e tipo {}", cardId, integrationType);
+        log.info("🔧 INTEGRATION SYNC SERVICE - Criando status de sincronização para card {} e tipo {}", cardId, integrationType);
         
-        // Verificar se já existe um status para este card e tipo
-        Optional<IntegrationSyncStatus> existing = repository.findByCardIdAndType(cardId, integrationType);
-        if (existing.isPresent()) {
-            log.warn("Status de sincronização já existe para card {} e tipo {}", cardId, integrationType);
-            return existing.get();
+        try {
+            // Verificar se já existe um status para este card e tipo
+            log.info("🔧 INTEGRATION SYNC SERVICE - Verificando se já existe status para card {} e tipo {}", cardId, integrationType);
+            Optional<IntegrationSyncStatus> existing = repository.findByCardIdAndType(cardId, integrationType);
+            if (existing.isPresent()) {
+                log.warn("⚠️ INTEGRATION SYNC SERVICE - Status de sincronização já existe para card {} e tipo {}", cardId, integrationType);
+                return existing.get();
+            }
+            
+            log.info("🔧 INTEGRATION SYNC SERVICE - Construindo novo status de sincronização");
+            IntegrationSyncStatus status = IntegrationSyncStatus.builder()
+                    .cardId(cardId)
+                    .integrationType(integrationType)
+                    .syncStatus(SyncStatus.PENDING)
+                    .retryCount(0)
+                    .maxRetries(maxRetries != null ? maxRetries : 3)
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+            log.info("✅ INTEGRATION SYNC SERVICE - Status construído com sucesso");
+            
+            log.info("🔧 INTEGRATION SYNC SERVICE - Salvando status no repositório");
+            IntegrationSyncStatus saved = repository.save(status);
+            log.info("✅ INTEGRATION SYNC SERVICE - Status de sincronização criado com ID: {}", saved.getId());
+            
+            return saved;
+            
+        } catch (Exception e) {
+            log.error("❌ INTEGRATION SYNC SERVICE - Erro ao criar status de sincronização para card {} e tipo {}: {}", cardId, integrationType, e.getMessage(), e);
+            throw new RuntimeException("Falha ao criar status de sincronização", e);
         }
-        
-        IntegrationSyncStatus status = IntegrationSyncStatus.builder()
-                .cardId(cardId)
-                .integrationType(integrationType)
-                .syncStatus(SyncStatus.PENDING)
-                .retryCount(0)
-                .maxRetries(maxRetries != null ? maxRetries : 3)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
-        
-        IntegrationSyncStatus saved = repository.save(status);
-        log.info("Status de sincronização criado: {}", saved.getId());
-        
-        return saved;
     }
     
     /**

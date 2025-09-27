@@ -101,6 +101,7 @@ public class AutoAuthCallbackServer {
     private HttpServer server;
     private CompletableFuture<String> authCodeFuture;
     private CountDownLatch serverReadyLatch;
+    private int actualPort;
 
     /**
      * Inicia o servidor de callback e aguarda o código de autorização.
@@ -115,14 +116,14 @@ public class AutoAuthCallbackServer {
         this.serverReadyLatch = new CountDownLatch(1);
         
         // Tenta diferentes portas se a padrão estiver ocupada
-        int actualPort = findAvailablePort(port);
+        this.actualPort = findAvailablePort(port);
         
-        server = HttpServer.create(new InetSocketAddress(actualPort), 0);
+        server = HttpServer.create(new InetSocketAddress(this.actualPort), 0);
         server.createContext("/Callback", new AuthCallbackHandler());
         server.setExecutor(null); // Usa thread padrão
         server.start();
         
-        log.info("Servidor de callback iniciado na porta {}", actualPort);
+        log.info("Servidor de callback iniciado na porta {}", this.actualPort);
         serverReadyLatch.countDown();
         
         // Configura timeout
@@ -155,6 +156,15 @@ public class AutoAuthCallbackServer {
             server.stop(0);
             log.info("Servidor de callback parado");
         }
+    }
+
+    /**
+     * Retorna a porta real em que o servidor está rodando.
+     * 
+     * @return porta do servidor
+     */
+    public int getActualPort() {
+        return actualPort;
     }
 
     /**

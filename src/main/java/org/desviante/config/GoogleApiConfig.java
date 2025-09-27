@@ -61,7 +61,35 @@ public class GoogleApiConfig {
      * <p>Esta classe não requer inicialização especial.</p>
      */
     public GoogleApiConfig() {
-        // Configuração automática via anotações Spring
+        log.info("🔧 GOOGLE API CONFIG - GoogleApiConfig sendo inicializado!");
+        log.info("🔧 GOOGLE API CONFIG - Verificando arquivo de credenciais: " + CREDENTIALS_FILE_PATH);
+        
+        // Verificar se o arquivo de credenciais existe
+        try (InputStream in = GoogleApiConfig.class.getResourceAsStream(CREDENTIALS_FILE_PATH)) {
+            if (in == null) {
+                log.warning("❌ GOOGLE API CONFIG - Arquivo credentials.json não encontrado em: " + CREDENTIALS_FILE_PATH);
+                log.warning("❌ GOOGLE API CONFIG - A integração com Google Tasks será desativada");
+            } else {
+                log.info("✅ GOOGLE API CONFIG - Arquivo credentials.json encontrado!");
+                in.close();
+            }
+        } catch (Exception e) {
+            log.severe("❌ GOOGLE API CONFIG - Erro ao verificar arquivo de credenciais: " + e.getMessage());
+        }
+        
+        // Verificar diretório de tokens
+        File tokenDir = new File(TOKENS_DIRECTORY_PATH);
+        log.info("🔧 GOOGLE API CONFIG - Diretório de tokens: " + TOKENS_DIRECTORY_PATH);
+        log.info("🔧 GOOGLE API CONFIG - Diretório existe: " + tokenDir.exists());
+        if (tokenDir.exists()) {
+            File[] files = tokenDir.listFiles();
+            log.info("🔧 GOOGLE API CONFIG - Arquivos no diretório de tokens: " + (files != null ? files.length : 0));
+            if (files != null) {
+                for (File file : files) {
+                    log.info("🔧 GOOGLE API CONFIG - Arquivo: " + file.getName() + " (tamanho: " + file.length() + " bytes)");
+                }
+            }
+        }
     }
 
     /**
@@ -130,8 +158,9 @@ public class GoogleApiConfig {
             // Aguarda o servidor estar pronto
             callbackServer.waitForServerReady();
             
-            // Gera a URL de autorização
-            String redirectUri = "http://localhost:8888/Callback";
+            // Obtém a porta real do servidor (pode ser diferente de 8888 se estiver ocupada)
+            int actualPort = callbackServer.getActualPort();
+            String redirectUri = "http://localhost:" + actualPort + "/Callback";
             String authUrl = flow.newAuthorizationUrl()
                 .setRedirectUri(redirectUri)
                 .build();
@@ -241,11 +270,15 @@ public class GoogleApiConfig {
      */
     @Bean
     public Tasks tasksService(NetHttpTransport httpTransport) throws GeneralSecurityException, IOException {
+        log.info("🔧 GOOGLE API CONFIG - Iniciando criação do bean Tasks...");
+        
         if (!areCredentialsAvailable()) {
-            log.warning("Arquivo de credenciais do Google API ('/auth/credentials.json') não encontrado. A integração com Google Tasks será desativada.");
+            log.warning("❌ GOOGLE API CONFIG - Arquivo de credenciais do Google API ('/auth/credentials.json') não encontrado. A integração com Google Tasks será desativada.");
             showCredentialsInstructions();
             return null; // Não cria o bean, evitando a injeção.
         }
+
+        log.info("✅ GOOGLE API CONFIG - Arquivo de credenciais encontrado, tentando autorização silenciosa...");
 
         try {
             // Tenta autorizar silenciosamente primeiro, sem interação com o usuário.
@@ -253,16 +286,20 @@ public class GoogleApiConfig {
             Credential credential = authorizeSilently(httpTransport);
 
             if (credential == null) {
-                log.info("Nenhuma credencial do Google encontrada. A autenticação será solicitada no primeiro uso.");
+                log.info("⚠️ GOOGLE API CONFIG - Nenhuma credencial do Google encontrada. A autenticação será solicitada no primeiro uso.");
                 return null; // Permite que a aplicação inicie. A autenticação será feita sob demanda.
             }
 
-            return new Tasks.Builder(httpTransport, JSON_FACTORY, credential)
+            log.info("✅ GOOGLE API CONFIG - Credencial autorizada com sucesso! Criando serviço Tasks...");
+            Tasks service = new Tasks.Builder(httpTransport, JSON_FACTORY, credential)
                     .setApplicationName(APPLICATION_NAME)
                     .build();
+            
+            log.info("🎉 GOOGLE API CONFIG - Serviço Tasks criado com sucesso!");
+            return service;
         } catch (IOException e) {
-            log.severe("FALHA CRÍTICA NA AUTENTICAÇÃO COM GOOGLE API: " + e.getMessage());
-            log.severe("A integração com Google Tasks será desativada. Causa provável: o usuário negou acesso, a porta 8888 está bloqueada/em uso, ou há um problema de rede.");
+            log.severe("❌ GOOGLE API CONFIG - FALHA CRÍTICA NA AUTENTICAÇÃO COM GOOGLE API: " + e.getMessage());
+            log.severe("❌ GOOGLE API CONFIG - A integração com Google Tasks será desativada. Causa provável: o usuário negou acesso, a porta 8888 está bloqueada/em uso, ou há um problema de rede.");
             log.throwing(GoogleApiConfig.class.getName(), "tasksService", e);
             showAuthenticationInstructions();
             return null; // Retorna null se a autorização falhar (ex: usuário nega acesso).
@@ -278,9 +315,18 @@ public class GoogleApiConfig {
      * @throws IOException em caso de erro de I/O.
      */
     private Credential authorizeSilently(final NetHttpTransport httpTransport) throws IOException {
+        log.info("🔧 GOOGLE API CONFIG - Tentando autorização silenciosa...");
+        
         InputStream in = GoogleApiConfig.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
-        if (in == null) return null;
+        if (in == null) {
+            log.warning("❌ GOOGLE API CONFIG - Arquivo de credenciais não encontrado para autorização silenciosa");
+            return null;
+        }
+        
+        log.info("✅ GOOGLE API CONFIG - Carregando client secrets...");
         GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
+        
+        log.info("🔧 GOOGLE API CONFIG - Criando fluxo de autorização...");
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
                 httpTransport, JSON_FACTORY, clientSecrets, SCOPES)
                 .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH)))
@@ -288,7 +334,31 @@ public class GoogleApiConfig {
                 .build();
 
         // Tenta carregar a credencial sem iniciar o fluxo interativo.
-        return flow.loadCredential("user");
+        log.info("🔧 GOOGLE API CONFIG - Tentando carregar credencial existente...");
+        Credential credential = flow.loadCredential("user");
+        
+        if (credential == null) {
+            log.info("⚠️ GOOGLE API CONFIG - Nenhuma credencial existente encontrada");
+        } else {
+            log.info("✅ GOOGLE API CONFIG - Credencial existente encontrada! Verificando validade...");
+            try {
+                if (credential.refreshToken()) {
+                    log.info("✅ GOOGLE API CONFIG - Credencial válida e renovada com sucesso!");
+                } else {
+                    log.warning("⚠️ GOOGLE API CONFIG - Credencial expirada, será necessário reautenticação");
+                }
+            } catch (Exception e) {
+                log.warning("⚠️ GOOGLE API CONFIG - Erro ao verificar/renovar credencial: " + e.getMessage());
+                // Se o erro for invalid_grant, limpar as credenciais para forçar nova autenticação
+                if (e.getMessage() != null && e.getMessage().contains("invalid_grant")) {
+                    log.info("🔑 GOOGLE API CONFIG - Credenciais expiradas detectadas. Limpando credenciais antigas...");
+                    handleInvalidGrant();
+                    return null; // Força nova autenticação no primeiro uso
+                }
+            }
+        }
+        
+        return credential;
     }
 
     /**
@@ -328,6 +398,28 @@ public class GoogleApiConfig {
         log.warning("As credenciais de autorização serão salvas em: " + TOKENS_DIRECTORY_PATH);
         log.warning("Se o problema persistir, reinicie a aplicação.");
         log.warning("==========================================");
+    }
+
+    /**
+     * Lida com o erro 'invalid_grant', que geralmente significa que o token de atualização
+     * foi revogado. A solução é limpar as credenciais armazenadas para forçar uma
+     * nova autenticação na próxima inicialização.
+     */
+    private void handleInvalidGrant() {
+        log.severe("O token de atualização do Google foi revogado ou expirou (invalid_grant). Removendo credenciais antigas para forçar nova autenticação.");
+        try {
+            File tokenDirectory = new File(TOKENS_DIRECTORY_PATH);
+            if (tokenDirectory.exists() && tokenDirectory.isDirectory()) {
+                for (File file : tokenDirectory.listFiles()) {
+                    if (!file.delete()) {
+                        log.warning("Não foi possível deletar o arquivo de credencial: " + file.getAbsolutePath());
+                    }
+                }
+                log.info("Arquivos de credenciais do Google removidos com sucesso.");
+            }
+        } catch (Exception ex) {
+            log.severe("Falha ao tentar remover o diretório de credenciais antigas: " + ex.getMessage());
+        }
     }
 
     /**

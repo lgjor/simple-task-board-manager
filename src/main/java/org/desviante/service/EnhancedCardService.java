@@ -59,6 +59,7 @@ public class EnhancedCardService {
     private final EventPublisher eventPublisher;
     private final IntegrationCoordinator integrationCoordinator;
     private final IntegrationSyncService integrationSyncService;
+    private final DatabaseMigrationService migrationService;
     
     /**
      * Cria um novo card com integração de eventos.
@@ -241,6 +242,14 @@ public class EnhancedCardService {
     public Card setSchedulingDates(Long cardId, LocalDateTime scheduledDate, LocalDateTime dueDate) {
         log.info("📅 ENHANCED CARD SERVICE - Definindo datas de agendamento e vencimento para card {}: {} / {}", cardId, scheduledDate, dueDate);
         
+        // Garantir que a tabela existe ANTES da transação
+        try {
+            migrationService.ensureIntegrationSyncStatusTable();
+        } catch (Exception e) {
+            log.error("Erro ao garantir existência da tabela de sincronização: {}", e.getMessage(), e);
+            throw new RuntimeException("Falha ao preparar banco de dados para sincronização", e);
+        }
+        
         // Obter card atual antes da atualização
         Optional<Card> currentCardOpt = cardService.getCardById(cardId);
         if (currentCardOpt.isEmpty()) {
@@ -317,16 +326,25 @@ public class EnhancedCardService {
      */
     private void processCardScheduled(Card card) {
         try {
+            log.info("🔧 PROCESSANDO CARD AGENDADO - Iniciando processamento para card {}", card.getId());
+            
             // Criar status de sincronização
+            log.info("🔧 PROCESSANDO CARD AGENDADO - Criando status de sincronização para Google Tasks");
             integrationSyncService.createSyncStatus(card.getId(), IntegrationType.GOOGLE_TASKS);
+            log.info("✅ PROCESSANDO CARD AGENDADO - Status Google Tasks criado");
+            
+            log.info("🔧 PROCESSANDO CARD AGENDADO - Criando status de sincronização para Calendar");
             integrationSyncService.createSyncStatus(card.getId(), IntegrationType.CALENDAR);
+            log.info("✅ PROCESSANDO CARD AGENDADO - Status Calendar criado");
             
             // Publicar evento de agendamento
+            log.info("🔧 PROCESSANDO CARD AGENDADO - Construindo evento CardScheduledEvent");
             CardScheduledEvent event = CardScheduledEvent.builder()
                     .card(card)
                     .scheduledDate(card.getScheduledDate())
                     .previousScheduledDate(null)
                     .build();
+            log.info("✅ PROCESSANDO CARD AGENDADO - Evento construído com sucesso");
             
             log.info("🚀 PUBLICANDO EVENTO CardScheduledEvent para card {} com data: {}", card.getId(), card.getScheduledDate());
             eventPublisher.publish(event);
@@ -337,10 +355,12 @@ public class EnhancedCardService {
             integrationCoordinator.onCardScheduled(card);
             log.info("✅ Integrações coordenadas com sucesso para card {}", card.getId());
             
-            log.debug("Card {} processado como agendado", card.getId());
+            log.info("🎉 PROCESSANDO CARD AGENDADO - Processamento concluído com sucesso para card {}", card.getId());
             
         } catch (Exception e) {
-            log.error("Erro ao processar agendamento do card {}: {}", card.getId(), e.getMessage(), e);
+            log.error("❌ ERRO AO PROCESSAR AGENDAMENTO DO CARD {}: {}", card.getId(), e.getMessage(), e);
+            // Re-lançar a exceção para que seja tratada pelo Spring
+            throw new RuntimeException("Falha ao processar agendamento do card " + card.getId(), e);
         }
     }
     

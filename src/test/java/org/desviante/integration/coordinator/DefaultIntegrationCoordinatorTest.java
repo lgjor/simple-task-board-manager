@@ -5,6 +5,7 @@ import org.desviante.integration.event.card.CardScheduledEvent;
 import org.desviante.integration.event.card.CardUnscheduledEvent;
 import org.desviante.integration.event.card.CardUpdatedEvent;
 import org.desviante.model.Card;
+import org.desviante.service.DatabaseMigrationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -32,12 +33,15 @@ class DefaultIntegrationCoordinatorTest {
     @Mock
     private EventPublisher eventPublisher;
     
+    @Mock
+    private DatabaseMigrationService migrationService;
+    
     private DefaultIntegrationCoordinator coordinator;
     
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        coordinator = new DefaultIntegrationCoordinator(eventPublisher);
+        coordinator = new DefaultIntegrationCoordinator(eventPublisher, migrationService);
     }
     
     @Test
