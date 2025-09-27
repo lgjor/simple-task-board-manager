@@ -50,7 +50,6 @@ public interface IntegrationCoordinator {
      * </ul>
      * 
      * @param card card que foi agendado
-     * @throws IntegrationException se ocorrer erro durante a coordenação
      */
     void onCardScheduled(Card card);
     
@@ -69,7 +68,6 @@ public interface IntegrationCoordinator {
      * </ul>
      * 
      * @param card card que foi desagendado
-     * @throws IntegrationException se ocorrer erro durante a coordenação
      */
     void onCardUnscheduled(Card card);
     
@@ -90,7 +88,6 @@ public interface IntegrationCoordinator {
      * 
      * @param card card que foi atualizado
      * @param previousCard versão anterior do card (pode ser null)
-     * @throws IntegrationException se ocorrer erro durante a coordenação
      */
     void onCardUpdated(Card card, Card previousCard);
     
@@ -103,7 +100,6 @@ public interface IntegrationCoordinator {
      * @param card card que foi movido
      * @param previousColumnId ID da coluna anterior
      * @param newColumnId ID da nova coluna
-     * @throws IntegrationException se ocorrer erro durante a coordenação
      */
     void onCardMoved(Card card, Long previousColumnId, Long newColumnId);
     
@@ -114,7 +110,6 @@ public interface IntegrationCoordinator {
      * indicando que todas as integrações externas devem ser limpas.</p>
      * 
      * @param cardId ID do card que foi excluído
-     * @throws IntegrationException se ocorrer erro durante a coordenação
      */
     void onCardDeleted(Long cardId);
     
