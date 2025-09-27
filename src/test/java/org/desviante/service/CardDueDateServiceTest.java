@@ -4,7 +4,6 @@ import org.desviante.model.Card;
 import org.desviante.model.CardType;
 import org.desviante.model.enums.ProgressType;
 import org.desviante.repository.CardRepository;
-import org.desviante.service.CardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,7 +15,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;

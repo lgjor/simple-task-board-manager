@@ -7,8 +7,6 @@ import org.desviante.integration.event.card.CardUnscheduledEvent;
 import org.desviante.integration.event.card.CardUpdatedEvent;
 import org.desviante.integration.sync.IntegrationSyncService;
 import org.desviante.integration.sync.IntegrationType;
-import org.desviante.integration.sync.IntegrationSyncStatus;
-import org.desviante.integration.sync.SyncStatus;
 import org.desviante.model.Card;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

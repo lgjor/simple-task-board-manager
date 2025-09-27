@@ -11,7 +11,6 @@ import org.desviante.service.TaskService;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.function.Supplier;
 
 /**
  * Observador responsável pela sincronização com Google Tasks.

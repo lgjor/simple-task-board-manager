@@ -52,13 +52,6 @@ public class CalendarService {
      */
     private final List<CalendarEventProvider> providers;
     
-    /**
-     * Gerenciador de eventos do calendário.
-     * 
-     * <p>Responsável por manter o estado dos eventos e coordenar
-     * operações de CRUD.</p>
-     */
-    private final CalendarEventManager eventManager;
 
     /**
      * Obtém todos os eventos para um período específico.

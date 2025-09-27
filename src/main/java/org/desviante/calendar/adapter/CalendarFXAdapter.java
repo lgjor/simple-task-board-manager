@@ -123,6 +123,15 @@ public class CalendarFXAdapter {
         
         // Configurar se está oculto
         entry.setHidden(!eventDTO.isActive());
+        
+        // TODO: Configurar cor e opacidade quando a API do CalendarFX permitir
+        // As cores são aplicadas através do estilo do calendário (Calendar.Style)
+        // e a opacidade pode ser configurada através de CSS customizado
+        String eventColor = getColorForEventType(eventDTO.getType());
+        double opacity = getOpacityForPriority(eventDTO.getPriority());
+        
+        // Log para debug (remover em produção se necessário)
+        log.debug("Evento {} - Cor: {}, Opacidade: {}", eventDTO.getTitle(), eventColor, opacity);
     }
 
     /**
@@ -155,7 +164,10 @@ public class CalendarFXAdapter {
             tooltip.append("\nRecorrente: Sim");
         }
         
-        entry.setTitle(tooltip.toString());
+        // Configurar tooltip (não sobrescrever o título)
+        // TODO: Implementar tooltip quando a API do CalendarFX permitir
+        // entry.setTooltip(new Tooltip(tooltip.toString()));
+        log.debug("Tooltip para evento {}: {}", eventDTO.getTitle(), tooltip.toString());
     }
 
     /**

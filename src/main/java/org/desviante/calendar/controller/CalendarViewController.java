@@ -200,10 +200,11 @@ public class CalendarViewController implements Initializable {
     /**
      * Limpa todos os calendários.
      */
+    @SuppressWarnings("unchecked")
     private void clearAllCalendars() {
         if (calendarSource != null) {
-            for (Calendar<CalendarEventDTO> calendar : calendarSource.getCalendars()) {
-                calendar.clear();
+            for (Calendar<?> calendar : calendarSource.getCalendars()) {
+                ((Calendar<CalendarEventDTO>) calendar).clear();
             }
         }
     }
@@ -214,13 +215,14 @@ public class CalendarViewController implements Initializable {
      * @param type tipo do evento
      * @return calendário correspondente
      */
+    @SuppressWarnings("unchecked")
     private Calendar<CalendarEventDTO> getCalendarForType(CalendarEventType type) {
         if (calendarSource == null || type == null) {
             return null;
         }
         
         String calendarName = getCalendarNameForType(type);
-        return calendarSource.getCalendars().stream()
+        return (Calendar<CalendarEventDTO>) calendarSource.getCalendars().stream()
                 .filter(calendar -> calendar.getName().equals(calendarName))
                 .findFirst()
                 .orElse(null);
