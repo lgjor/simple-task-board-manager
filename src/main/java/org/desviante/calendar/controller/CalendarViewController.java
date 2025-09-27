@@ -2,6 +2,7 @@ package org.desviante.calendar.controller;
 
 import com.calendarfx.model.Calendar;
 import com.calendarfx.model.CalendarSource;
+import com.calendarfx.model.Entry;
 import com.calendarfx.view.CalendarView;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -13,28 +14,35 @@ import org.desviante.calendar.CalendarEventType;
 import org.desviante.calendar.CalendarService;
 import org.desviante.calendar.adapter.CalendarFXAdapter;
 import org.desviante.calendar.dto.CalendarEventDTO;
+import org.desviante.calendar.view.EventDetailsView;
+import org.desviante.service.TaskManagerFacade;
 import org.springframework.stereotype.Component;
 
 import java.net.URL;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
 /**
- * Controller para a visualização do calendário.
+ * Controller para visualização do calendário (somente leitura).
  * 
- * <p>Este controller gerencia a interface do calendário, integrando
- * o CalendarFX com o sistema de eventos existente.</p>
+ * <p>Este controller gerencia a interface do calendário como uma tela de visualização,
+ * integrando o CalendarFX com o sistema de eventos existente. Não permite edição
+ * de eventos diretamente no calendário.</p>
  * 
  * <p><strong>Responsabilidades:</strong></p>
  * <ul>
- *   <li>Gerenciar a visualização do calendário</li>
+ *   <li>Exibir eventos do sistema no calendário</li>
  *   <li>Integrar eventos do sistema com CalendarFX</li>
  *   <li>Controlar navegação entre períodos</li>
- *   <li>Gerenciar interações do usuário</li>
+ *   <li>Fornecer interface somente leitura</li>
  * </ul>
+ * 
+ * <p><strong>Nota:</strong> Edições de eventos devem ser feitas através da interface
+ * de cards, não diretamente no calendário.</p>
  * 
  * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
  * @version 1.0
@@ -49,6 +57,7 @@ public class CalendarViewController implements Initializable {
 
     private final CalendarService calendarService;
     private final CalendarFXAdapter calendarFXAdapter;
+    private final TaskManagerFacade taskManagerFacade;
     
     @FXML
     private BorderPane calendarContainer;
@@ -62,14 +71,14 @@ public class CalendarViewController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        log.info("Inicializando CalendarViewController");
+        log.info("Inicializando CalendarViewController como tela de visualização");
         initializeCalendarView();
         loadEventsForCurrentPeriod();
         updateStatusLabel();
     }
 
     /**
-     * Inicializa a visualização do calendário.
+     * Inicializa a visualização do calendário como tela somente leitura.
      */
     private void initializeCalendarView() {
         calendarView = new CalendarView();
@@ -80,13 +89,34 @@ public class CalendarViewController implements Initializable {
         
         // Criar e configurar o CalendarSource
         calendarSource = calendarFXAdapter.createCalendarSource();
+        
+        // Configurar todos os calendários como somente leitura
+        for (Calendar<?> calendar : calendarSource.getCalendars()) {
+            calendar.setReadOnly(true);
+        }
+        
         calendarView.getCalendarSources().add(calendarSource);
+        
+        // Garantir que não há menu de contexto (tela somente leitura)
+        calendarView.setContextMenuCallback(null);
+        calendarView.setEntryContextMenuCallback(null);
+        
+        // Configurar PopOver personalizado para detalhes de eventos
+        calendarView.setEntryDetailsPopOverContentCallback(param -> {
+            if (param.getEntry() != null && param.getEntry().getUserObject() instanceof CalendarEventDTO) {
+                CalendarEventDTO eventDTO = (CalendarEventDTO) param.getEntry().getUserObject();
+                return new EventDetailsView(eventDTO);
+            }
+            return null;
+        });
         
         // Adicionar o calendário ao container
         calendarContainer.setCenter(calendarView);
         
-        log.info("CalendarView inicializado com sucesso");
+        log.info("CalendarView inicializado como tela de visualização (somente leitura)");
     }
+
+
 
     /**
      * Carrega eventos para o período atual.
@@ -110,6 +140,9 @@ public class CalendarViewController implements Initializable {
                 Calendar<CalendarEventDTO> calendar = getCalendarForType(entry.getKey());
                 if (calendar != null) {
                     calendarFXAdapter.addEventsToCalendar(calendar, entry.getValue());
+                    
+                    // Nota: Listeners para propriedades serão configurados quando necessário
+                    // CalendarFX não expõe diretamente os entries para configuração de listeners
                 }
             }
             
@@ -244,4 +277,5 @@ public class CalendarViewController implements Initializable {
             default -> "Outros";
         };
     }
+
 }

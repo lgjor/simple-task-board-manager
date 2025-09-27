@@ -140,7 +140,7 @@ class TaskManagerFacadeIntegrationTest {
                                                    CardService cardService, EnhancedCardService enhancedCardService, TaskService taskService, 
                                                    BoardGroupService boardGroupService, CardTypeService cardTypeService,
                                                    CheckListItemRepository checkListItemRepository) {
-            return new TaskManagerFacade(boardService, boardColumnService, cardService, enhancedCardService, taskService, boardGroupService, cardTypeService, checkListItemRepository, mock(AppMetadataConfig.class));
+            return new TaskManagerFacade(boardService, boardColumnService, cardService, enhancedCardService, taskService, boardGroupService, cardTypeService, checkListItemRepository, mock(AppMetadataConfig.class), mock(CardSchedulingService.class), mock(CalendarEventService.class), mock(GoogleTaskCreationService.class));
         }
         
         @Bean
@@ -151,6 +151,21 @@ class TaskManagerFacadeIntegrationTest {
         @Bean
         public DataMigrationService dataMigrationService() {
             return mock(DataMigrationService.class);
+        }
+        
+        @Bean
+        public CardSchedulingService cardSchedulingService() {
+            return mock(CardSchedulingService.class);
+        }
+        
+        @Bean
+        public CalendarEventService calendarEventService() {
+            return mock(CalendarEventService.class);
+        }
+        
+        @Bean
+        public GoogleTaskCreationService googleTaskCreationService() {
+            return mock(GoogleTaskCreationService.class);
         }
     }
 

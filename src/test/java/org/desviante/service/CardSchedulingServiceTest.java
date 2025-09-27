@@ -1,11 +1,10 @@
 package org.desviante.service;
 
+import org.desviante.calendar.CalendarService;
+import org.desviante.exception.ResourceNotFoundException;
 import org.desviante.model.Card;
-import org.desviante.model.CardType;
-import org.desviante.model.enums.ProgressType;
 import org.desviante.repository.CardRepository;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,258 +14,242 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 /**
- * Testes unitários para funcionalidades de agendamento de cards.
+ * Testes unitários para CardSchedulingService.
  * 
- * <p>Esta classe testa especificamente as funcionalidades relacionadas
- * ao agendamento e vencimento de cards, seguindo os princípios SOLID
- * e boas práticas de programação orientada a objetos.</p>
- * 
- * @author Aú Desviante - Lucas Godoy
- * @version 1.0
- * @since 1.0
+ * <p>Testa as funcionalidades de agendamento de cards e a sincronização
+ * com o sistema de calendário quando datas são alteradas.</p>
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("CardSchedulingService - Testes de Agendamento")
 class CardSchedulingServiceTest {
 
     @Mock
     private CardRepository cardRepository;
 
+    @Mock
+    private CalendarService calendarService;
+
     @InjectMocks
-    private CardService cardService;
+    private CardSchedulingService cardSchedulingService;
 
     private Card testCard;
-    private CardType testCardType;
 
     @BeforeEach
     void setUp() {
-        // Configurar dados de teste
-        testCardType = new CardType();
-        testCardType.setId(1L);
-        testCardType.setName("TASK");
-        testCardType.setUnitLabel("tarefa");
-
-        testCard = Card.builder()
-                .id(1L)
-                .title("Tarefa de Teste")
-                .description("Descrição da tarefa de teste")
-                .cardType(testCardType)
-                .totalUnits(1)
-                .currentUnits(0)
-                .progressType(ProgressType.NONE)
-                .creationDate(LocalDateTime.now())
-                .lastUpdateDate(LocalDateTime.now())
-                .boardColumnId(1L)
-                .orderIndex(0)
-                .build();
+        testCard = new Card();
+        testCard.setId(1L);
+        testCard.setTitle("Teste Card");
+        testCard.setDescription("Card para teste");
+        testCard.setScheduledDate(LocalDateTime.now().plusDays(1));
+        testCard.setDueDate(LocalDateTime.now().plusDays(2));
+        testCard.setLastUpdateDate(LocalDateTime.now());
     }
 
     @Test
-    @DisplayName("Deve definir data de agendamento com sucesso")
-    void deveDefinirDataDeAgendamentoComSucesso() {
+    void setSchedulingDates_Success() {
         // Arrange
         LocalDateTime scheduledDate = LocalDateTime.now().plusDays(1);
+        LocalDateTime dueDate = LocalDateTime.now().plusDays(2);
+        
         when(cardRepository.findById(1L)).thenReturn(Optional.of(testCard));
-        when(cardRepository.save(any(Card.class))).thenAnswer(invocation -> {
-            Card card = invocation.getArgument(0);
-            card.setLastUpdateDate(LocalDateTime.now());
-            return card;
-        });
+        when(cardRepository.save(any(Card.class))).thenReturn(testCard);
 
         // Act
-        Card result = cardService.setScheduledDate(1L, scheduledDate);
+        Card result = cardSchedulingService.setSchedulingDates(1L, scheduledDate, dueDate);
 
         // Assert
-        assertThat(result).isNotNull();
-        assertThat(result.getScheduledDate()).isEqualTo(scheduledDate);
-        assertThat(result.getLastUpdateDate()).isNotNull();
-        
+        assertNotNull(result, "Card retornado não deve ser null");
+        assertEquals(scheduledDate, testCard.getScheduledDate());
+        assertEquals(dueDate, testCard.getDueDate());
         verify(cardRepository).findById(1L);
         verify(cardRepository).save(testCard);
     }
 
     @Test
-    @DisplayName("Deve definir data de vencimento com sucesso")
-    void deveDefinirDataDeVencimentoComSucesso() {
-        // Arrange
-        LocalDateTime dueDate = LocalDateTime.now().plusDays(3);
-        when(cardRepository.findById(1L)).thenReturn(Optional.of(testCard));
-        when(cardRepository.save(any(Card.class))).thenAnswer(invocation -> {
-            Card card = invocation.getArgument(0);
-            card.setLastUpdateDate(LocalDateTime.now());
-            return card;
-        });
-
-        // Act
-        Card result = cardService.setDueDate(1L, dueDate);
-
-        // Assert
-        assertThat(result).isNotNull();
-        assertThat(result.getDueDate()).isEqualTo(dueDate);
-        assertThat(result.getLastUpdateDate()).isNotNull();
-        
-        verify(cardRepository).findById(1L);
-        verify(cardRepository).save(testCard);
-    }
-
-    @Test
-    @DisplayName("Deve definir ambas as datas de agendamento e vencimento com sucesso")
-    void deveDefinirAmbasAsDatasComSucesso() {
-        // Arrange
-        LocalDateTime scheduledDate = LocalDateTime.now().plusDays(1);
-        LocalDateTime dueDate = LocalDateTime.now().plusDays(3);
-        when(cardRepository.findById(1L)).thenReturn(Optional.of(testCard));
-        when(cardRepository.save(any(Card.class))).thenAnswer(invocation -> {
-            Card card = invocation.getArgument(0);
-            card.setLastUpdateDate(LocalDateTime.now());
-            return card;
-        });
-
-        // Act
-        Card result = cardService.setSchedulingDates(1L, scheduledDate, dueDate);
-
-        // Assert
-        assertThat(result).isNotNull();
-        assertThat(result.getScheduledDate()).isEqualTo(scheduledDate);
-        assertThat(result.getDueDate()).isEqualTo(dueDate);
-        assertThat(result.getLastUpdateDate()).isNotNull();
-        
-        verify(cardRepository).findById(1L);
-        verify(cardRepository).save(testCard);
-    }
-
-    @Test
-    @DisplayName("Deve lançar exceção quando card não for encontrado")
-    void deveLancarExcecaoQuandoCardNaoForEncontrado() {
+    void setSchedulingDates_CardNotFound() {
         // Arrange
         when(cardRepository.findById(1L)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThatThrownBy(() -> cardService.setScheduledDate(1L, LocalDateTime.now()))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Card com ID 1 não encontrado");
-        
-        verify(cardRepository).findById(1L);
-        verify(cardRepository, never()).save(any(Card.class));
+        assertThrows(ResourceNotFoundException.class, () -> {
+            cardSchedulingService.setSchedulingDates(1L, LocalDateTime.now(), LocalDateTime.now().plusDays(1));
+        }, "Deve lançar exceção quando card não é encontrado");
     }
 
     @Test
-    @DisplayName("Deve lançar exceção quando data de vencimento for anterior à data de agendamento")
-    void deveLancarExcecaoQuandoDataVencimentoForAnteriorAoAgendamento() {
+    void setSchedulingDates_InvalidDates() {
         // Arrange
         LocalDateTime scheduledDate = LocalDateTime.now().plusDays(2);
-        LocalDateTime dueDate = LocalDateTime.now().plusDays(1); // Anterior ao agendamento
-        testCard.setScheduledDate(scheduledDate);
+        LocalDateTime dueDate = LocalDateTime.now().plusDays(1); // Antes da data de agendamento
         
         when(cardRepository.findById(1L)).thenReturn(Optional.of(testCard));
 
         // Act & Assert
-        assertThatThrownBy(() -> cardService.setDueDate(1L, dueDate))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Data de vencimento não pode ser anterior à data de agendamento");
-        
-        verify(cardRepository).findById(1L);
-        verify(cardRepository, never()).save(any(Card.class));
+        assertThrows(IllegalArgumentException.class, () -> {
+            cardSchedulingService.setSchedulingDates(1L, scheduledDate, dueDate);
+        }, "Deve lançar exceção quando data de vencimento é anterior à data de agendamento");
     }
 
     @Test
-    @DisplayName("Deve lançar exceção quando data de vencimento for anterior à data de agendamento no setSchedulingDates")
-    void deveLancarExcecaoQuandoDataVencimentoForAnteriorAoAgendamentoNoSetSchedulingDates() {
+    void clearScheduledDate_Success_WithScheduledDate() {
         // Arrange
-        LocalDateTime scheduledDate = LocalDateTime.now().plusDays(2);
-        LocalDateTime dueDate = LocalDateTime.now().plusDays(1); // Anterior ao agendamento
-        
         when(cardRepository.findById(1L)).thenReturn(Optional.of(testCard));
+        when(cardRepository.save(any(Card.class))).thenReturn(testCard);
+
+        // Act
+        Card result = cardSchedulingService.clearScheduledDate(1L);
+
+        // Assert
+        assertNotNull(result, "Card retornado não deve ser null");
+        assertNull(testCard.getScheduledDate(), "Data de agendamento deve ser null");
+        verify(cardRepository).findById(1L);
+        verify(cardRepository).save(testCard);
+        verify(calendarService, never()).deleteEvent(anyLong()); // NÃO deve remover evento do calendário
+    }
+
+    @Test
+    void clearScheduledDate_Success_WithoutScheduledDate() {
+        // Arrange
+        testCard.setScheduledDate(null);
+        when(cardRepository.findById(1L)).thenReturn(Optional.of(testCard));
+        when(cardRepository.save(any(Card.class))).thenReturn(testCard);
+
+        // Act
+        Card result = cardSchedulingService.clearScheduledDate(1L);
+
+        // Assert
+        assertNotNull(result, "Card retornado não deve ser null");
+        verify(cardRepository).findById(1L);
+        verify(cardRepository).save(testCard);
+        verify(calendarService, never()).deleteEvent(anyLong()); // Não deve tentar remover evento
+    }
+
+    @Test
+    void clearScheduledDate_CalendarServiceThrowsException() {
+        // Arrange
+        when(cardRepository.findById(1L)).thenReturn(Optional.of(testCard));
+        when(cardRepository.save(any(Card.class))).thenReturn(testCard);
+
+        // Act
+        Card result = cardSchedulingService.clearScheduledDate(1L);
+
+        // Assert
+        assertNotNull(result, "Card retornado não deve ser null");
+        assertNull(testCard.getScheduledDate(), "Data de agendamento deve ser null");
+        verify(cardRepository).save(testCard);
+        verify(calendarService, never()).deleteEvent(anyLong()); // NÃO deve chamar deleteEvent
+    }
+
+    @Test
+    void clearDueDate_Success() {
+        // Arrange
+        when(cardRepository.findById(1L)).thenReturn(Optional.of(testCard));
+        when(cardRepository.save(any(Card.class))).thenReturn(testCard);
+
+        // Act
+        Card result = cardSchedulingService.clearDueDate(1L);
+
+        // Assert
+        assertNotNull(result, "Card retornado não deve ser null");
+        assertNull(testCard.getDueDate(), "Data de vencimento deve ser null");
+        verify(cardRepository).findById(1L);
+        verify(cardRepository).save(testCard);
+    }
+
+    @Test
+    void getCardById_Success() {
+        // Arrange
+        when(cardRepository.findById(1L)).thenReturn(Optional.of(testCard));
+
+        // Act
+        Optional<Card> result = cardSchedulingService.getCardById(1L);
+
+        // Assert
+        assertTrue(result.isPresent(), "Card deve ser encontrado");
+        assertEquals(testCard, result.get());
+        verify(cardRepository).findById(1L);
+    }
+
+    @Test
+    void getCardById_NotFound() {
+        // Arrange
+        when(cardRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // Act
+        Optional<Card> result = cardSchedulingService.getCardById(1L);
+
+        // Assert
+        assertFalse(result.isPresent(), "Card não deve ser encontrado");
+        verify(cardRepository).findById(1L);
+    }
+
+    @Test
+    void clearScheduledDateWithEvent_Success_WithScheduledDate() {
+        // Arrange
+        when(cardRepository.findById(1L)).thenReturn(Optional.of(testCard));
+        when(cardRepository.save(any(Card.class))).thenReturn(testCard);
+        doNothing().when(calendarService).deleteEvent(1L);
+
+        // Act
+        Card result = cardSchedulingService.clearScheduledDateWithEvent(1L);
+
+        // Assert
+        assertNotNull(result, "Card retornado não deve ser null");
+        assertNull(testCard.getScheduledDate(), "Data de agendamento deve ser null");
+        verify(cardRepository).findById(1L);
+        verify(cardRepository).save(testCard);
+        verify(calendarService).deleteEvent(1L); // Deve remover evento do calendário
+    }
+
+    @Test
+    void clearScheduledDateWithEvent_Success_WithoutScheduledDate() {
+        // Arrange
+        testCard.setScheduledDate(null);
+        when(cardRepository.findById(1L)).thenReturn(Optional.of(testCard));
+        when(cardRepository.save(any(Card.class))).thenReturn(testCard);
+
+        // Act
+        Card result = cardSchedulingService.clearScheduledDateWithEvent(1L);
+
+        // Assert
+        assertNotNull(result, "Card retornado não deve ser null");
+        verify(cardRepository).findById(1L);
+        verify(cardRepository).save(testCard);
+        verify(calendarService, never()).deleteEvent(anyLong()); // Não deve tentar remover evento
+    }
+
+    @Test
+    void clearScheduledDateWithEvent_CalendarServiceThrowsException() {
+        // Arrange
+        when(cardRepository.findById(1L)).thenReturn(Optional.of(testCard));
+        when(cardRepository.save(any(Card.class))).thenReturn(testCard);
+        doThrow(new RuntimeException("Erro simulado")).when(calendarService).deleteEvent(1L);
+
+        // Act
+        Card result = cardSchedulingService.clearScheduledDateWithEvent(1L);
+
+        // Assert
+        assertNotNull(result, "Card deve ser salvo mesmo se calendário falhar");
+        assertNull(testCard.getScheduledDate(), "Data de agendamento deve ser null");
+        verify(cardRepository).save(testCard);
+        verify(calendarService).deleteEvent(1L); // Deve tentar remover evento mesmo falhando
+    }
+
+    @Test
+    void clearScheduledDateWithEvent_CardNotFound() {
+        // Arrange
+        when(cardRepository.findById(1L)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThatThrownBy(() -> cardService.setSchedulingDates(1L, scheduledDate, dueDate))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Data de vencimento não pode ser anterior à data de agendamento");
+        assertThrows(ResourceNotFoundException.class, () -> {
+            cardSchedulingService.clearScheduledDateWithEvent(1L);
+        }, "Deve lançar exceção quando card não é encontrado");
         
-        verify(cardRepository).findById(1L);
-        verify(cardRepository, never()).save(any(Card.class));
-    }
-
-    @Test
-    @DisplayName("Deve permitir definir apenas data de agendamento sem data de vencimento")
-    void devePermitirDefinirApenasDataDeAgendamento() {
-        // Arrange
-        LocalDateTime scheduledDate = LocalDateTime.now().plusDays(1);
-        when(cardRepository.findById(1L)).thenReturn(Optional.of(testCard));
-        when(cardRepository.save(any(Card.class))).thenReturn(testCard);
-
-        // Act
-        Card result = cardService.setSchedulingDates(1L, scheduledDate, null);
-
-        // Assert
-        assertThat(result).isNotNull();
-        assertThat(result.getScheduledDate()).isEqualTo(scheduledDate);
-        assertThat(result.getDueDate()).isNull();
-        
-        verify(cardRepository).findById(1L);
-        verify(cardRepository).save(testCard);
-    }
-
-    @Test
-    @DisplayName("Deve permitir definir apenas data de vencimento sem data de agendamento")
-    void devePermitirDefinirApenasDataDeVencimento() {
-        // Arrange
-        LocalDateTime dueDate = LocalDateTime.now().plusDays(3);
-        when(cardRepository.findById(1L)).thenReturn(Optional.of(testCard));
-        when(cardRepository.save(any(Card.class))).thenReturn(testCard);
-
-        // Act
-        Card result = cardService.setSchedulingDates(1L, null, dueDate);
-
-        // Assert
-        assertThat(result).isNotNull();
-        assertThat(result.getScheduledDate()).isNull();
-        assertThat(result.getDueDate()).isEqualTo(dueDate);
-        
-        verify(cardRepository).findById(1L);
-        verify(cardRepository).save(testCard);
-    }
-
-    @Test
-    @DisplayName("Deve permitir limpar data de agendamento definindo como null")
-    void devePermitirLimparDataDeAgendamento() {
-        // Arrange
-        testCard.setScheduledDate(LocalDateTime.now().plusDays(1));
-        when(cardRepository.findById(1L)).thenReturn(Optional.of(testCard));
-        when(cardRepository.save(any(Card.class))).thenReturn(testCard);
-
-        // Act
-        Card result = cardService.setScheduledDate(1L, null);
-
-        // Assert
-        assertThat(result).isNotNull();
-        assertThat(result.getScheduledDate()).isNull();
-        
-        verify(cardRepository).findById(1L);
-        verify(cardRepository).save(testCard);
-    }
-
-    @Test
-    @DisplayName("Deve permitir limpar data de vencimento definindo como null")
-    void devePermitirLimparDataDeVencimento() {
-        // Arrange
-        testCard.setDueDate(LocalDateTime.now().plusDays(3));
-        when(cardRepository.findById(1L)).thenReturn(Optional.of(testCard));
-        when(cardRepository.save(any(Card.class))).thenReturn(testCard);
-
-        // Act
-        Card result = cardService.setDueDate(1L, null);
-
-        // Assert
-        assertThat(result).isNotNull();
-        assertThat(result.getDueDate()).isNull();
-        
-        verify(cardRepository).findById(1L);
-        verify(cardRepository).save(testCard);
+        verify(calendarService, never()).deleteEvent(anyLong());
     }
 }

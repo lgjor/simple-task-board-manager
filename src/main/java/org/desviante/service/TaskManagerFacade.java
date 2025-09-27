@@ -71,6 +71,9 @@ public class TaskManagerFacade {
     private final CardTypeService cardTypeService;
     private final CheckListItemRepository checklistItemRepository;
     private final AppMetadataConfig appMetadataConfig;
+    private final CardSchedulingService cardSchedulingService;
+    private final CalendarEventService calendarEventService;
+    private final GoogleTaskCreationService googleTaskCreationService;
     
     /**
      * Obtém resumos de todos os quadros disponíveis no sistema.
@@ -624,7 +627,10 @@ public class TaskManagerFacade {
         System.out.println("🔧 TASK MANAGER FACADE - setSchedulingDates chamado para card ID: " + cardId);
         System.out.println("🔧 TASK MANAGER FACADE - Scheduled Date: " + scheduledDate);
         System.out.println("🔧 TASK MANAGER FACADE - Due Date: " + dueDate);
-        enhancedCardService.setSchedulingDates(cardId, scheduledDate, dueDate);
+        
+        // Usar o novo serviço dedicado para salvar apenas as datas
+        cardSchedulingService.setSchedulingDates(cardId, scheduledDate, dueDate);
+        
         System.out.println("✅ TASK MANAGER FACADE - setSchedulingDates executado com sucesso");
     }
 
@@ -937,5 +943,74 @@ public class TaskManagerFacade {
                             card.getProgressTypeOrDefault()
                     );
                 });
+    }
+
+    /**
+     * Cria um evento no calendário baseado nas informações de agendamento de um card.
+     * 
+     * <p>Esta operação é independente e não afeta o estado do card.
+     * Falhas na criação do evento não causam rollback nas datas do card.</p>
+     * 
+     * @param cardId identificador do card
+     * @return true se o evento foi criado com sucesso, false caso contrário
+     */
+    public boolean createCalendarEvent(Long cardId) {
+        return calendarEventService.createCalendarEvent(cardId);
+    }
+
+    /**
+     * Cria uma tarefa no Google Tasks baseada nas informações de um card.
+     * 
+     * <p>Esta operação é independente e não afeta o estado do card.
+     * Falhas na criação da tarefa não causam rollback nas datas do card.</p>
+     * 
+     * @param cardId identificador do card
+     * @return true se a tarefa foi criada com sucesso, false caso contrário
+     */
+    public boolean createGoogleTask(Long cardId) {
+        return googleTaskCreationService.createGoogleTask(cardId);
+    }
+
+    /**
+     * Verifica se um card pode ter um evento criado no calendário.
+     * 
+     * @param cardId identificador do card
+     * @return true se o card pode ter evento criado, false caso contrário
+     */
+    public boolean canCreateCalendarEvent(Long cardId) {
+        return calendarEventService.canCreateCalendarEvent(cardId);
+    }
+
+    /**
+     * Verifica se um card pode ter uma tarefa criada no Google Tasks.
+     * 
+     * @param cardId identificador do card
+     * @return true se o card pode ter tarefa criada, false caso contrário
+     */
+    public boolean canCreateGoogleTask(Long cardId) {
+        return googleTaskCreationService.canCreateGoogleTask(cardId);
+    }
+
+    /**
+     * Deleta um evento do calendário.
+     * 
+     * <p>Esta operação é independente e não afeta o estado do card.
+     * Falhas na exclusão do evento não causam rollback nas datas do card.</p>
+     * 
+     * @param eventId identificador do evento
+     * @return true se o evento foi deletado com sucesso, false caso contrário
+     */
+    public boolean deleteCalendarEvent(String eventId) {
+        return calendarEventService.deleteCalendarEvent(eventId);
+    }
+
+    /**
+     * Verifica se um evento pode ser deletado.
+     * 
+     * @param eventId identificador do evento
+     * @return true se o evento pode ser deletado, false caso contrário
+     */
+    public boolean canDeleteCalendarEvent(String eventId) {
+        return calendarEventService.canDeleteCalendarEvent(eventId);
     }
 }

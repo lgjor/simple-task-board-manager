@@ -238,10 +238,11 @@
                         <Label fx:id="completionDateLabel" styleClass="footer-value-completed" />
                     </children>
                 </HBox>
-                <!-- NOVO: Botão para criar Task -->
-                <HBox alignment="CENTER" spacing="5">
+                <!-- Botões para integração com sistemas externos -->
+                <HBox alignment="CENTER" spacing="10">
                     <children>
-                        <Button fx:id="createTaskButton" onAction="#handleCreateTask" styleClass="task-button" text="+ Criar Tarefa Google" />
+                        <Button fx:id="createCalendarEventButton" onAction="#handleCreateCalendarEvent" styleClass="calendar-button" text="📅 Criar Evento" />
+                        <Button fx:id="createGoogleTaskButton" onAction="#handleCreateGoogleTask" styleClass="task-button" text="📋 Criar Tarefa Google" />
                     </children>
                     <VBox.margin>
                         <Insets top="5.0" />

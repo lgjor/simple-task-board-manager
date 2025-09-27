@@ -64,7 +64,8 @@ class TaskManagerFacadeDefaultGroupTest {
     void setUp() {
         taskManagerFacade = new TaskManagerFacade(
             boardService, columnService, cardService, enhancedCardService, taskService,
-            boardGroupService, cardTypeService, checkListItemRepository, appMetadataConfig
+            boardGroupService, cardTypeService, checkListItemRepository, appMetadataConfig,
+            mock(CardSchedulingService.class), mock(CalendarEventService.class), mock(GoogleTaskCreationService.class)
         );
     }
     
