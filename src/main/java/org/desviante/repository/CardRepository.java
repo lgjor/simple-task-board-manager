@@ -2,6 +2,7 @@ package org.desviante.repository;
 
 import org.desviante.model.Card;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -10,8 +11,12 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -41,6 +46,8 @@ public class CardRepository {
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final SimpleJdbcInsert jdbcInsert;
+    private final JdbcTemplate simpleJdbcTemplate;
+    private static final String LOG_FILE = System.getProperty("user.home") + "/myboards/card_repository_debug.log";
 
     /**
      * Construtor que inicializa os templates JDBC necessários.
@@ -49,10 +56,14 @@ public class CardRepository {
      */
     public CardRepository(DataSource dataSource) {
         this.jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
+        this.simpleJdbcTemplate = new JdbcTemplate(dataSource);
         this.jdbcInsert = new SimpleJdbcInsert(dataSource)
                 .withTableName("cards")
                 .usingColumns("title", "description", "card_type_id", "total_units", "current_units", "progress_type", "creation_date", "last_update_date", "completion_date", "scheduled_date", "due_date", "board_column_id", "order_index")
                 .usingGeneratedKeyColumns("id");
+        
+        // Garantir que as colunas de agendamento existam
+        ensureSchedulingColumnsExist();
     }
 
     /**
@@ -101,25 +112,15 @@ public class CardRepository {
         if (completionTimestamp != null) {
             card.setCompletionDate(completionTimestamp.toLocalDateTime());
         }
-        // Trata a data de agendamento, que pode ser nula (verificar se a coluna existe)
-        try {
-            Timestamp scheduledTimestamp = rs.getTimestamp("scheduled_date");
-            if (scheduledTimestamp != null) {
-                card.setScheduledDate(scheduledTimestamp.toLocalDateTime());
-            }
-        } catch (Exception e) {
-            // Coluna scheduled_date não existe ainda, definir como null
-            card.setScheduledDate(null);
+        // Trata a data de agendamento, que pode ser nula
+        Timestamp scheduledTimestamp = rs.getTimestamp("scheduled_date");
+        if (scheduledTimestamp != null) {
+            card.setScheduledDate(scheduledTimestamp.toLocalDateTime());
         }
-        // Trata a data de vencimento, que pode ser nula (verificar se a coluna existe)
-        try {
-            Timestamp dueTimestamp = rs.getTimestamp("due_date");
-            if (dueTimestamp != null) {
-                card.setDueDate(dueTimestamp.toLocalDateTime());
-            }
-        } catch (Exception e) {
-            // Coluna due_date não existe ainda, definir como null
-            card.setDueDate(null);
+        // Trata a data de vencimento, que pode ser nula
+        Timestamp dueTimestamp = rs.getTimestamp("due_date");
+        if (dueTimestamp != null) {
+            card.setDueDate(dueTimestamp.toLocalDateTime());
         }
         card.setBoardColumnId(rs.getLong("board_column_id"));
         
@@ -199,25 +200,251 @@ public class CardRepository {
             card.setId(newId.longValue());
         } else {
             params.addValue("id", card.getId());
-            String sql = """
-                    UPDATE cards SET
-                        title = :title,
-                        description = :description,
-                        card_type_id = :card_type_id,
-                        total_units = :total_units,
-                        current_units = :current_units,
-                        progress_type = :progress_type,
-                        last_update_date = :last_update_date,
-                        completion_date = :completion_date,
-                        scheduled_date = :scheduled_date,
-                        due_date = :due_date,
-                        board_column_id = :board_column_id,
-                        order_index = :order_index
-                    WHERE id = :id
-                    """;
-            jdbcTemplate.update(sql, params);
+            
+            // Verificar se as colunas de agendamento existem e construir SQL dinamicamente
+            boolean hasSchedulingColumns = checkSchedulingColumnsExist();
+            
+            String sql;
+            if (hasSchedulingColumns) {
+                sql = """
+                        UPDATE cards SET
+                            title = :title,
+                            description = :description,
+                            card_type_id = :card_type_id,
+                            total_units = :total_units,
+                            current_units = :current_units,
+                            progress_type = :progress_type,
+                            last_update_date = :last_update_date,
+                            completion_date = :completion_date,
+                            scheduled_date = :scheduled_date,
+                            due_date = :due_date,
+                            board_column_id = :board_column_id,
+                            order_index = :order_index
+                        WHERE id = :id
+                        """;
+            } else {
+                sql = """
+                        UPDATE cards SET
+                            title = :title,
+                            description = :description,
+                            card_type_id = :card_type_id,
+                            total_units = :total_units,
+                            current_units = :current_units,
+                            progress_type = :progress_type,
+                            last_update_date = :last_update_date,
+                            completion_date = :completion_date,
+                            board_column_id = :board_column_id,
+                            order_index = :order_index
+                        WHERE id = :id
+                        """;
+            }
+            
+            try {
+                String logMsg1 = "🔧 CARD REPOSITORY - Atualizando card ID: " + card.getId();
+                String logMsg2 = "🔧 CARD REPOSITORY - Scheduled Date: " + card.getScheduledDate();
+                String logMsg3 = "🔧 CARD REPOSITORY - Due Date: " + card.getDueDate();
+                String logMsg4 = "🔧 CARD REPOSITORY - Colunas de agendamento existem: " + hasSchedulingColumns;
+                
+                System.out.println(logMsg1);
+                System.out.println(logMsg2);
+                System.out.println(logMsg3);
+                System.out.println(logMsg4);
+                
+                logToFile(logMsg1);
+                logToFile(logMsg2);
+                logToFile(logMsg3);
+                logToFile(logMsg4);
+                
+                logToFile("🔧 CARD REPOSITORY - Executando SQL: " + sql);
+                logToFile("🔧 CARD REPOSITORY - Parâmetros: " + params.getValues());
+                
+                int rowsAffected = jdbcTemplate.update(sql, params);
+                
+                String successMsg = "✅ CARD REPOSITORY - Card atualizado com sucesso. Linhas afetadas: " + rowsAffected;
+                System.out.println(successMsg);
+                logToFile(successMsg);
+                
+            } catch (Exception e) {
+                String errorMsg1 = "❌ CARD REPOSITORY - Erro ao atualizar card ID " + card.getId() + ": " + e.getMessage();
+                String errorMsg2 = "❌ CARD REPOSITORY - SQL: " + sql;
+                String errorMsg3 = "❌ CARD REPOSITORY - Parâmetros: " + params.getValues();
+                
+                System.err.println(errorMsg1);
+                System.err.println(errorMsg2);
+                System.err.println(errorMsg3);
+                
+                logToFile(errorMsg1);
+                logToFile(errorMsg2);
+                logToFile(errorMsg3);
+                
+                // Tentar fallback: atualizar sem as colunas de agendamento
+                if (hasSchedulingColumns) {
+                    String fallbackMsg = "🔄 CARD REPOSITORY - Tentando fallback sem colunas de agendamento...";
+                    System.out.println(fallbackMsg);
+                    logToFile(fallbackMsg);
+                    try {
+                        String fallbackSql = """
+                                UPDATE cards SET
+                                    title = :title,
+                                    description = :description,
+                                    card_type_id = :card_type_id,
+                                    total_units = :total_units,
+                                    current_units = :current_units,
+                                    progress_type = :progress_type,
+                                    last_update_date = :last_update_date,
+                                    completion_date = :completion_date,
+                                    board_column_id = :board_column_id,
+                                    order_index = :order_index
+                                WHERE id = :id
+                                """;
+                        
+                        logToFile("🔧 CARD REPOSITORY - Executando fallback SQL: " + fallbackSql);
+                        
+                        int rowsAffected = jdbcTemplate.update(fallbackSql, params);
+                        
+                        String fallbackSuccessMsg = "✅ CARD REPOSITORY - Fallback executado com sucesso. Linhas afetadas: " + rowsAffected;
+                        System.out.println(fallbackSuccessMsg);
+                        logToFile(fallbackSuccessMsg);
+                        
+                        // Tentar atualizar as colunas de agendamento separadamente
+                        updateSchedulingColumns(card);
+                        
+                    } catch (Exception fallbackException) {
+                        System.err.println("❌ CARD REPOSITORY - Fallback também falhou: " + fallbackException.getMessage());
+                        e.printStackTrace();
+                        throw e; // Re-lançar a exceção original
+                    }
+                } else {
+                    e.printStackTrace();
+                    throw e; // Re-lançar a exceção para que o erro seja propagado
+                }
+            }
         }
         return card;
+    }
+
+    /**
+     * Atualiza apenas as colunas de agendamento de um card.
+     * 
+     * @param card card com as datas de agendamento a serem atualizadas
+     */
+    private void updateSchedulingColumns(Card card) {
+        try {
+            String logMsg = "🔧 CARD REPOSITORY - Atualizando colunas de agendamento para card ID: " + card.getId();
+            System.out.println(logMsg);
+            logToFile(logMsg);
+            
+            String sql = "UPDATE cards SET scheduled_date = ?, due_date = ? WHERE id = ?";
+            logToFile("🔧 CARD REPOSITORY - SQL agendamento: " + sql);
+            logToFile("🔧 CARD REPOSITORY - Scheduled: " + card.getScheduledDate() + ", Due: " + card.getDueDate());
+            
+            int rowsAffected = simpleJdbcTemplate.update(sql, 
+                card.getScheduledDate() != null ? Timestamp.valueOf(card.getScheduledDate()) : null,
+                card.getDueDate() != null ? Timestamp.valueOf(card.getDueDate()) : null,
+                card.getId());
+            
+            String successMsg = "✅ CARD REPOSITORY - Colunas de agendamento atualizadas. Linhas afetadas: " + rowsAffected;
+            System.out.println(successMsg);
+            logToFile(successMsg);
+            
+        } catch (Exception e) {
+            String errorMsg = "❌ CARD REPOSITORY - Erro ao atualizar colunas de agendamento: " + e.getMessage();
+            System.err.println(errorMsg);
+            logToFile(errorMsg);
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Escreve uma mensagem de log no arquivo de debug.
+     * 
+     * @param message mensagem a ser logada
+     */
+    private void logToFile(String message) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(LOG_FILE, true))) {
+            writer.println("[" + LocalDateTime.now() + "] " + message);
+            writer.flush();
+        } catch (IOException e) {
+            // Se não conseguir escrever no arquivo, pelo menos imprimir no console
+            System.err.println("Erro ao escrever log: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Verifica se as colunas de agendamento existem na tabela cards.
+     * 
+     * @return true se as colunas scheduled_date e due_date existem
+     */
+    private boolean checkSchedulingColumnsExist() {
+        try {
+            // Tentar executar uma consulta que usa as colunas de agendamento
+            simpleJdbcTemplate.query("SELECT scheduled_date, due_date FROM cards LIMIT 1", (rs, rowNum) -> null);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Garante que as colunas de agendamento existam na tabela cards.
+     * 
+     * <p>Este método é executado no construtor para garantir que as colunas
+     * scheduled_date e due_date existam antes de qualquer operação com cards.</p>
+     */
+    private void ensureSchedulingColumnsExist() {
+        try {
+            String logMsg = "🔧 CARD REPOSITORY - Verificando colunas de agendamento...";
+            System.out.println(logMsg);
+            logToFile(logMsg);
+            
+            // Verificar se a coluna scheduled_date existe
+            try {
+                simpleJdbcTemplate.queryForObject("SELECT scheduled_date FROM cards LIMIT 1", String.class);
+                System.out.println("✅ CARD REPOSITORY - Coluna scheduled_date já existe");
+            } catch (Exception e) {
+                System.out.println("➕ CARD REPOSITORY - Adicionando coluna scheduled_date...");
+                simpleJdbcTemplate.execute("ALTER TABLE cards ADD COLUMN scheduled_date TIMESTAMP NULL");
+                System.out.println("✅ CARD REPOSITORY - Coluna scheduled_date adicionada");
+            }
+            
+            // Verificar se a coluna due_date existe
+            try {
+                simpleJdbcTemplate.queryForObject("SELECT due_date FROM cards LIMIT 1", String.class);
+                System.out.println("✅ CARD REPOSITORY - Coluna due_date já existe");
+            } catch (Exception e) {
+                System.out.println("➕ CARD REPOSITORY - Adicionando coluna due_date...");
+                simpleJdbcTemplate.execute("ALTER TABLE cards ADD COLUMN due_date TIMESTAMP NULL");
+                System.out.println("✅ CARD REPOSITORY - Coluna due_date adicionada");
+            }
+            
+            // Criar índices se não existirem
+            try {
+                simpleJdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_cards_scheduled_date ON cards(scheduled_date)");
+                System.out.println("✅ CARD REPOSITORY - Índice scheduled_date criado/verificado");
+            } catch (Exception e) {
+                System.out.println("ℹ️ CARD REPOSITORY - Índice scheduled_date já existe ou erro: " + e.getMessage());
+            }
+            
+            try {
+                simpleJdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_cards_due_date ON cards(due_date)");
+                System.out.println("✅ CARD REPOSITORY - Índice due_date criado/verificado");
+            } catch (Exception e) {
+                System.out.println("ℹ️ CARD REPOSITORY - Índice due_date já existe ou erro: " + e.getMessage());
+            }
+            
+            try {
+                simpleJdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_cards_urgency ON cards(completion_date, due_date)");
+                System.out.println("✅ CARD REPOSITORY - Índice urgency criado/verificado");
+            } catch (Exception e) {
+                System.out.println("ℹ️ CARD REPOSITORY - Índice urgency já existe ou erro: " + e.getMessage());
+            }
+            
+            System.out.println("🎉 CARD REPOSITORY - Verificação de colunas concluída!");
+            
+        } catch (Exception e) {
+            System.err.println("❌ CARD REPOSITORY - Erro ao garantir colunas de agendamento: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     /**

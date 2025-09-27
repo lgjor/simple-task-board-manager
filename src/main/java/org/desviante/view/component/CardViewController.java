@@ -35,6 +35,9 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  * Controlador para visualização e edição de cards individuais.
@@ -1336,6 +1339,19 @@ public class CardViewController {
         
         // Salvar campos de agendamento e vencimento
         try {
+            String logMsg1 = "=== INICIANDO SALVAMENTO DE DATAS DE AGENDAMENTO ===";
+            String logMsg2 = "Card ID: " + cardData.id();
+            String logMsg3 = "Facade disponível: " + (facade != null);
+            
+            System.out.println(logMsg1);
+            System.out.println(logMsg2);
+            System.out.println(logMsg3);
+            
+            // Log também no arquivo de debug do CardRepository
+            logToFile(logMsg1);
+            logToFile(logMsg2);
+            logToFile(logMsg3);
+            
             // Log do estado dos DatePickers antes de coletar
             System.out.println("=== ESTADO DOS DATEPICKERS ANTES DE COLETAR ===");
             System.out.println("Scheduled DatePicker value: " + scheduledDatePicker.getValue());
@@ -1362,6 +1378,10 @@ public class CardViewController {
             
             // Atualizar datas no card PRIMEIRO
             if (facade != null) {
+                System.out.println("=== CHAMANDO FACADE.SETSCHEDULINGDATES() ===");
+                System.out.println("Card ID: " + cardData.id());
+                System.out.println("Scheduled Date: " + scheduledDate);
+                System.out.println("Due Date: " + dueDate);
                 System.out.println("Chamando facade.setSchedulingDates()...");
                 
                 // Obter as datas atuais do card para preservar as que não foram alteradas
@@ -1386,8 +1406,18 @@ public class CardViewController {
                 System.out.println("  - Agendamento final: " + finalScheduledDate);
                 System.out.println("  - Vencimento final: " + finalDueDate);
                 
-                facade.setSchedulingDates(cardData.id(), finalScheduledDate, finalDueDate);
-                System.out.println("facade.setSchedulingDates() executado com sucesso");
+                System.out.println("=== EXECUTANDO FACADE.SETSCHEDULINGDATES() ===");
+                try {
+                    facade.setSchedulingDates(cardData.id(), finalScheduledDate, finalDueDate);
+                    System.out.println("✅ facade.setSchedulingDates() executado com sucesso");
+                    logToFile("✅ facade.setSchedulingDates() executado com sucesso");
+                } catch (Exception e) {
+                    String errorMsg = "❌ ERRO ao executar facade.setSchedulingDates(): " + e.getMessage();
+                    System.err.println(errorMsg);
+                    logToFile(errorMsg);
+                    e.printStackTrace();
+                    throw e; // Re-lançar para que o erro seja propagado
+                }
                 
                 // Verificar se as datas foram realmente salvas
                 try {
@@ -1856,5 +1886,20 @@ public class CardViewController {
             alert.setContentText(content);
             alert.showAndWait();
         });
+    }
+    
+    /**
+     * Escreve uma mensagem de log no arquivo de debug.
+     * 
+     * @param message mensagem a ser logada
+     */
+    private void logToFile(String message) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(System.getProperty("user.home") + "/myboards/card_repository_debug.log", true))) {
+            writer.println("[" + LocalDateTime.now() + "] " + message);
+            writer.flush();
+        } catch (IOException e) {
+            // Se não conseguir escrever no arquivo, pelo menos imprimir no console
+            System.err.println("Erro ao escrever log: " + e.getMessage());
+        }
     }
 }

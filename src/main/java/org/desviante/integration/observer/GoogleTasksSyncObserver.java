@@ -12,6 +12,7 @@ import org.desviante.model.Task;
 import org.desviante.service.TaskService;
 import org.desviante.service.BoardService;
 import org.desviante.service.BoardColumnService;
+import org.desviante.integration.retry.RetryExecutor;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -56,9 +57,7 @@ public class GoogleTasksSyncObserver implements EventObserver<DomainEvent> {
     private final TaskService taskService;
     private final BoardService boardService;
     private final BoardColumnService boardColumnService;
-    
-    // TODO: Injetar RetryExecutor quando implementado
-    // private final RetryExecutor retryExecutor;
+    private final RetryExecutor retryExecutor;
     
     @Override
     public void handle(DomainEvent event) throws Exception {
@@ -108,10 +107,10 @@ public class GoogleTasksSyncObserver implements EventObserver<DomainEvent> {
         try {
             if (event.isFirstScheduling()) {
                 // Primeira vez sendo agendado - criar nova task
-                createGoogleTask(card);
+                createGoogleTaskWithRetry(card);
             } else {
                 // Card já estava agendado - atualizar task existente
-                updateGoogleTask(card);
+                updateGoogleTaskWithRetry(card);
             }
             
             log.debug("Sincronização com Google Tasks concluída com sucesso para card: {}", card.getId());
@@ -134,7 +133,7 @@ public class GoogleTasksSyncObserver implements EventObserver<DomainEvent> {
         }
         
         Card card = event.getCard();
-        removeGoogleTask(card);
+        removeGoogleTaskWithRetry(card);
     }
     
     /**
@@ -154,17 +153,17 @@ public class GoogleTasksSyncObserver implements EventObserver<DomainEvent> {
         // Se o card foi desagendado (tinha data antes, não tem mais)
         if (previousCard != null && previousCard.getScheduledDate() != null && card.getScheduledDate() == null) {
             log.info("GOOGLE TASKS OBSERVER - Card {} foi desagendado, removendo task do Google Tasks", card.getId());
-            removeGoogleTask(card);
+            removeGoogleTaskWithRetry(card);
         }
         // Se o card foi agendado (não tinha data antes, tem agora)
         else if (previousCard != null && previousCard.getScheduledDate() == null && card.getScheduledDate() != null) {
             log.info("GOOGLE TASKS OBSERVER - Card {} foi agendado, criando task no Google Tasks", card.getId());
-            createGoogleTask(card);
+            createGoogleTaskWithRetry(card);
         }
         // Se o card já estava agendado e foi atualizado
         else if (card.getScheduledDate() != null) {
             log.info("GOOGLE TASKS OBSERVER - Card {} foi atualizado, atualizando task no Google Tasks", card.getId());
-            updateGoogleTask(card);
+            updateGoogleTaskWithRetry(card);
         }
     }
     
@@ -184,6 +183,38 @@ public class GoogleTasksSyncObserver implements EventObserver<DomainEvent> {
     @Override
     public String getObserverName() {
         return "GoogleTasksSyncObserver";
+    }
+    
+    /**
+     * Cria uma nova task no Google Tasks para um card agendado com retry automático.
+     * 
+     * @param card card agendado
+     * @throws Exception se ocorrer erro durante a criação
+     */
+    private void createGoogleTaskWithRetry(Card card) throws Exception {
+        log.info("GOOGLE TASKS OBSERVER - Criando task com retry para card: {}", card.getId());
+        
+        var result = retryExecutor.execute(
+            () -> {
+                try {
+                    createGoogleTask(card);
+                    return "Task criada com sucesso";
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            },
+            "CREATE_GOOGLE_TASK",
+            card.getId(),
+            "GOOGLE_TASKS"
+        );
+        
+        if (!result.isSuccessful()) {
+            log.error("GOOGLE TASKS OBSERVER - Falha ao criar task após {} tentativas: {}", 
+                     result.getTotalAttempts(), result.getErrorMessage());
+            throw new RuntimeException("Falha ao criar task no Google Tasks: " + result.getErrorMessage());
+        }
+        
+        log.info("GOOGLE TASKS OBSERVER - Task criada com sucesso após {} tentativas", result.getTotalAttempts());
     }
     
     /**
@@ -220,6 +251,38 @@ public class GoogleTasksSyncObserver implements EventObserver<DomainEvent> {
         }
 
         log.info("GOOGLE TASKS OBSERVER - Task criada com sucesso! ID local: {}, Google ID: {}", createdTask.getId(), createdTask.getGoogleTaskId());
+    }
+    
+    /**
+     * Remove uma task do Google Tasks quando um card é desagendado com retry automático.
+     * 
+     * @param card card desagendado
+     * @throws Exception se ocorrer erro durante a remoção
+     */
+    private void removeGoogleTaskWithRetry(Card card) throws Exception {
+        log.info("GOOGLE TASKS OBSERVER - Removendo task com retry para card: {}", card.getId());
+        
+        var result = retryExecutor.execute(
+            () -> {
+                try {
+                    removeGoogleTask(card);
+                    return "Task removida com sucesso";
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            },
+            "DELETE_GOOGLE_TASK",
+            card.getId(),
+            "GOOGLE_TASKS"
+        );
+        
+        if (!result.isSuccessful()) {
+            log.error("GOOGLE TASKS OBSERVER - Falha ao remover task após {} tentativas: {}", 
+                     result.getTotalAttempts(), result.getErrorMessage());
+            throw new RuntimeException("Falha ao remover task do Google Tasks: " + result.getErrorMessage());
+        }
+        
+        log.info("GOOGLE TASKS OBSERVER - Task removida com sucesso após {} tentativas", result.getTotalAttempts());
     }
     
     /**
@@ -266,6 +329,38 @@ public class GoogleTasksSyncObserver implements EventObserver<DomainEvent> {
         // Fallback para nome padrão
         log.warn("GOOGLE TASKS OBSERVER - Usando nome padrão da lista: Simple Task Board Manager");
         return "Simple Task Board Manager";
+    }
+    
+    /**
+     * Atualiza uma task existente no Google Tasks com retry automático.
+     * 
+     * @param card card atualizado
+     * @throws Exception se ocorrer erro durante a atualização
+     */
+    private void updateGoogleTaskWithRetry(Card card) throws Exception {
+        log.info("GOOGLE TASKS OBSERVER - Atualizando task com retry para card: {}", card.getId());
+        
+        var result = retryExecutor.execute(
+            () -> {
+                try {
+                    updateGoogleTask(card);
+                    return "Task atualizada com sucesso";
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            },
+            "UPDATE_GOOGLE_TASK",
+            card.getId(),
+            "GOOGLE_TASKS"
+        );
+        
+        if (!result.isSuccessful()) {
+            log.error("GOOGLE TASKS OBSERVER - Falha ao atualizar task após {} tentativas: {}", 
+                     result.getTotalAttempts(), result.getErrorMessage());
+            throw new RuntimeException("Falha ao atualizar task no Google Tasks: " + result.getErrorMessage());
+        }
+        
+        log.info("GOOGLE TASKS OBSERVER - Task atualizada com sucesso após {} tentativas", result.getTotalAttempts());
     }
     
     /**
@@ -325,10 +420,10 @@ public class GoogleTasksSyncObserver implements EventObserver<DomainEvent> {
         
         // Se o card não tinha data de agendamento antes, criar nova task
         if (previousCard == null || previousCard.getScheduledDate() == null) {
-            createGoogleTask(card);
+            createGoogleTaskWithRetry(card);
         } else {
             // Atualizar task existente
-            updateGoogleTask(card);
+            updateGoogleTaskWithRetry(card);
         }
     }
     

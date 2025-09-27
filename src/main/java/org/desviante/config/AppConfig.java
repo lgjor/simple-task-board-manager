@@ -23,13 +23,21 @@ import org.springframework.context.annotation.Import;
  * @since 1.0
  * @see DataConfig
  * @see GoogleApiConfig
+ * @see RetryConfig
  * @see org.springframework.context.annotation.Configuration
  * @see org.springframework.context.annotation.ComponentScan
  * @see org.springframework.context.annotation.Import
  */
 @Configuration
-@ComponentScan(basePackages = {"org.desviante.service", "org.desviante.view"})
-@Import({DataConfig.class, GoogleApiConfig.class, AppMetadataConfig.class})
+@ComponentScan(basePackages = {
+    "org.desviante.service", 
+    "org.desviante.view", 
+    "org.desviante.config",
+    "org.desviante.integration",
+    "org.desviante.calendar",
+    "org.desviante.util"
+})
+@Import({DataConfig.class, GoogleApiConfig.class, AppMetadataConfig.class, RetryConfig.class})
 public class AppConfig {
     /**
      * Construtor padrão da classe de configuração.

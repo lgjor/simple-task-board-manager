@@ -11,6 +11,7 @@ import org.desviante.integration.sync.IntegrationSyncService;
 import org.desviante.integration.sync.IntegrationType;
 import org.desviante.model.Card;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -59,7 +60,6 @@ public class EnhancedCardService {
     private final EventPublisher eventPublisher;
     private final IntegrationCoordinator integrationCoordinator;
     private final IntegrationSyncService integrationSyncService;
-    private final DatabaseMigrationService migrationService;
     
     /**
      * Cria um novo card com integração de eventos.
@@ -240,15 +240,7 @@ public class EnhancedCardService {
      */
     @Transactional
     public Card setSchedulingDates(Long cardId, LocalDateTime scheduledDate, LocalDateTime dueDate) {
-        log.info("📅 ENHANCED CARD SERVICE - Definindo datas de agendamento e vencimento para card {}: {} / {}", cardId, scheduledDate, dueDate);
-        
-        // Garantir que a tabela existe ANTES da transação
-        try {
-            migrationService.ensureIntegrationSyncStatusTable();
-        } catch (Exception e) {
-            log.error("Erro ao garantir existência da tabela de sincronização: {}", e.getMessage(), e);
-            throw new RuntimeException("Falha ao preparar banco de dados para sincronização", e);
-        }
+        log.debug("Definindo datas de agendamento e vencimento para card {}: {} / {}", cardId, scheduledDate, dueDate);
         
         // Obter card atual antes da atualização
         Optional<Card> currentCardOpt = cardService.getCardById(cardId);
@@ -259,25 +251,13 @@ public class EnhancedCardService {
         Card currentCard = currentCardOpt.get();
         LocalDateTime previousScheduledDate = currentCard.getScheduledDate();
         
-        // Atualizar o card
+        // Atualizar o card PRIMEIRO - esta é a operação principal que deve sempre funcionar
         Card updatedCard = cardService.setSchedulingDates(cardId, scheduledDate, dueDate);
         
-        // Processar eventos de agendamento/desagendamento
-        if (scheduledDate != null && previousScheduledDate == null) {
-            // Card foi agendado pela primeira vez
-            processCardScheduled(updatedCard);
-        } else if (scheduledDate != null && !scheduledDate.equals(previousScheduledDate)) {
-            // Data de agendamento foi alterada
-            processCardRescheduled(updatedCard, previousScheduledDate);
-        } else if (scheduledDate == null && previousScheduledDate != null) {
-            // Card foi desagendado
-            processCardUnscheduled(updatedCard, previousScheduledDate);
-        } else {
-            // Apenas atualização normal
-            publishCardUpdatedEvent(updatedCard, currentCard);
-        }
+        // Processar eventos de agendamento em transação separada para evitar rollback
+        processSchedulingEventsInSeparateTransaction(updatedCard, currentCard, scheduledDate, previousScheduledDate);
         
-        log.info("Datas do card {} definidas - Agendamento: {}, Vencimento: {}", cardId, scheduledDate, dueDate);
+        log.debug("Datas do card {} definidas - Agendamento: {}, Vencimento: {}", cardId, scheduledDate, dueDate);
         return updatedCard;
     }
     
@@ -320,41 +300,74 @@ public class EnhancedCardService {
     }
     
     /**
+     * Processa eventos de agendamento de forma segura em transação separada.
+     * 
+     * <p>Este método executa a integração em uma transação independente para evitar
+     * que falhas de integração causem rollback na operação principal de salvamento
+     * do card no banco de dados.</p>
+     * 
+     * @param updatedCard card atualizado
+     * @param currentCard card anterior
+     * @param scheduledDate nova data de agendamento
+     * @param previousScheduledDate data anterior de agendamento
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void processSchedulingEventsInSeparateTransaction(Card updatedCard, Card currentCard, 
+                                                           LocalDateTime scheduledDate, LocalDateTime previousScheduledDate) {
+        try {
+            // Processar eventos de agendamento baseado no estado
+            if (scheduledDate != null && previousScheduledDate == null) {
+                // Card foi agendado pela primeira vez
+                processCardScheduled(updatedCard);
+            } else if (scheduledDate != null && !scheduledDate.equals(previousScheduledDate)) {
+                // Data de agendamento foi alterada
+                processCardRescheduled(updatedCard, previousScheduledDate);
+            } else if (scheduledDate == null && previousScheduledDate != null) {
+                // Card foi desagendado
+                processCardUnscheduled(updatedCard, previousScheduledDate);
+            } else {
+                // Apenas atualização normal
+                publishCardUpdatedEvent(updatedCard, currentCard);
+            }
+            
+            log.debug("Eventos de agendamento processados com sucesso para card {}", updatedCard.getId());
+            
+        } catch (Exception e) {
+            log.error("Erro ao processar eventos de agendamento para card {}: {}", 
+                     updatedCard.getId(), e.getMessage(), e);
+            
+            // Não re-lançar a exceção para não afetar a transação principal
+            // A integração falhou, mas o card foi salvo com sucesso
+            log.warn("Card {} salvo com sucesso, mas integração falhou", updatedCard.getId());
+        }
+    }
+
+    /**
      * Processa o agendamento de um card.
      * 
      * @param card card agendado
      */
     private void processCardScheduled(Card card) {
         try {
-            log.info("🔧 PROCESSANDO CARD AGENDADO - Iniciando processamento para card {}", card.getId());
+            log.debug("Processando agendamento do card {}", card.getId());
             
             // Criar status de sincronização
-            log.info("🔧 PROCESSANDO CARD AGENDADO - Criando status de sincronização para Google Tasks");
             integrationSyncService.createSyncStatus(card.getId(), IntegrationType.GOOGLE_TASKS);
-            log.info("✅ PROCESSANDO CARD AGENDADO - Status Google Tasks criado");
-            
-            log.info("🔧 PROCESSANDO CARD AGENDADO - Criando status de sincronização para Calendar");
             integrationSyncService.createSyncStatus(card.getId(), IntegrationType.CALENDAR);
-            log.info("✅ PROCESSANDO CARD AGENDADO - Status Calendar criado");
             
             // Publicar evento de agendamento
-            log.info("🔧 PROCESSANDO CARD AGENDADO - Construindo evento CardScheduledEvent");
             CardScheduledEvent event = CardScheduledEvent.builder()
                     .card(card)
                     .scheduledDate(card.getScheduledDate())
                     .previousScheduledDate(null)
                     .build();
-            log.info("✅ PROCESSANDO CARD AGENDADO - Evento construído com sucesso");
             
-            log.info("🚀 PUBLICANDO EVENTO CardScheduledEvent para card {} com data: {}", card.getId(), card.getScheduledDate());
             eventPublisher.publish(event);
-            log.info("✅ Evento CardScheduledEvent publicado com sucesso para card {}", card.getId());
             
-            log.info("🎉 PROCESSANDO CARD AGENDADO - Processamento concluído com sucesso para card {}", card.getId());
+            log.debug("Agendamento do card {} processado com sucesso", card.getId());
             
         } catch (Exception e) {
-            log.error("❌ ERRO AO PROCESSAR AGENDAMENTO DO CARD {}: {}", card.getId(), e.getMessage(), e);
-            // Re-lançar a exceção para que seja tratada pelo Spring
+            log.error("Erro ao processar agendamento do card {}: {}", card.getId(), e.getMessage(), e);
             throw new RuntimeException("Falha ao processar agendamento do card " + card.getId(), e);
         }
     }
@@ -488,4 +501,5 @@ public class EnhancedCardService {
         
         return changedFields;
     }
+    
 }

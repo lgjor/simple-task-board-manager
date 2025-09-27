@@ -5,6 +5,8 @@ import org.desviante.integration.event.SimpleEventPublisher;
 import org.desviante.integration.event.card.CardScheduledEvent;
 import org.desviante.integration.observer.GoogleTasksSyncObserver;
 import org.desviante.integration.observer.CalendarSyncObserver;
+import org.desviante.integration.retry.RetryExecutor;
+import org.desviante.integration.retry.RetryResult;
 import org.desviante.model.Card;
 import org.desviante.service.TaskService;
 import org.desviante.service.DatabaseMigrationService;
@@ -83,7 +85,31 @@ class ManualIntegrationTest {
         when(mockBoardService.getBoardById(anyLong())).thenReturn(java.util.Optional.of(mockBoard));
         when(mockBoardColumnService.getColumnById(anyLong())).thenReturn(java.util.Optional.of(mockColumn));
         
-        googleTasksSyncObserver = new GoogleTasksSyncObserver(mockTaskService, mockBoardService, mockBoardColumnService);
+        // Criar um RetryExecutor mock para o teste que executa a operação diretamente
+        RetryExecutor mockRetryExecutor = mock(RetryExecutor.class);
+        RetryResult mockResult = RetryResult.builder()
+                .successful(true)
+                .totalAttempts(1)
+                .build();
+        
+        // Configurar o mock para executar a operação passada como parâmetro
+        when(mockRetryExecutor.execute(any(), any(), any(), any())).thenAnswer(invocation -> {
+            java.util.function.Supplier<?> operation = invocation.getArgument(0);
+            try {
+                operation.get();
+            } catch (Exception e) {
+                // Se a operação falhar, criar um resultado de falha
+                return RetryResult.builder()
+                        .successful(false)
+                        .totalAttempts(1)
+                        .errorMessage(e.getMessage())
+                        .finalException(e)
+                        .build();
+            }
+            return mockResult;
+        });
+        
+        googleTasksSyncObserver = new GoogleTasksSyncObserver(mockTaskService, mockBoardService, mockBoardColumnService, mockRetryExecutor);
         calendarSyncObserver = new CalendarSyncObserver(mockCalendarService);
         
         // Inscrever observadores

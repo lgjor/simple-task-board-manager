@@ -558,8 +558,14 @@ public class CardService {
      */
     @Transactional
     public Card setSchedulingDates(Long cardId, LocalDateTime scheduledDate, LocalDateTime dueDate) {
+        System.out.println("🔧 CARD SERVICE - setSchedulingDates chamado para card ID: " + cardId);
+        System.out.println("🔧 CARD SERVICE - Scheduled Date: " + scheduledDate);
+        System.out.println("🔧 CARD SERVICE - Due Date: " + dueDate);
+        
         Card card = cardRepository.findById(cardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Card com ID " + cardId + " não encontrado."));
+        
+        System.out.println("🔧 CARD SERVICE - Card encontrado: " + card.getTitle());
         
         // Validação: data de vencimento não pode ser anterior à data de agendamento
         if (scheduledDate != null && dueDate != null && dueDate.isBefore(scheduledDate)) {
@@ -570,7 +576,11 @@ public class CardService {
         card.setDueDate(dueDate);
         card.setLastUpdateDate(LocalDateTime.now());
         
-        return cardRepository.save(card);
+        System.out.println("🔧 CARD SERVICE - Chamando cardRepository.save()...");
+        Card savedCard = cardRepository.save(card);
+        System.out.println("✅ CARD SERVICE - Card salvo com sucesso!");
+        
+        return savedCard;
     }
 
     /**

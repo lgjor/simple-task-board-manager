@@ -115,9 +115,9 @@ public class IntegrationTestConfig {
      */
     @Bean
     @Primary
-    public GoogleTasksSyncObserver testGoogleTasksSyncObserver(TaskService taskService, BoardService boardService, BoardColumnService boardColumnService) {
+    public GoogleTasksSyncObserver testGoogleTasksSyncObserver(TaskService taskService, BoardService boardService, BoardColumnService boardColumnService, RetryExecutor retryExecutor) {
         System.out.println("🔧 INTEGRATION TEST CONFIG - Criando GoogleTasksSyncObserver com TaskService: " + taskService.getClass().getName());
-        return new GoogleTasksSyncObserver(taskService, boardService, boardColumnService);
+        return new GoogleTasksSyncObserver(taskService, boardService, boardColumnService, retryExecutor);
     }
     
     /**

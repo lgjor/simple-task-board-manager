@@ -26,7 +26,8 @@ public class SchedulingMigrationConfig implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        log.info("🔄 Verificando migração das colunas de agendamento...");
+        log.info("🔄 SCHEDULING MIGRATION CONFIG - Iniciando verificação das colunas de agendamento...");
+        log.info("🔄 SCHEDULING MIGRATION CONFIG - JdbcTemplate disponível: {}", jdbcTemplate != null);
         
         try {
             // Verificar se a coluna scheduled_date existe
@@ -71,10 +72,10 @@ public class SchedulingMigrationConfig implements ApplicationRunner {
                 log.debug("ℹ️ Índice idx_cards_urgency já existe ou erro: {}", e.getMessage());
             }
             
-            log.info("🎉 Migração das colunas de agendamento concluída com sucesso!");
+            log.info("🎉 SCHEDULING MIGRATION CONFIG - Migração das colunas de agendamento concluída com sucesso!");
             
         } catch (Exception e) {
-            log.error("❌ Erro ao aplicar migração das colunas de agendamento: {}", e.getMessage());
+            log.error("❌ SCHEDULING MIGRATION CONFIG - Erro ao aplicar migração das colunas de agendamento: {}", e.getMessage(), e);
             // Não relançar a exceção para não impedir o startup da aplicação
         }
     }

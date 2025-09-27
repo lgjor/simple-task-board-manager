@@ -621,7 +621,11 @@ public class TaskManagerFacade {
      */
     @Transactional
     public void setSchedulingDates(Long cardId, LocalDateTime scheduledDate, LocalDateTime dueDate) {
+        System.out.println("🔧 TASK MANAGER FACADE - setSchedulingDates chamado para card ID: " + cardId);
+        System.out.println("🔧 TASK MANAGER FACADE - Scheduled Date: " + scheduledDate);
+        System.out.println("🔧 TASK MANAGER FACADE - Due Date: " + dueDate);
         enhancedCardService.setSchedulingDates(cardId, scheduledDate, dueDate);
+        System.out.println("✅ TASK MANAGER FACADE - setSchedulingDates executado com sucesso");
     }
 
     /**

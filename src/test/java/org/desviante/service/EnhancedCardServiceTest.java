@@ -50,9 +50,8 @@ class EnhancedCardServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        DatabaseMigrationService migrationService = mock(DatabaseMigrationService.class);
         enhancedCardService = new EnhancedCardService(
-            cardService, eventPublisher, integrationCoordinator, integrationSyncService, migrationService);
+            cardService, eventPublisher, integrationCoordinator, integrationSyncService);
     }
     
     @Test

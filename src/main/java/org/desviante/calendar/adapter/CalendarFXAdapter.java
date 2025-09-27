@@ -3,13 +3,16 @@ package org.desviante.calendar.adapter;
 import com.calendarfx.model.Calendar;
 import com.calendarfx.model.CalendarSource;
 import com.calendarfx.model.Entry;
+import com.calendarfx.view.DayView;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.desviante.calendar.CalendarEventPriority;
 import org.desviante.calendar.CalendarEventType;
 import org.desviante.calendar.dto.CalendarEventDTO;
+import org.desviante.calendar.view.DayEntryViewPersonalizada;
 import org.springframework.stereotype.Component;
 
+import javafx.scene.control.Tooltip;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,6 +28,7 @@ import java.util.List;
  * <ul>
  *   <li>Converter CalendarEventDTO para CalendarFX Entry</li>
  *   <li>Configurar cores e estilos baseados no tipo e prioridade</li>
+ *   <li>Configurar regras de recorrência para eventos recorrentes</li>
  *   <li>Gerenciar calendários por tipo de evento</li>
  *   <li>Manter sincronização entre os formatos</li>
  * </ul>
@@ -100,20 +104,35 @@ public class CalendarFXAdapter {
     /**
      * Configura o estilo do entry baseado no tipo e prioridade do evento.
      * 
+     * <p>Este método configura todas as propriedades visuais e comportamentais
+     * do Entry do CalendarFX, incluindo:</p>
+     * <ul>
+     *   <li>Configuração de dia inteiro</li>
+     *   <li>Regras de recorrência (formato RRULE)</li>
+     *   <li>Localização do evento</li>
+     *   <li>Estado ativo/inativo</li>
+     *   <li>Cores e opacidade baseadas no tipo e prioridade</li>
+     * </ul>
+     * 
      * @param entry entry a ser configurado
      * @param eventDTO evento de origem
      */
     private void configureEntryStyle(Entry<CalendarEventDTO> entry, CalendarEventDTO eventDTO) {
-        // No CalendarFX, o estilo é aplicado através do CSS e das propriedades do Entry
         // Configurar propriedades específicas do Entry
         
         // Configurar se é evento de dia inteiro
         entry.setFullDay(eventDTO.isAllDay());
         
         // Configurar se é recorrente
-        if (eventDTO.isRecurring()) {
-            // TODO: Implementar regra de recorrência quando necessário
-            // entry.setRecurrenceRule(eventDTO.getRecurrenceRule());
+        if (eventDTO.isRecurring() && eventDTO.getRecurrenceRule() != null && !eventDTO.getRecurrenceRule().trim().isEmpty()) {
+            try {
+                // Configurar regra de recorrência no CalendarFX
+                entry.setRecurrenceRule(eventDTO.getRecurrenceRule());
+                log.debug("Regra de recorrência configurada para evento {}: {}", eventDTO.getTitle(), eventDTO.getRecurrenceRule());
+            } catch (Exception e) {
+                log.warn("Erro ao configurar regra de recorrência para evento {}: {}", eventDTO.getTitle(), e.getMessage());
+                // Continua sem recorrência se houver erro na configuração
+            }
         }
         
         // Configurar localização se disponível
@@ -124,14 +143,15 @@ public class CalendarFXAdapter {
         // Configurar se está oculto
         entry.setHidden(!eventDTO.isActive());
         
-        // TODO: Configurar cor e opacidade quando a API do CalendarFX permitir
-        // As cores são aplicadas através do estilo do calendário (Calendar.Style)
-        // e a opacidade pode ser configurada através de CSS customizado
+        // Configurar cor e opacidade através de CSS personalizado
         String eventColor = getColorForEventType(eventDTO.getType());
         double opacity = getOpacityForPriority(eventDTO.getPriority());
         
-        // Log para debug (remover em produção se necessário)
-        log.debug("Evento {} - Cor: {}, Opacidade: {}", eventDTO.getTitle(), eventColor, opacity);
+        // Aplicar estilo CSS personalizado
+        applyCustomEntryStyle(entry, eventColor, opacity, eventDTO.isRecurring(), eventDTO.isAllDay());
+        
+        log.debug("Evento {} - Cor: {}, Opacidade: {}, Recorrente: {}, Dia inteiro: {}", 
+                 eventDTO.getTitle(), eventColor, opacity, eventDTO.isRecurring(), eventDTO.isAllDay());
     }
 
     /**
@@ -164,10 +184,18 @@ public class CalendarFXAdapter {
             tooltip.append("\nRecorrente: Sim");
         }
         
-        // Configurar tooltip (não sobrescrever o título)
-        // TODO: Implementar tooltip quando a API do CalendarFX permitir
-        // entry.setTooltip(new Tooltip(tooltip.toString()));
-        log.debug("Tooltip para evento {}: {}", eventDTO.getTitle(), tooltip.toString());
+        // Configurar tooltip usando JavaFX Tooltip
+        try {
+            Tooltip tooltipControl = new Tooltip(tooltip.toString());
+            tooltipControl.setWrapText(true);
+            tooltipControl.setMaxWidth(300);
+            
+            // O tooltip será aplicado através da fábrica de visualização personalizada
+            // configurada no DayView. Aqui apenas logamos as configurações.
+            log.debug("Tooltip configurado para evento {}: {}", eventDTO.getTitle(), tooltip.toString());
+        } catch (Exception e) {
+            log.warn("Erro ao configurar tooltip para evento {}: {}", eventDTO.getTitle(), e.getMessage());
+        }
     }
 
     /**
@@ -232,6 +260,31 @@ public class CalendarFXAdapter {
     }
 
     /**
+     * Aplica estilo CSS personalizado ao entry.
+     * 
+     * <p>Nota: O CalendarFX não suporta setStyle diretamente no Entry.
+     * O estilo é aplicado através da fábrica de visualização personalizada
+     * configurada no DayView.</p>
+     * 
+     * @param entry entry a ser estilizado
+     * @param colorHex cor em formato hexadecimal
+     * @param opacity opacidade (0.0 a 1.0)
+     * @param isRecurring se o evento é recorrente
+     * @param isAllDay se o evento é de dia inteiro
+     */
+    private void applyCustomEntryStyle(Entry<CalendarEventDTO> entry, String colorHex, double opacity, 
+                                     boolean isRecurring, boolean isAllDay) {
+        if (entry == null) {
+            return;
+        }
+        
+        // O estilo será aplicado através da fábrica de visualização personalizada
+        // configurada no DayView. Aqui apenas logamos as configurações.
+        log.debug("Configurações de estilo para entrada {}: Cor={}, Opacidade={}, Recorrente={}, Dia inteiro={}", 
+                 entry.getTitle(), colorHex, opacity, isRecurring, isAllDay);
+    }
+
+    /**
      * Cria um calendário para um tipo específico de evento.
      * 
      * @param type tipo do evento
@@ -291,6 +344,95 @@ public class CalendarFXAdapter {
         
         log.info("CalendarSource criado com {} calendários", calendarSource.getCalendars().size());
         return calendarSource;
+    }
+
+    /**
+     * Configura a fábrica de visualização personalizada para um DayView.
+     * 
+     * <p>Este método configura o DayView para usar a DayEntryViewPersonalizada,
+     * permitindo a aplicação de cores e opacidade personalizadas aos eventos.</p>
+     * 
+     * @param dayView DayView a ser configurado
+     */
+    public void configureCustomEntryViewFactory(DayView dayView) {
+        if (dayView == null) {
+            log.warn("Tentativa de configurar fábrica de visualização com DayView null");
+            return;
+        }
+        
+        dayView.setEntryViewFactory(param -> {
+            DayEntryViewPersonalizada customView = new DayEntryViewPersonalizada(param);
+            
+            // Obter dados do evento se disponível
+            if (param.getUserObject() instanceof CalendarEventDTO eventDTO) {
+                String eventColor = getColorForEventType(eventDTO.getType());
+                double opacity = getOpacityForPriority(eventDTO.getPriority());
+                
+                // Aplicar estilo personalizado
+                customView.applyCustomStyle(eventColor, opacity, eventDTO.isRecurring(), eventDTO.isAllDay());
+                
+                // Aplicar tooltip ao evento
+                applyTooltipToEntry(customView, eventDTO);
+                
+                log.debug("Fábrica de visualização configurada para evento: {} - Cor: {}, Opacidade: {}", 
+                         eventDTO.getTitle(), eventColor, opacity);
+            }
+            
+            return customView;
+        });
+        
+        log.debug("Fábrica de visualização personalizada configurada para DayView");
+    }
+
+    /**
+     * Aplica tooltip a uma visualização de entrada personalizada.
+     * 
+     * @param customView visualização personalizada do evento
+     * @param eventDTO dados do evento
+     */
+    private void applyTooltipToEntry(DayEntryViewPersonalizada customView, CalendarEventDTO eventDTO) {
+        if (customView == null || eventDTO == null) {
+            return;
+        }
+        
+        try {
+            // Criar conteúdo do tooltip
+            StringBuilder tooltipContent = new StringBuilder();
+            tooltipContent.append("Título: ").append(eventDTO.getTitle()).append("\n");
+            
+            if (eventDTO.getDescription() != null && !eventDTO.getDescription().isEmpty()) {
+                tooltipContent.append("Descrição: ").append(eventDTO.getDescription()).append("\n");
+            }
+            
+            tooltipContent.append("Tipo: ").append(eventDTO.getType().getDisplayName()).append("\n");
+            tooltipContent.append("Prioridade: ").append(eventDTO.getPriority().getDisplayName()).append("\n");
+            
+            if (eventDTO.isAllDay()) {
+                tooltipContent.append("Duração: Dia inteiro");
+            } else {
+                tooltipContent.append("Início: ").append(eventDTO.getStartDateTime().toLocalTime());
+                if (eventDTO.getEndDateTime() != null) {
+                    tooltipContent.append("\nFim: ").append(eventDTO.getEndDateTime().toLocalTime());
+                }
+            }
+            
+            if (eventDTO.isRecurring()) {
+                tooltipContent.append("\nRecorrente: Sim");
+            }
+            
+            // Criar e configurar tooltip
+            Tooltip tooltip = new Tooltip(tooltipContent.toString());
+            tooltip.setWrapText(true);
+            tooltip.setMaxWidth(300);
+            
+            // Aplicar tooltip à visualização personalizada
+            Tooltip.install(customView, tooltip);
+            
+            log.debug("Tooltip aplicado ao evento: {}", eventDTO.getTitle());
+            
+        } catch (Exception e) {
+            log.warn("Erro ao aplicar tooltip ao evento {}: {}", eventDTO.getTitle(), e.getMessage());
+        }
     }
 
     /**

@@ -3,6 +3,8 @@ package org.desviante.integration.observer;
 import org.desviante.integration.event.card.CardScheduledEvent;
 import org.desviante.integration.event.card.CardUnscheduledEvent;
 import org.desviante.integration.event.card.CardUpdatedEvent;
+import org.desviante.integration.retry.RetryExecutor;
+import org.desviante.integration.retry.RetryResult;
 import org.desviante.model.Card;
 import org.desviante.service.TaskService;
 import org.desviante.service.BoardService;
@@ -55,7 +57,31 @@ class GoogleTasksSyncObserverTest {
         when(mockBoardService.getBoardById(anyLong())).thenReturn(java.util.Optional.of(mockBoard));
         when(mockBoardColumnService.getColumnById(anyLong())).thenReturn(java.util.Optional.of(mockColumn));
         
-        observer = new GoogleTasksSyncObserver(taskService, mockBoardService, mockBoardColumnService);
+        // Criar um RetryExecutor mock para o teste que executa a operação diretamente
+        RetryExecutor mockRetryExecutor = mock(RetryExecutor.class);
+        RetryResult mockResult = RetryResult.builder()
+                .successful(true)
+                .totalAttempts(1)
+                .build();
+        
+        // Configurar o mock para executar a operação passada como parâmetro
+        when(mockRetryExecutor.execute(any(), any(), any(), any())).thenAnswer(invocation -> {
+            java.util.function.Supplier<?> operation = invocation.getArgument(0);
+            try {
+                operation.get();
+            } catch (Exception e) {
+                // Se a operação falhar, criar um resultado de falha
+                return RetryResult.builder()
+                        .successful(false)
+                        .totalAttempts(1)
+                        .errorMessage(e.getMessage())
+                        .finalException(e)
+                        .build();
+            }
+            return mockResult;
+        });
+        
+        observer = new GoogleTasksSyncObserver(taskService, mockBoardService, mockBoardColumnService, mockRetryExecutor);
         
         // Configurar mock para retornar Task válido
         org.desviante.model.Task mockTask = new org.desviante.model.Task();

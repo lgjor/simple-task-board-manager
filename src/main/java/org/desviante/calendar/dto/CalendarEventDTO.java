@@ -101,6 +101,14 @@ public class CalendarEventDTO {
     private boolean recurring = false;
 
     /**
+     * Regra de recorrência do evento (formato RRULE).
+     * 
+     * <p>Define como o evento se repete seguindo o padrão RRULE do RFC 5545.
+     * Exemplos: "FREQ=DAILY", "FREQ=WEEKLY;BYDAY=MO,WE,FR", "FREQ=MONTHLY"</p>
+     */
+    private String recurrenceRule;
+
+    /**
      * Indica se o evento está ativo.
      */
     @Builder.Default
