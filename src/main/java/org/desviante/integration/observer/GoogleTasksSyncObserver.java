@@ -11,6 +11,7 @@ import org.desviante.service.TaskService;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.function.Supplier;
 
 /**
  * Observador responsável pela sincronização com Google Tasks.
@@ -50,6 +51,9 @@ import java.time.LocalDateTime;
 public class GoogleTasksSyncObserver implements EventObserver<CardScheduledEvent> {
     
     private final TaskService taskService;
+    
+    // TODO: Injetar RetryExecutor quando implementado
+    // private final RetryExecutor retryExecutor;
     
     @Override
     public void handle(CardScheduledEvent event) throws Exception {
