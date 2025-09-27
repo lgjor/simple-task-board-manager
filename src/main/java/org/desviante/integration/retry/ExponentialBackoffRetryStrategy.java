@@ -82,15 +82,8 @@ public class ExponentialBackoffRetryStrategy implements RetryStrategy {
             return false;
         }
         
-        // Usar configuração personalizada se disponível
-        if (config.isRetryable(exception)) {
-            return true;
-        }
-        
-        // Verificar lista padrão
-        Class<?> exceptionClass = exception.getClass();
-        return DEFAULT_RETRYABLE_EXCEPTIONS.stream()
-                .anyMatch(retryable -> retryable.isAssignableFrom(exceptionClass));
+        // Usar configuração do RetryConfig (que já tem lógica para verificar ambas as listas)
+        return config.isRetryable(exception);
     }
     
     @Override

@@ -62,6 +62,13 @@ public class CalendarSyncObserver implements EventObserver<CardScheduledEvent> {
         }
         
         Card card = event.getCard();
+        
+        // Verificar se o card tem data agendada
+        if (card.getScheduledDate() == null) {
+            log.debug("Card {} não tem data agendada, ignorando sincronização com calendário", card.getId());
+            return;
+        }
+        
         log.info("Processando sincronização com calendário para card agendado: {}", card.getId());
         
         try {
@@ -235,6 +242,12 @@ public class CalendarSyncObserver implements EventObserver<CardScheduledEvent> {
         
         // Se não há data de vencimento, usar 1 hora após o agendamento
         LocalDateTime scheduled = card.getScheduledDate();
+        if (scheduled == null) {
+            // Se não há data agendada, usar data atual + 1 hora
+            scheduled = LocalDateTime.now();
+            log.debug("Card sem data agendada, usando data atual: {}", scheduled);
+        }
+        
         if (isAllDayEvent(card)) {
             return scheduled.toLocalDate().atTime(23, 59, 59);
         } else {

@@ -145,7 +145,7 @@ class RetryResultTest {
                 .attemptNumber(2)
                 .startTime(startTime.plusSeconds(1))
                 .build();
-        attempt2.markAsSuccessful(startTime.plusNanos(1_500_000_000)); // +1500ms
+        attempt2.markAsSuccessful(startTime.plusSeconds(1).plusNanos(1_500_000_000L)); // +1500ms relativo ao startTime do attempt2
         
         // Act
         result.addAttempt(attempt1);

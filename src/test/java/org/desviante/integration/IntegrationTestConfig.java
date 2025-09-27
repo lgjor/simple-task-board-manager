@@ -13,6 +13,7 @@ import org.desviante.calendar.CalendarService;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.mockito.Mockito;
 
 import java.time.Duration;
@@ -131,5 +132,30 @@ public class IntegrationTestConfig {
     @Primary
     public CalendarSyncObserver testCalendarSyncObserver(CalendarService mockCalendarService) {
         return new CalendarSyncObserver(mockCalendarService);
+    }
+    
+    /**
+     * Mock do JdbcTemplate para testes.
+     * Necessário para o DatabaseIntegrityChecker.
+     */
+    @Bean
+    @Primary
+    public JdbcTemplate mockJdbcTemplate() {
+        return Mockito.mock(JdbcTemplate.class);
+    }
+    
+    /**
+     * Configuração de inicialização para registrar observers no eventPublisher.
+     * Este bean é executado após a criação de todos os outros beans.
+     */
+    @Bean
+    public Object initializeObservers(SimpleEventPublisher testEventPublisher,
+                                    GoogleTasksSyncObserver testGoogleTasksSyncObserver,
+                                    CalendarSyncObserver testCalendarSyncObserver) {
+        // Registrar observers no eventPublisher
+        testEventPublisher.subscribe(testGoogleTasksSyncObserver);
+        testEventPublisher.subscribe(testCalendarSyncObserver);
+        
+        return new Object(); // Bean dummy
     }
 }

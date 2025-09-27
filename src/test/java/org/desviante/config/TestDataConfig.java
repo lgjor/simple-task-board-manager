@@ -61,7 +61,7 @@ public class TestDataConfig {
      * @return DataSource configurado com HikariCP para testes
      */
     @Bean(destroyMethod = "close")
-    public DataSource dataSource() {
+    public DataSource testDataSource() {
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl("jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=LEGACY");
         config.setUsername("sa");

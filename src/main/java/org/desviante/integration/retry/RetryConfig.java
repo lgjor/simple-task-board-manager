@@ -64,7 +64,8 @@ public class RetryConfig {
         java.net.ConnectException.class,
         java.net.SocketTimeoutException.class,
         java.io.IOException.class,
-        java.util.concurrent.TimeoutException.class
+        java.util.concurrent.TimeoutException.class,
+        java.util.concurrent.CompletionException.class
     );
     
     /**

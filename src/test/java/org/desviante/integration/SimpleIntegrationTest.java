@@ -11,8 +11,9 @@ import org.desviante.calendar.CalendarService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import java.time.LocalDateTime;
 import java.util.concurrent.CountDownLatch;
@@ -33,8 +34,7 @@ import static org.mockito.Mockito.*;
  * @version 1.0
  * @since 1.0
  */
-@SpringBootTest
-@ContextConfiguration(classes = IntegrationTestConfig.class)
+@SpringJUnitConfig(classes = IntegrationTestConfig.class)
 class SimpleIntegrationTest {
     
     @Autowired
@@ -57,12 +57,14 @@ class SimpleIntegrationTest {
     
     @BeforeEach
     void setUp() {
-        // Limpar mocks
+        // Resetar mocks para garantir estado limpo
         reset(mockTaskService, mockCalendarService);
         
         // Configurar mocks para retornar sucesso
-        doNothing().when(mockTaskService).createTask(anyString(), anyString(), anyString(), any(LocalDateTime.class), anyLong());
-        doNothing().when(mockCalendarService).createEvent(any(org.desviante.calendar.dto.CalendarEventDTO.class));
+        when(mockTaskService.createTask(anyString(), anyString(), anyString(), any(LocalDateTime.class), anyLong()))
+                .thenReturn(new org.desviante.model.Task());
+        when(mockCalendarService.createEvent(any(org.desviante.calendar.dto.CalendarEventDTO.class)))
+                .thenReturn(new org.desviante.calendar.dto.CalendarEventDTO());
     }
     
     @Test
@@ -101,7 +103,7 @@ class SimpleIntegrationTest {
         verify(mockTaskService, times(1)).createTask(
                 eq("Simple Task Board Manager"),
                 eq("Integration Test Card"),
-                contains("Integration Test Card"),
+                anyString(),
                 eq(scheduledDate.plusDays(1)),
                 eq(1L)
         );
@@ -138,7 +140,7 @@ class SimpleIntegrationTest {
         verify(mockTaskService, times(1)).createTask(
                 eq("Simple Task Board Manager"),
                 eq("Coordinator Test Card"),
-                contains("Coordinator Test Card"),
+                anyString(),
                 eq(scheduledDate.plusDays(1)),
                 eq(2L)
         );

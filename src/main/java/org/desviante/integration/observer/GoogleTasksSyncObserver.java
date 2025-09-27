@@ -62,6 +62,13 @@ public class GoogleTasksSyncObserver implements EventObserver<CardScheduledEvent
         }
         
         Card card = event.getCard();
+        
+        // Verificar se o card tem data agendada
+        if (card.getScheduledDate() == null) {
+            log.debug("Card {} não tem data agendada, ignorando sincronização com Google Tasks", card.getId());
+            return;
+        }
+        
         log.info("Processando sincronização com Google Tasks para card agendado: {}", card.getId());
         
         try {
@@ -111,6 +118,12 @@ public class GoogleTasksSyncObserver implements EventObserver<CardScheduledEvent
         String title = card.getTitle();
         String notes = buildTaskNotes(card);
         LocalDateTime due = card.getDueDate();
+        
+        // Se não há data de vencimento, usar a data atual
+        if (due == null) {
+            due = LocalDateTime.now();
+            log.debug("Card sem data de vencimento, usando data atual: {}", due);
+        }
         
         taskService.createTask(listTitle, title, notes, due, card.getId());
         

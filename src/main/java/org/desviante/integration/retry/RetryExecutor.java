@@ -59,6 +59,12 @@ public class RetryExecutor {
                 Object operationResult = executeOperation(operation, context, result);
                 
                 // Se chegou aqui, a operação foi bem-sucedida
+                // Adicionar a tentativa bem-sucedida ao resultado
+                RetryAttempt successfulAttempt = context.getLastAttempt();
+                if (successfulAttempt != null) {
+                    result.addAttempt(successfulAttempt);
+                }
+                
                 result.markAsSuccessful(operationResult, LocalDateTime.now());
                 log.info("Operação {} executada com sucesso na tentativa {} (ID: {})", 
                         context.getOperationType(), context.getCurrentAttempt(), context.getRetryId());

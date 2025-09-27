@@ -23,7 +23,8 @@ public class RetryAttempt {
     /**
      * Número da tentativa (1-based).
      */
-    private int attemptNumber;
+    @Builder.Default
+    private int attemptNumber = 1;
     
     /**
      * Data e hora em que a tentativa foi iniciada.

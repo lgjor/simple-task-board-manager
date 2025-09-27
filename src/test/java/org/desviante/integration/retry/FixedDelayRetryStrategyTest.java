@@ -78,8 +78,16 @@ class FixedDelayRetryStrategyTest {
         
         FixedDelayRetryStrategy timeLimitedStrategy = new FixedDelayRetryStrategy(timeLimitedConfig);
         
-        RetryContext context = createContext(2);
-        context.setStartTime(java.time.LocalDateTime.now().minusMinutes(2)); // 2 minutos atrás
+        RetryContext context = RetryContext.builder()
+                .retryId("test-time-limit")
+                .currentAttempt(2)
+                .maxAttempts(10)
+                .operationType("TEST_OPERATION")
+                .entityId(1L)
+                .integrationType("GOOGLE_TASKS")
+                .config(timeLimitedConfig)
+                .startTime(java.time.LocalDateTime.now().minusMinutes(2)) // 2 minutos atrás
+                .build();
         
         // Act & Assert
         assertFalse(timeLimitedStrategy.shouldRetry(context));
