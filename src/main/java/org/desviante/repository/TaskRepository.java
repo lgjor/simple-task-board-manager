@@ -7,7 +7,6 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.sql.ResultSet;
@@ -125,7 +124,6 @@ public class TaskRepository {
      * @param task tarefa a ser salva ou atualizada
      * @return tarefa com ID definido (se for nova)
      */
-    @Transactional
     public Task save(Task task) {
 
         var params = new MapSqlParameterSource()
@@ -182,7 +180,6 @@ public class TaskRepository {
      * 
      * @param id ID da tarefa a ser removida
      */
-    @Transactional
     public void deleteById(Long id) {
         String sql = "DELETE FROM tasks WHERE id = :id";
         var params = new MapSqlParameterSource("id", id);
@@ -194,7 +191,6 @@ public class TaskRepository {
      * 
      * @param cardId ID do card
      */
-    @Transactional
     public void deleteByCardId(Long cardId) {
         String sql = "DELETE FROM tasks WHERE card_id = :cardId";
         var params = new MapSqlParameterSource("cardId", cardId);

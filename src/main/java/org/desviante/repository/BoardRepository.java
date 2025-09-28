@@ -8,7 +8,6 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.sql.ResultSet;
@@ -171,7 +170,6 @@ public class BoardRepository {
      * @param board quadro a ser salvo
      * @return quadro com ID atualizado (em caso de inserção)
      */
-    @Transactional
     public Board save(Board board) {
         // Usamos MapSqlParameterSource para mapear explicitamente as propriedades para as colunas.
         var params = new MapSqlParameterSource()
@@ -195,7 +193,6 @@ public class BoardRepository {
      * 
      * @param id identificador do quadro a ser removido
      */
-    @Transactional
     public void deleteById(Long id) {
         String sql = "DELETE FROM boards WHERE id = :id";
         var params = new MapSqlParameterSource("id", id);

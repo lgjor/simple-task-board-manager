@@ -7,7 +7,6 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.sql.ResultSet;
@@ -111,7 +110,6 @@ public class BoardGroupRepository {
      * @param boardGroup grupo a ser salvo
      * @return grupo com ID atualizado (em caso de inserção)
      */
-    @Transactional
     public BoardGroup save(BoardGroup boardGroup) {
         var params = new MapSqlParameterSource()
                 .addValue("name", boardGroup.getName())
@@ -137,7 +135,6 @@ public class BoardGroupRepository {
      * 
      * @param id identificador do grupo a ser removido
      */
-    @Transactional
     public void deleteById(Long id) {
         String sql = "DELETE FROM board_groups WHERE id = :id";
         var params = new MapSqlParameterSource("id", id);

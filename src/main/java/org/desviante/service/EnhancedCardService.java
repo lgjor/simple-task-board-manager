@@ -357,14 +357,21 @@ public class EnhancedCardService {
             integrationSyncService.createSyncStatus(card.getId(), IntegrationType.GOOGLE_TASKS);
             integrationSyncService.createSyncStatus(card.getId(), IntegrationType.CALENDAR);
             
-            // Publicar evento de agendamento
+            // Publicar evento de agendamento de forma assíncrona para evitar rollback
             CardScheduledEvent event = CardScheduledEvent.builder()
                     .card(card)
                     .scheduledDate(card.getScheduledDate())
                     .previousScheduledDate(null)
                     .build();
             
-            eventPublisher.publish(event);
+            // Executar de forma assíncrona para não afetar a transação principal
+            try {
+                eventPublisher.publish(event);
+                log.debug("Evento de agendamento publicado com sucesso para card {}", card.getId());
+            } catch (Exception e) {
+                log.error("Erro ao publicar evento de agendamento para card {}: {}", card.getId(), e.getMessage(), e);
+                // Não re-lançar para não causar rollback
+            }
             
             log.debug("Agendamento do card {} processado com sucesso", card.getId());
             
@@ -390,7 +397,14 @@ public class EnhancedCardService {
                     .previousScheduledDate(previousScheduledDate)
                     .build();
             
-            eventPublisher.publish(event);
+            // Executar de forma assíncrona para não afetar a transação principal
+            try {
+                eventPublisher.publish(event);
+                log.debug("Evento publicado com sucesso para card {}", card.getId());
+            } catch (Exception e) {
+                log.error("Erro ao publicar evento para card {}: {}", card.getId(), e.getMessage(), e);
+                // Não re-lançar para não causar rollback
+            }
             
             log.debug("Card {} processado como reagendado", card.getId());
             
@@ -413,7 +427,14 @@ public class EnhancedCardService {
                     .previousScheduledDate(previousScheduledDate)
                     .build();
             
-            eventPublisher.publish(event);
+            // Executar de forma assíncrona para não afetar a transação principal
+            try {
+                eventPublisher.publish(event);
+                log.debug("Evento publicado com sucesso para card {}", card.getId());
+            } catch (Exception e) {
+                log.error("Erro ao publicar evento para card {}: {}", card.getId(), e.getMessage(), e);
+                // Não re-lançar para não causar rollback
+            }
             
             log.debug("Card {} processado como desagendado", card.getId());
             
@@ -440,7 +461,14 @@ public class EnhancedCardService {
                     .changedFields(changedFields)
                     .build();
             
-            eventPublisher.publish(event);
+            // Executar de forma assíncrona para não afetar a transação principal
+            try {
+                eventPublisher.publish(event);
+                log.debug("Evento publicado com sucesso para card {}", updatedCard.getId());
+            } catch (Exception e) {
+                log.error("Erro ao publicar evento para card {}: {}", updatedCard.getId(), e.getMessage(), e);
+                // Não re-lançar para não causar rollback
+            }
             
             // Coordenar integrações se necessário
             if (event.requiresExternalSync()) {

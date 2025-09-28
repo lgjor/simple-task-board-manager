@@ -7,7 +7,6 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.sql.ResultSet;
@@ -77,7 +76,6 @@ public class CardTypeRepository {
      * @param id identificador do tipo de card
      * @return Optional contendo o tipo de card se encontrado
      */
-    @Transactional(readOnly = true)
     public Optional<CardType> findById(Long id) {
         String sql = "SELECT id, name, unit_label, creation_date, last_update_date " +
                     "FROM card_types WHERE id = :id";
@@ -97,7 +95,6 @@ public class CardTypeRepository {
      * @param name nome do tipo de card
      * @return Optional contendo o tipo de card se encontrado
      */
-    @Transactional(readOnly = true)
     public Optional<CardType> findByName(String name) {
         String sql = "SELECT id, name, unit_label, creation_date, last_update_date " +
                     "FROM card_types WHERE name = :name";
@@ -116,7 +113,6 @@ public class CardTypeRepository {
      *
      * @return lista de todos os tipos de card
      */
-    @Transactional(readOnly = true)
     public List<CardType> findAll() {
         String sql = "SELECT id, name, unit_label, creation_date, last_update_date " +
                     "FROM card_types ORDER BY name";
@@ -130,7 +126,6 @@ public class CardTypeRepository {
      * @param cardType tipo de card a ser salvo
      * @return tipo de card salvo com ID gerado
      */
-    @Transactional
     public CardType save(CardType cardType) {
         LocalDateTime now = LocalDateTime.now();
         cardType.setCreationDate(now);
@@ -154,7 +149,6 @@ public class CardTypeRepository {
      * @param cardType tipo de card a ser atualizado
      * @return tipo de card atualizado
      */
-    @Transactional
     public CardType update(CardType cardType) {
         cardType.setLastUpdateDate(LocalDateTime.now());
         
@@ -181,7 +175,6 @@ public class CardTypeRepository {
      * @param id identificador do tipo de card a ser removido
      * @return true se o tipo foi removido, false se não existia
      */
-    @Transactional
     public boolean deleteById(Long id) {
         String sql = "DELETE FROM card_types WHERE id = :id";
         
@@ -195,7 +188,6 @@ public class CardTypeRepository {
      * @param name nome a ser verificado
      * @return true se existe um tipo com este nome, false caso contrário
      */
-    @Transactional(readOnly = true)
     public boolean existsByName(String name) {
         String sql = "SELECT COUNT(*) FROM card_types WHERE name = :name";
         
