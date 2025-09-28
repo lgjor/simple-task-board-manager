@@ -1,40 +1,40 @@
 package org.desviante.calendar;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.desviante.repository.CalendarEventRepository;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Gerenciador de eventos do calendário.
  * 
  * <p>Esta classe é responsável por manter o estado dos eventos do calendário
- * e coordenar operações de CRUD. Implementa um repositório em memória para
- * demonstração, mas em produção seria substituído por persistência em banco.</p>
+ * e coordenar operações de CRUD. Utiliza persistência em banco de dados
+ * para garantir que os eventos sejam mantidos entre sessões da aplicação.</p>
  * 
  * <p><strong>Responsabilidades:</strong></p>
  * <ul>
- *   <li>Armazenamento temporário de eventos</li>
- *   <li>Geração de IDs únicos</li>
+ *   <li>Persistência permanente de eventos</li>
  *   <li>Operações CRUD básicas</li>
  *   <li>Validação de integridade</li>
+ *   <li>Carregamento automático na inicialização</li>
  * </ul>
  * 
  * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see CalendarEvent
+ * @see CalendarEventRepository
  */
 @Component
+@RequiredArgsConstructor
 @Slf4j
 public class CalendarEventManager {
 
-    private final ConcurrentHashMap<Long, CalendarEvent> events = new ConcurrentHashMap<>();
-    private final AtomicLong idGenerator = new AtomicLong(1);
+    private final CalendarEventRepository calendarEventRepository;
 
     /**
      * Salva um evento no gerenciador.
@@ -47,19 +47,18 @@ public class CalendarEventManager {
         System.out.println("🔧 CALENDAR EVENT MANAGER - Data: " + event.getStartDateTime());
         
         if (event.getId() == null) {
-            event.setId(idGenerator.getAndIncrement());
             event.setCreatedAt(LocalDateTime.now());
-            System.out.println("🔧 CALENDAR EVENT MANAGER - Novo evento criado com ID: " + event.getId());
+            System.out.println("🔧 CALENDAR EVENT MANAGER - Novo evento sendo criado");
         } else {
             System.out.println("🔧 CALENDAR EVENT MANAGER - Atualizando evento existente com ID: " + event.getId());
         }
         event.setUpdatedAt(LocalDateTime.now());
         
-        events.put(event.getId(), event);
-        System.out.println("🔧 CALENDAR EVENT MANAGER - Evento salvo no mapa. Total de eventos: " + events.size());
-        log.debug("Evento salvo: {}", event);
+        CalendarEvent savedEvent = calendarEventRepository.save(event);
+        System.out.println("🔧 CALENDAR EVENT MANAGER - Evento salvo no banco com ID: " + savedEvent.getId());
+        log.debug("Evento salvo: {}", savedEvent);
         
-        return event;
+        return savedEvent;
     }
 
     /**
@@ -69,7 +68,7 @@ public class CalendarEventManager {
      * @return evento encontrado ou null
      */
     public CalendarEvent findById(Long id) {
-        return events.get(id);
+        return calendarEventRepository.findById(id).orElse(null);
     }
 
     /**
@@ -78,7 +77,7 @@ public class CalendarEventManager {
      * @return lista de todos os eventos
      */
     public List<CalendarEvent> findAll() {
-        return new ArrayList<>(events.values());
+        return calendarEventRepository.findAll();
     }
 
     /**
@@ -88,12 +87,11 @@ public class CalendarEventManager {
      * @return true se o evento foi removido
      */
     public boolean deleteById(Long id) {
-        CalendarEvent removed = events.remove(id);
-        if (removed != null) {
-            log.debug("Evento removido: {}", removed);
-            return true;
+        boolean removed = calendarEventRepository.deleteById(id);
+        if (removed) {
+            log.debug("Evento removido: {}", id);
         }
-        return false;
+        return removed;
     }
 
     /**
@@ -103,7 +101,7 @@ public class CalendarEventManager {
      * @return true se o evento existe
      */
     public boolean existsById(Long id) {
-        return events.containsKey(id);
+        return calendarEventRepository.existsById(id);
     }
 
     /**
@@ -112,15 +110,43 @@ public class CalendarEventManager {
      * @return número total de eventos
      */
     public long count() {
-        return events.size();
+        return calendarEventRepository.count();
     }
 
     /**
-     * Limpa todos os eventos (método para testes).
+     * Busca eventos por entidade relacionada.
+     * 
+     * @param relatedEntityId ID da entidade relacionada
+     * @param relatedEntityType tipo da entidade relacionada
+     * @return lista de eventos relacionados à entidade
      */
-    public void clear() {
-        events.clear();
-        idGenerator.set(1);
-        log.debug("Todos os eventos foram removidos");
+    public List<CalendarEvent> findByRelatedEntity(Long relatedEntityId, String relatedEntityType) {
+        return calendarEventRepository.findByRelatedEntity(relatedEntityId, relatedEntityType);
+    }
+
+    /**
+     * Remove eventos por entidade relacionada.
+     * 
+     * @param relatedEntityId ID da entidade relacionada
+     * @param relatedEntityType tipo da entidade relacionada
+     * @return número de eventos removidos
+     */
+    public int deleteByRelatedEntity(Long relatedEntityId, String relatedEntityType) {
+        int deleted = calendarEventRepository.deleteByRelatedEntity(relatedEntityId, relatedEntityType);
+        if (deleted > 0) {
+            log.debug("Removidos {} eventos para entidade {}:{}", deleted, relatedEntityType, relatedEntityId);
+        }
+        return deleted;
+    }
+
+    /**
+     * Remove eventos de calendário relacionados a um card específico.
+     * 
+     * @param cardId ID do card
+     * @return número de eventos removidos
+     */
+    public int removeCalendarEventForCard(Long cardId) {
+        log.debug("Removendo eventos de calendário para card: {}", cardId);
+        return deleteByRelatedEntity(cardId, "CARD");
     }
 }

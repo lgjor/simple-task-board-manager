@@ -12,12 +12,14 @@ import org.desviante.service.TaskService;
 import org.desviante.service.DatabaseMigrationService;
 import org.desviante.service.BoardService;
 import org.desviante.service.BoardColumnService;
+import org.desviante.calendar.CalendarEventManager;
 import org.desviante.calendar.CalendarService;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.mockito.Mockito;
+import static org.mockito.Mockito.mock;
 
 import java.time.Duration;
 
@@ -127,7 +129,7 @@ public class IntegrationTestConfig {
     @Bean
     @Primary
     public CalendarSyncObserver testCalendarSyncObserver(CalendarService mockCalendarService) {
-        return new CalendarSyncObserver(mockCalendarService);
+        return new CalendarSyncObserver(mockCalendarService, mock(CalendarEventManager.class));
     }
     
     /**

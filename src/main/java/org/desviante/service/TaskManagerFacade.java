@@ -626,9 +626,18 @@ public class TaskManagerFacade {
         System.out.println("🔧 TASK MANAGER FACADE - setSchedulingDates chamado para card ID: " + cardId);
         System.out.println("🔧 TASK MANAGER FACADE - Scheduled Date: " + scheduledDate);
         System.out.println("🔧 TASK MANAGER FACADE - Due Date: " + dueDate);
+        System.out.println("🔧 TASK MANAGER FACADE - enhancedCardService disponível: " + (enhancedCardService != null));
         
-        // Usar o EnhancedCardService que publica eventos de agendamento
-        enhancedCardService.setSchedulingDates(cardId, scheduledDate, dueDate);
+        try {
+            // Usar o EnhancedCardService que publica eventos de agendamento
+            System.out.println("🔧 TASK MANAGER FACADE - Chamando enhancedCardService.setSchedulingDates()...");
+            enhancedCardService.setSchedulingDates(cardId, scheduledDate, dueDate);
+            System.out.println("✅ TASK MANAGER FACADE - enhancedCardService.setSchedulingDates() executado com sucesso");
+        } catch (Exception e) {
+            System.err.println("❌ TASK MANAGER FACADE - Erro ao chamar enhancedCardService.setSchedulingDates(): " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
         
         System.out.println("✅ TASK MANAGER FACADE - setSchedulingDates executado com sucesso");
     }

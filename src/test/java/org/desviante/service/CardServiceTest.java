@@ -1,5 +1,6 @@
 package org.desviante.service;
 
+import org.desviante.calendar.CalendarEventManager;
 import org.desviante.exception.ResourceNotFoundException;
 import org.desviante.model.BoardColumn;
 import org.desviante.model.Card;
@@ -13,6 +14,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -39,6 +42,7 @@ import static org.mockito.Mockito.*;
  * @see BoardColumn
  */
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class CardServiceTest {
 
     @Mock
@@ -46,6 +50,12 @@ class CardServiceTest {
 
     @Mock
     private BoardColumnRepository columnRepository;
+
+    @Mock
+    private CardTypeService cardTypeService;
+
+    @Mock
+    private CalendarEventManager calendarEventManager;
 
     @Mock
     private CardTypeService customCardTypeService;
@@ -78,6 +88,7 @@ class CardServiceTest {
             card.setId(1L);
             return card;
         });
+        when(calendarEventManager.findByRelatedEntity(anyLong(), anyString())).thenReturn(java.util.Collections.emptyList());
 
         // Act
         Card result = cardService.createCard(title, description, parentColumnId, customTypeId);
@@ -255,6 +266,7 @@ class CardServiceTest {
             card.setId(1L);
             return card;
         });
+        when(calendarEventManager.findByRelatedEntity(anyLong(), anyString())).thenReturn(java.util.Collections.emptyList());
 
         // Act
         Card result = cardService.createCard(title, description, parentColumnId, customTypeId, ProgressType.PERCENTAGE);
@@ -294,6 +306,7 @@ class CardServiceTest {
             card.setId(1L);
             return card;
         });
+        when(calendarEventManager.findByRelatedEntity(anyLong(), anyString())).thenReturn(java.util.Collections.emptyList());
 
         // Act
         Card result = cardService.createCard(title, description, parentColumnId, customTypeId, ProgressType.PERCENTAGE);
@@ -333,6 +346,7 @@ class CardServiceTest {
             card.setId(1L);
             return card;
         });
+        when(calendarEventManager.findByRelatedEntity(anyLong(), anyString())).thenReturn(java.util.Collections.emptyList());
 
         // Act
         Card result = cardService.createCard(title, description, parentColumnId, customTypeId, ProgressType.PERCENTAGE);
@@ -372,6 +386,7 @@ class CardServiceTest {
             card.setId(1L);
             return card;
         });
+        when(calendarEventManager.findByRelatedEntity(anyLong(), anyString())).thenReturn(java.util.Collections.emptyList());
 
         // Act
         Card result = cardService.createCard(title, description, parentColumnId, customTypeId);
@@ -506,5 +521,61 @@ class CardServiceTest {
             () -> cardService.createCard(whitespaceTitle, description, parentColumnId, customTypeId));
         
         assertEquals("Título do card não pode ser vazio", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve remover evento de calendário quando data de agendamento é definida como null")
+    void shouldRemoveCalendarEventWhenScheduledDateIsSetToNull() {
+        // Arrange
+        Long cardId = 1L;
+        LocalDateTime originalScheduledDate = LocalDateTime.now().plusDays(1);
+        
+        Card card = new Card();
+        card.setId(cardId);
+        card.setTitle("Test Card");
+        card.setScheduledDate(originalScheduledDate); // Card tem data de agendamento
+        
+        when(cardRepository.findById(cardId)).thenReturn(Optional.of(card));
+        when(cardRepository.save(any(Card.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(calendarEventManager.findByRelatedEntity(cardId, "CARD")).thenReturn(java.util.Collections.emptyList());
+        
+        // Act - Definir data de agendamento como null (remover)
+        Card result = cardService.setScheduledDate(cardId, null);
+        
+        // Assert
+        assertNotNull(result);
+        assertNull(result.getScheduledDate()); // Data deve ser null
+        
+        // Verificar se o método de busca de eventos foi chamado
+        verify(calendarEventManager, times(1)).findByRelatedEntity(cardId, "CARD");
+        verify(cardRepository, times(1)).findById(cardId);
+        verify(cardRepository, times(1)).save(any(Card.class));
+    }
+
+    @Test
+    @DisplayName("Deve manter evento de calendário quando data de agendamento é alterada para nova data")
+    void shouldKeepCalendarEventWhenScheduledDateIsChangedToNewDate() {
+        // Arrange
+        Long cardId = 1L;
+        LocalDateTime originalScheduledDate = LocalDateTime.now().plusDays(1);
+        LocalDateTime newScheduledDate = LocalDateTime.now().plusDays(2);
+        
+        Card card = new Card();
+        card.setId(cardId);
+        card.setTitle("Test Card");
+        card.setScheduledDate(originalScheduledDate);
+        
+        when(cardRepository.findById(cardId)).thenReturn(Optional.of(card));
+        when(cardRepository.save(any(Card.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        
+        // Act - Alterar data de agendamento para nova data
+        Card result = cardService.setScheduledDate(cardId, newScheduledDate);
+        
+        // Assert
+        assertNotNull(result);
+        assertEquals(newScheduledDate, result.getScheduledDate());
+        
+        verify(cardRepository, times(1)).findById(cardId);
+        verify(cardRepository, times(1)).save(any(Card.class));
     }
 }

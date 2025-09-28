@@ -33,6 +33,7 @@ import org.desviante.config.AppMetadataConfig;
 import org.desviante.integration.event.EventPublisher;
 import org.desviante.integration.coordinator.IntegrationCoordinator;
 import org.desviante.integration.sync.IntegrationSyncService;
+import org.desviante.calendar.CalendarEventManager;
 
 /**
  * Teste de integração para a TaskManagerFacade.
@@ -119,8 +120,8 @@ class TaskManagerFacadeIntegrationTest {
         }
         
         @Bean
-        public CardService cardService(CardRepository cardRepository, BoardColumnRepository boardColumnRepository, CardTypeService cardTypeService) {
-            return new CardService(cardRepository, boardColumnRepository, cardTypeService);
+        public CardService cardService(CardRepository cardRepository, BoardColumnRepository boardColumnRepository, CardTypeService cardTypeService, CalendarEventManager calendarEventManager) {
+            return new CardService(cardRepository, boardColumnRepository, cardTypeService, calendarEventManager);
         }
         
         @Bean
@@ -169,6 +170,11 @@ class TaskManagerFacadeIntegrationTest {
         @Bean
         public GoogleTaskCreationService googleTaskCreationService() {
             return mock(GoogleTaskCreationService.class);
+        }
+        
+        @Bean
+        public CalendarEventManager calendarEventManager() {
+            return mock(CalendarEventManager.class);
         }
     }
 

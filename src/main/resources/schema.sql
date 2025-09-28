@@ -70,6 +70,8 @@ CREATE TABLE IF NOT EXISTS cards (
     creation_date     TIMESTAMP NOT NULL,
     last_update_date  TIMESTAMP NOT NULL,
     completion_date   TIMESTAMP,
+    scheduled_date    TIMESTAMP,
+    due_date          TIMESTAMP,
     board_column_id   BIGINT NOT NULL,
     card_type_id      BIGINT,
     progress_type     VARCHAR(50) DEFAULT 'PERCENTAGE',
@@ -81,6 +83,9 @@ CREATE TABLE IF NOT EXISTS cards (
 
 -- Cria índice para otimizar consultas por coluna e ordem dos cards
 CREATE INDEX IF NOT EXISTS idx_cards_column_order ON cards(board_column_id, order_index);
+CREATE INDEX IF NOT EXISTS idx_cards_scheduled_date ON cards(scheduled_date);
+CREATE INDEX IF NOT EXISTS idx_cards_due_date ON cards(due_date);
+CREATE INDEX IF NOT EXISTS idx_cards_urgency ON cards(completion_date, due_date);
 
 -- Definição da tabela 'tasks' (para integração com Google Tasks)
 CREATE TABLE IF NOT EXISTS tasks (
@@ -98,11 +103,34 @@ CREATE TABLE IF NOT EXISTS tasks (
     CONSTRAINT fk_tasks_to_cards FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE
 );
 
+-- Definição da tabela 'calendar_events' (para persistir eventos do calendário)
+CREATE TABLE IF NOT EXISTS calendar_events (
+    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
+    title               VARCHAR(255) NOT NULL,
+    description         TEXT,
+    start_date_time     TIMESTAMP NOT NULL,
+    end_date_time       TIMESTAMP NOT NULL,
+    all_day             BOOLEAN NOT NULL DEFAULT FALSE,
+    event_type          VARCHAR(50) NOT NULL DEFAULT 'CARD',
+    priority            VARCHAR(20) NOT NULL DEFAULT 'LOW',
+    color               VARCHAR(7), -- Código hex da cor (ex: #FF5733)
+    related_entity_id   BIGINT,
+    related_entity_type VARCHAR(50), -- Tipo da entidade relacionada (CARD, TASK, etc.)
+    active              BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT fk_calendar_events_to_cards FOREIGN KEY (related_entity_id) REFERENCES cards(id) ON DELETE CASCADE
+);
+
 -- Cria índices para as chaves estrangeiras, melhorando a performance de joins e buscas.
 CREATE INDEX IF NOT EXISTS idx_board_columns_board_id ON board_columns(board_id);
 CREATE INDEX IF NOT EXISTS idx_cards_board_column_id ON cards(board_column_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_card_id ON tasks(card_id);
 CREATE INDEX IF NOT EXISTS idx_boards_group_id ON boards(group_id);
+CREATE INDEX IF NOT EXISTS idx_calendar_events_related_entity ON calendar_events(related_entity_id, related_entity_type);
+CREATE INDEX IF NOT EXISTS idx_calendar_events_start_date ON calendar_events(start_date_time);
+CREATE INDEX IF NOT EXISTS idx_calendar_events_active ON calendar_events(active);
 
 -- Não inserimos mais grupo padrão - boards sem grupo terão group_id = NULL
 

@@ -10,6 +10,7 @@ import org.desviante.model.enums.ProgressType;
 
 import org.desviante.repository.BoardColumnRepository;
 import org.desviante.repository.CardRepository;
+import org.desviante.calendar.CalendarEventManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,6 +50,7 @@ public class CardService {
     private final CardRepository cardRepository;
     private final BoardColumnRepository columnRepository;
     private final CardTypeService CardTypeService;
+    private final CalendarEventManager calendarEventManager;
 
     /**
      * Cria um novo card em uma coluna específica.
@@ -506,8 +508,29 @@ public class CardService {
      */
     @Transactional
     public Card setScheduledDate(Long cardId, LocalDateTime scheduledDate) {
+        System.out.println("🔍 CARD SERVICE - setScheduledDate chamado para card ID: " + cardId + ", scheduledDate: " + scheduledDate);
+        
         Card card = cardRepository.findById(cardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Card com ID " + cardId + " não encontrado."));
+        
+        // Verificar se o card tinha data de agendamento antes da atualização
+        LocalDateTime previousScheduledDate = card.getScheduledDate();
+        boolean hadScheduledDate = previousScheduledDate != null;
+        boolean willHaveScheduledDate = scheduledDate != null;
+        
+        System.out.println("🔍 CARD SERVICE - previousScheduledDate: " + previousScheduledDate);
+        System.out.println("🔍 CARD SERVICE - hadScheduledDate: " + hadScheduledDate);
+        System.out.println("🔍 CARD SERVICE - willHaveScheduledDate: " + willHaveScheduledDate);
+        System.out.println("🔍 CARD SERVICE - Condição (hadScheduledDate && !willHaveScheduledDate): " + (hadScheduledDate && !willHaveScheduledDate));
+        
+        // Se o card tinha data de agendamento e agora não tem mais, remover evento do calendário
+        if (hadScheduledDate && !willHaveScheduledDate) {
+            System.out.println("🗑️ CARD SERVICE - Card perdeu data de agendamento, removendo evento do calendário...");
+            System.out.println("🔍 CARD SERVICE - Card ID: " + cardId + ", hadScheduledDate: " + hadScheduledDate + ", willHaveScheduledDate: " + willHaveScheduledDate);
+            removeCalendarEventForCard(cardId);
+        } else {
+            System.out.println("ℹ️ CARD SERVICE - Condição não atendida para remoção de evento");
+        }
         
         card.setScheduledDate(scheduledDate);
         card.setLastUpdateDate(LocalDateTime.now());
@@ -570,6 +593,18 @@ public class CardService {
         // Validação: data de vencimento não pode ser anterior à data de agendamento
         if (scheduledDate != null && dueDate != null && dueDate.isBefore(scheduledDate)) {
             throw new IllegalArgumentException("Data de vencimento não pode ser anterior à data de agendamento");
+        }
+        
+        // Verificar se o card tinha data de agendamento antes da atualização
+        LocalDateTime previousScheduledDate = card.getScheduledDate();
+        boolean hadScheduledDate = previousScheduledDate != null;
+        boolean willHaveScheduledDate = scheduledDate != null;
+        
+        // Se o card tinha data de agendamento e agora não tem mais, remover evento do calendário
+        if (hadScheduledDate && !willHaveScheduledDate) {
+            System.out.println("🗑️ CARD SERVICE - Card perdeu data de agendamento, removendo evento do calendário...");
+            System.out.println("🔍 CARD SERVICE - Card ID: " + cardId + ", hadScheduledDate: " + hadScheduledDate + ", willHaveScheduledDate: " + willHaveScheduledDate);
+            removeCalendarEventForCard(cardId);
         }
         
         card.setScheduledDate(scheduledDate);
@@ -651,6 +686,16 @@ public class CardService {
     }
 
     /**
+     * Busca todos os cards que possuem data de agendamento.
+     * 
+     * @return lista de cards com data de agendamento
+     */
+    @Transactional(readOnly = true)
+    public List<Card> getAllCardsWithScheduledDate() {
+        return cardRepository.findByScheduledDateNotNull();
+    }
+
+    /**
      * Obtém estatísticas de urgência dos cards.
      * 
      * @return estatísticas de urgência
@@ -670,6 +715,60 @@ public class CardService {
                 .mediumUrgencyCount(mediumUrgencyCards.size())
                 .lowUrgencyCount(lowUrgencyCards.size())
                 .build();
+    }
+
+    /**
+     * Remove o evento do calendário associado a um card.
+     * 
+     * <p>Este método é chamado quando um card perde sua data de agendamento,
+     * garantindo que não existam eventos órfãos no calendário.</p>
+     * 
+     * @param cardId identificador do card
+     */
+    private void removeCalendarEventForCard(Long cardId) {
+        try {
+            System.out.println("🔍 CARD SERVICE - Buscando eventos para card ID: " + cardId);
+            
+        // Buscar eventos relacionados ao card
+        var existingEvents = calendarEventManager.findByRelatedEntity(cardId, "Card");
+            System.out.println("🔍 CARD SERVICE - Eventos encontrados: " + existingEvents.size());
+            
+            if (!existingEvents.isEmpty()) {
+                System.out.println("🗑️ CARD SERVICE - Encontrados " + existingEvents.size() + " eventos para remover");
+                
+                // Remover todos os eventos relacionados ao card
+                for (var event : existingEvents) {
+                    System.out.println("🗑️ CARD SERVICE - Removendo evento ID: " + event.getId() + " - Título: " + event.getTitle());
+                    boolean removed = calendarEventManager.deleteById(event.getId());
+                    if (removed) {
+                        System.out.println("✅ CARD SERVICE - Evento removido com sucesso: " + event.getTitle());
+                    } else {
+                        System.out.println("❌ CARD SERVICE - Falha ao remover evento: " + event.getTitle());
+                    }
+                }
+            } else {
+                System.out.println("ℹ️ CARD SERVICE - Nenhum evento encontrado para o card ID: " + cardId);
+                
+                // Debug: listar todos os eventos para verificar
+                var allEvents = calendarEventManager.findAll();
+                System.out.println("🔍 CARD SERVICE - Total de eventos no banco: " + allEvents.size());
+                for (var event : allEvents) {
+                    System.out.println("🔍 CARD SERVICE - Evento: ID=" + event.getId() + 
+                                     ", RelatedEntityId=" + event.getRelatedEntityId() + 
+                                     ", RelatedEntityType=" + event.getRelatedEntityType() + 
+                                     ", Title=" + event.getTitle());
+                }
+                
+            // Tentar remover usando o método direto
+            System.out.println("🔧 CARD SERVICE - Tentando remoção direta via deleteByRelatedEntity...");
+            int deleted = calendarEventManager.deleteByRelatedEntity(cardId, "Card");
+                System.out.println("🔧 CARD SERVICE - Eventos removidos via deleteByRelatedEntity: " + deleted);
+            }
+        } catch (Exception e) {
+            System.err.println("❌ CARD SERVICE - Erro ao remover evento do calendário para card " + cardId + ": " + e.getMessage());
+            e.printStackTrace();
+            // Não lançar exceção para não interromper o fluxo principal
+        }
     }
 
     /**

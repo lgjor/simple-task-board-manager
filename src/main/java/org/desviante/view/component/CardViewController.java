@@ -1264,6 +1264,7 @@ public class CardViewController {
 
     @FXML
     private void handleSave() {
+        System.out.println("🔵 MÉTODO handleSave() CHAMADO - BOTÃO SALVAR CLICADO");
         System.out.println("=== MÉTODO handleSave() CHAMADO ===");
         String newTitle = titleField.getText().trim();
         String newDescription = descriptionArea.getText().trim();
@@ -1653,6 +1654,7 @@ public class CardViewController {
      */
     @FXML
     private void handleClearScheduledDate() {
+        System.out.println("🔴 BOTÃO LIMPAR CLICADO - handleClearScheduledDate() CHAMADO");
         System.out.println("=== LIMPANDO DATA DE AGENDAMENTO ===");
         
         // Verificar se há uma data de agendamento salva no banco
@@ -1668,20 +1670,29 @@ public class CardViewController {
             alert.setContentText("Deseja realmente remover a data de agendamento?");
             
             Optional<ButtonType> result = alert.showAndWait();
+            System.out.println("🔴 RESULTADO DA CONFIRMAÇÃO: " + result);
+            if (result.isPresent()) {
+                System.out.println("🔴 BOTÃO SELECIONADO: " + result.get());
+                System.out.println("🔴 É OK? " + (result.get() == ButtonType.OK));
+            }
+            
             if (result.isPresent() && result.get() == ButtonType.OK) {
+                System.out.println("🔴 USUÁRIO CONFIRMOU - INICIANDO REMOÇÃO");
                 // Usuário confirmou - limpar e salvar
                 scheduledDatePicker.setValue(null);
                 scheduledHourSpinner.getValueFactory().setValue(12);
                 scheduledMinuteSpinner.getValueFactory().setValue(0);
                 
+                System.out.println("🔴 CAMPOS LIMPOS - CHAMANDO FACADE.SETSCHEDULINGDATES()");
                 // Salvar a remoção no banco - preservar data de vencimento
                 try {
                     // Obter a data de vencimento atual para preservá-la
                     Optional<Card> currentCard = facade.getCardById(cardData.id());
                     LocalDateTime currentDueDate = currentCard.isPresent() ? currentCard.get().getDueDate() : null;
                     
+                    System.out.println("🔴 CHAMANDO FACADE.SETSCHEDULINGDATES() COM: cardId=" + cardData.id() + ", scheduledDate=null, dueDate=" + currentDueDate);
                     facade.setSchedulingDates(cardData.id(), null, currentDueDate);
-                    System.out.println("Data de agendamento removida e salva no banco (data de vencimento preservada)");
+                    System.out.println("✅ Data de agendamento removida e salva no banco (data de vencimento preservada)");
                     
                     // Atualizar a urgência e estilos
                     updateUrgencyDisplay();
@@ -1692,12 +1703,12 @@ public class CardViewController {
                         onSaveCallback.accept(cardData.id(), null);
                     }
                 } catch (Exception e) {
-                    System.err.println("Erro ao remover data de agendamento: " + e.getMessage());
+                    System.err.println("❌ Erro ao remover data de agendamento: " + e.getMessage());
                     e.printStackTrace();
                 }
             } else {
                 // Usuário cancelou - não fazer nada
-                System.out.println("Remoção de data de agendamento cancelada pelo usuário");
+                System.out.println("🔴 Remoção de data de agendamento cancelada pelo usuário");
             }
         } else {
             // Não há data salva - apenas limpar os campos

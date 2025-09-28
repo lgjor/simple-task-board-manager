@@ -49,7 +49,7 @@ public class CardCalendarEventProvider implements CalendarEventProvider {
     public List<CalendarEventDTO> getEventsForDateRange(LocalDate start, LocalDate end) {
         System.out.println("🔧 CARD CALENDAR EVENT PROVIDER - getEventsForDateRange chamado para período: " + start + " a " + end);
         
-        // Buscar eventos do CalendarEventManager (em memória)
+        // Buscar eventos do CalendarEventManager (agora persistido no banco)
         List<CalendarEvent> events = calendarEventManager.findAll();
         System.out.println("🔧 CARD CALENDAR EVENT PROVIDER - Total de eventos no CalendarEventManager: " + events.size());
         

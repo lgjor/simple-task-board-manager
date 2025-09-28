@@ -2,6 +2,7 @@ package org.desviante.integration.observer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.desviante.calendar.CalendarEventManager;
 import org.desviante.calendar.CalendarEventPriority;
 import org.desviante.calendar.CalendarEventType;
 import org.desviante.calendar.CalendarService;
@@ -53,6 +54,7 @@ import java.time.LocalDateTime;
 public class CalendarSyncObserver implements EventObserver<CardScheduledEvent> {
     
     private final CalendarService calendarService;
+    private final CalendarEventManager calendarEventManager;
     
     @Override
     public void handle(CardScheduledEvent event) throws Exception {
@@ -215,21 +217,44 @@ public class CalendarSyncObserver implements EventObserver<CardScheduledEvent> {
             return;
         }
         
-        log.info("Removendo evento do calendário para card desagendado: {}", card.getId());
+        log.info("🗑️ CALENDAR OBSERVER - Removendo evento do calendário para card desagendado: {}", card.getId());
         
-        // Buscar eventos relacionados ao card
-        var events = calendarService.getEventsForDate(LocalDateTime.now().toLocalDate());
-        var relatedEvents = events.stream()
-                .filter(event -> "Card".equals(event.getRelatedEntityType()) && 
-                               card.getId().equals(event.getRelatedEntityId()))
-                .toList();
-        
-        for (var event : relatedEvents) {
-            calendarService.deleteEvent(event.getId());
-            log.debug("Evento removido do calendário: {}", event.getId());
+        try {
+            // Usar o CalendarEventManager diretamente para buscar eventos por entidade relacionada
+            var relatedEvents = calendarEventManager.findByRelatedEntity(card.getId(), "CARD");
+            
+            log.info("🔍 CALENDAR OBSERVER - Encontrados {} eventos relacionados ao card {} para remoção", 
+                    relatedEvents.size(), card.getId());
+            
+            if (relatedEvents.isEmpty()) {
+                log.warn("⚠️ CALENDAR OBSERVER - Nenhum evento encontrado para o card {}", card.getId());
+                return;
+            }
+            
+            // Remover todos os eventos relacionados ao card
+            for (var event : relatedEvents) {
+                try {
+                    boolean removed = calendarEventManager.deleteById(event.getId());
+                    if (removed) {
+                        log.info("✅ CALENDAR OBSERVER - Evento removido com sucesso: {} (Card: {})", 
+                                event.getTitle(), card.getId());
+                    } else {
+                        log.error("❌ CALENDAR OBSERVER - Falha ao remover evento: {} (Card: {})", 
+                                event.getTitle(), card.getId());
+                    }
+                } catch (Exception e) {
+                    log.error("❌ CALENDAR OBSERVER - Erro ao remover evento {} do calendário: {}", 
+                            event.getId(), e.getMessage());
+                }
+            }
+            
+            log.info("✅ CALENDAR OBSERVER - Processo de remoção de eventos concluído para card: {}", card.getId());
+            
+        } catch (Exception e) {
+            log.error("❌ CALENDAR OBSERVER - Erro geral ao remover eventos do calendário para card {}: {}", 
+                    card.getId(), e.getMessage(), e);
+            throw e;
         }
-        
-        log.info("Eventos removidos do calendário para card: {}", card.getId());
     }
     
     /**

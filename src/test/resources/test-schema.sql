@@ -1,5 +1,6 @@
 -- Garante que as tabelas sejam recriadas do zero a cada inicialização,
 -- evitando erros de "tabela já existe" e garantindo um ambiente limpo para testes.
+DROP TABLE IF EXISTS calendar_events CASCADE;
 DROP TABLE IF EXISTS tasks CASCADE;
 DROP TABLE IF EXISTS checklist_items CASCADE;
 DROP TABLE IF EXISTS cards CASCADE;
@@ -99,6 +100,26 @@ CREATE TABLE tasks (
     CONSTRAINT fk_tasks_to_cards FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE
 );
 
+-- Definição da tabela 'calendar_events' (para persistir eventos do calendário)
+CREATE TABLE calendar_events (
+    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
+    title               VARCHAR(255) NOT NULL,
+    description         TEXT,
+    start_date_time     TIMESTAMP NOT NULL,
+    end_date_time       TIMESTAMP NOT NULL,
+    all_day             BOOLEAN NOT NULL DEFAULT FALSE,
+    event_type          VARCHAR(50) NOT NULL DEFAULT 'CARD',
+    priority            VARCHAR(20) NOT NULL DEFAULT 'LOW',
+    color               VARCHAR(7), -- Código hex da cor (ex: #FF5733)
+    related_entity_id   BIGINT,
+    related_entity_type VARCHAR(50), -- Tipo da entidade relacionada (CARD, TASK, etc.)
+    active              BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT fk_calendar_events_to_cards FOREIGN KEY (related_entity_id) REFERENCES cards(id) ON DELETE CASCADE
+);
+
 -- Cria índices para as chaves estrangeiras, melhorando a performance de joins e buscas.
 CREATE INDEX idx_board_columns_board_id ON board_columns(board_id);
 CREATE INDEX idx_cards_board_column_id ON cards(board_column_id);
@@ -108,6 +129,9 @@ CREATE INDEX idx_cards_due_date ON cards(due_date);
 CREATE INDEX idx_cards_urgency ON cards(completion_date, due_date);
 CREATE INDEX idx_tasks_card_id ON tasks(card_id);
 CREATE INDEX idx_boards_group_id ON boards(group_id);
+CREATE INDEX idx_calendar_events_related_entity ON calendar_events(related_entity_id, related_entity_type);
+CREATE INDEX idx_calendar_events_start_date ON calendar_events(start_date_time);
+CREATE INDEX idx_calendar_events_active ON calendar_events(active);
 
 -- Dados de exemplo para testes
 -- Inserir um board de exemplo

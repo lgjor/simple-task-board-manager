@@ -818,4 +818,14 @@ public class CardRepository {
                 .addValue("endDate", endDate);
         return jdbcTemplate.query(sql, params, cardRowMapper);
     }
+
+    /**
+     * Busca todos os cards que possuem data de agendamento.
+     * 
+     * @return lista de cards com data de agendamento
+     */
+    public List<Card> findByScheduledDateNotNull() {
+        String sql = "SELECT * FROM cards WHERE scheduled_date IS NOT NULL ORDER BY scheduled_date ASC";
+        return jdbcTemplate.query(sql, cardRowMapper);
+    }
 }
