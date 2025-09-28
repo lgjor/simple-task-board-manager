@@ -564,7 +564,6 @@ public class BoardViewController {
 
                 columnController.setData(
                         this.facade,
-                        boardDetails.name(),
                         columnData,
                         this::handleCardDrop,
                         this::updateSelectedBoardSummary,
@@ -579,7 +578,6 @@ public class BoardViewController {
 
                     cardController.setData(
                             this.facade,
-                            boardDetails.name(),
                             cardData,
                             this::handleCardUpdate
                     );

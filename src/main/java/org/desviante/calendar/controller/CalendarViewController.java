@@ -2,7 +2,6 @@ package org.desviante.calendar.controller;
 
 import com.calendarfx.model.Calendar;
 import com.calendarfx.model.CalendarSource;
-import com.calendarfx.model.Entry;
 import com.calendarfx.view.CalendarView;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -15,14 +14,12 @@ import org.desviante.calendar.CalendarService;
 import org.desviante.calendar.adapter.CalendarFXAdapter;
 import org.desviante.calendar.dto.CalendarEventDTO;
 import org.desviante.calendar.view.EventDetailsView;
-import org.desviante.service.TaskManagerFacade;
 import org.springframework.stereotype.Component;
 
 import java.net.URL;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
@@ -57,7 +54,6 @@ public class CalendarViewController implements Initializable {
 
     private final CalendarService calendarService;
     private final CalendarFXAdapter calendarFXAdapter;
-    private final TaskManagerFacade taskManagerFacade;
     
     @FXML
     private BorderPane calendarContainer;
@@ -123,9 +119,12 @@ public class CalendarViewController implements Initializable {
      */
     private void loadEventsForCurrentPeriod() {
         try {
-            LocalDate startDate = currentDate.withDayOfMonth(1);
-            LocalDate endDate = currentDate.withDayOfMonth(currentDate.lengthOfMonth());
+            // Expandir o período para incluir 2 meses antes e 2 meses depois
+            // Isso garante que eventos próximos sejam sempre visíveis
+            LocalDate startDate = currentDate.minusMonths(2).withDayOfMonth(1);
+            LocalDate endDate = currentDate.plusMonths(2).withDayOfMonth(currentDate.plusMonths(2).lengthOfMonth());
             
+            log.info("Carregando eventos para período expandido: {} a {}", startDate, endDate);
             List<CalendarEventDTO> events = calendarService.getEventsForDateRange(startDate, endDate);
             
             // Limpar eventos existentes

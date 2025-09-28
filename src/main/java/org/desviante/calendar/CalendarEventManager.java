@@ -43,13 +43,20 @@ public class CalendarEventManager {
      * @return evento salvo com ID gerado
      */
     public CalendarEvent save(CalendarEvent event) {
+        System.out.println("🔧 CALENDAR EVENT MANAGER - save chamado para: " + event.getTitle());
+        System.out.println("🔧 CALENDAR EVENT MANAGER - Data: " + event.getStartDateTime());
+        
         if (event.getId() == null) {
             event.setId(idGenerator.getAndIncrement());
             event.setCreatedAt(LocalDateTime.now());
+            System.out.println("🔧 CALENDAR EVENT MANAGER - Novo evento criado com ID: " + event.getId());
+        } else {
+            System.out.println("🔧 CALENDAR EVENT MANAGER - Atualizando evento existente com ID: " + event.getId());
         }
         event.setUpdatedAt(LocalDateTime.now());
         
         events.put(event.getId(), event);
+        System.out.println("🔧 CALENDAR EVENT MANAGER - Evento salvo no mapa. Total de eventos: " + events.size());
         log.debug("Evento salvo: {}", event);
         
         return event;

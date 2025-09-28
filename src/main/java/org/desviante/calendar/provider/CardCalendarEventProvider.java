@@ -1,6 +1,8 @@
 package org.desviante.calendar.provider;
 
 import lombok.RequiredArgsConstructor;
+import org.desviante.calendar.CalendarEvent;
+import org.desviante.calendar.CalendarEventManager;
 import org.desviante.calendar.CalendarEventPriority;
 import org.desviante.calendar.CalendarEventType;
 import org.desviante.calendar.dto.CalendarEventDTO;
@@ -41,22 +43,50 @@ import java.util.stream.Collectors;
 public class CardCalendarEventProvider implements CalendarEventProvider {
 
     private final CardService cardService;
+    private final CalendarEventManager calendarEventManager;
 
     @Override
     public List<CalendarEventDTO> getEventsForDateRange(LocalDate start, LocalDate end) {
-        List<Card> cards = cardService.getCardsScheduledBetween(start, end);
+        System.out.println("🔧 CARD CALENDAR EVENT PROVIDER - getEventsForDateRange chamado para período: " + start + " a " + end);
         
-        return cards.stream()
-                .filter(card -> card.getScheduledDate() != null)
-                .map(this::convertCardToEventDTO)
+        // Buscar eventos do CalendarEventManager (em memória)
+        List<CalendarEvent> events = calendarEventManager.findAll();
+        System.out.println("🔧 CARD CALENDAR EVENT PROVIDER - Total de eventos no CalendarEventManager: " + events.size());
+        
+        // Filtrar eventos por período e converter para DTO
+        List<CalendarEventDTO> result = events.stream()
+                .filter(event -> {
+                    LocalDate eventDate = event.getStartDateTime().toLocalDate();
+                    boolean inRange = !eventDate.isBefore(start) && !eventDate.isAfter(end);
+                    System.out.println("🔧 CARD CALENDAR EVENT PROVIDER - Evento: " + event.getTitle() + " (" + eventDate + ") - Em período: " + inRange);
+                    System.out.println("🔧 CARD CALENDAR EVENT PROVIDER - Período solicitado: " + start + " a " + end);
+                    System.out.println("🔧 CARD CALENDAR EVENT PROVIDER - Comparação: " + eventDate + " >= " + start + " && " + eventDate + " <= " + end);
+                    return inRange;
+                })
+                .map(this::convertEventToDTO)
                 .collect(Collectors.toList());
+        
+        System.out.println("🔧 CARD CALENDAR EVENT PROVIDER - Eventos retornados: " + result.size());
+        return result;
     }
 
     @Override
     public CalendarEventDTO createEvent(CalendarEventDTO event) {
-        // Para cards, retornamos o evento como está, pois ele já foi criado
-        // quando um card foi agendado através do CardService
-        return event;
+        System.out.println("🔧 CARD CALENDAR EVENT PROVIDER - createEvent chamado para: " + event.getTitle());
+        System.out.println("🔧 CARD CALENDAR EVENT PROVIDER - Data: " + event.getStartDateTime());
+        
+        // Converter DTO para entidade e salvar no CalendarEventManager
+        CalendarEvent calendarEvent = convertDTOToEvent(event);
+        System.out.println("🔧 CARD CALENDAR EVENT PROVIDER - Evento convertido: " + calendarEvent.getTitle());
+        
+        CalendarEvent savedEvent = calendarEventManager.save(calendarEvent);
+        System.out.println("🔧 CARD CALENDAR EVENT PROVIDER - Evento salvo com ID: " + savedEvent.getId());
+        
+        // Converter de volta para DTO e retornar
+        CalendarEventDTO result = convertEventToDTO(savedEvent);
+        System.out.println("🔧 CARD CALENDAR EVENT PROVIDER - DTO retornado: " + result.getTitle());
+        
+        return result;
     }
 
     @Override
@@ -202,5 +232,51 @@ public class CardCalendarEventProvider implements CalendarEventProvider {
                 .filter(card -> card.getScheduledDate() != null)
                 .map(this::convertCardToEventDTO)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Converte um DTO de evento para entidade CalendarEvent.
+     * 
+     * @param dto DTO do evento
+     * @return entidade CalendarEvent
+     */
+    private CalendarEvent convertDTOToEvent(CalendarEventDTO dto) {
+        CalendarEvent event = new CalendarEvent();
+        event.setId(dto.getId());
+        event.setTitle(dto.getTitle());
+        event.setDescription(dto.getDescription());
+        event.setStartDateTime(dto.getStartDateTime());
+        event.setEndDateTime(dto.getEndDateTime());
+        event.setAllDay(dto.isAllDay());
+        event.setType(dto.getType());
+        event.setPriority(dto.getPriority());
+        event.setColor(dto.getColor());
+        event.setRelatedEntityId(dto.getRelatedEntityId());
+        event.setRelatedEntityType(dto.getRelatedEntityType());
+        event.setActive(dto.isActive());
+        return event;
+    }
+
+    /**
+     * Converte uma entidade CalendarEvent para DTO.
+     * 
+     * @param event entidade CalendarEvent
+     * @return DTO do evento
+     */
+    private CalendarEventDTO convertEventToDTO(CalendarEvent event) {
+        return CalendarEventDTO.builder()
+                .id(event.getId())
+                .title(event.getTitle())
+                .description(event.getDescription())
+                .startDateTime(event.getStartDateTime())
+                .endDateTime(event.getEndDateTime())
+                .allDay(event.isAllDay())
+                .type(event.getType())
+                .priority(event.getPriority())
+                .color(event.getColor())
+                .relatedEntityId(event.getRelatedEntityId())
+                .relatedEntityType(event.getRelatedEntityType())
+                .active(event.isActive())
+                .build();
     }
 }

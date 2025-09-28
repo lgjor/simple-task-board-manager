@@ -231,12 +231,13 @@ public class GoogleTasksSyncObserver implements EventObserver<DomainEvent> {
         String listTitle = getBoardTitleForCard(card);
         String title = card.getTitle();
         String notes = buildTaskNotes(card);
-        LocalDateTime due = card.getDueDate();
+        // CORREÇÃO: Usar data de agendamento como due date no Google Tasks
+        LocalDateTime due = card.getScheduledDate();
 
-        // Se não há data de vencimento, usar a data atual
+        // Se não há data de agendamento, usar a data atual
         if (due == null) {
             due = LocalDateTime.now();
-            log.info("GOOGLE TASKS OBSERVER - Card sem data de vencimento, usando data atual: {}", due);
+            log.info("GOOGLE TASKS OBSERVER - Card sem data de agendamento, usando data atual: {}", due);
         }
 
         log.info("GOOGLE TASKS OBSERVER - Chamando taskService.createTask com: listTitle={}, title={}, due={}", listTitle, title, due);
@@ -430,6 +431,10 @@ public class GoogleTasksSyncObserver implements EventObserver<DomainEvent> {
     /**
      * Constrói as notas da task baseadas nas informações do card.
      * 
+     * <p>A data de vencimento (due date) é incluída apenas nas notas para
+     * permitir o cálculo de urgência, pois a data de agendamento é usada
+     * como due date na API do Google Tasks.</p>
+     * 
      * @param card card para construção das notas
      * @return notas formatadas para a task
      */
@@ -444,8 +449,9 @@ public class GoogleTasksSyncObserver implements EventObserver<DomainEvent> {
             notes.append("Agendado para: ").append(card.getScheduledDate()).append("\n");
         }
         
+        // CORREÇÃO: Data de vencimento incluída apenas nas notas para cálculo de urgência
         if (card.getDueDate() != null) {
-            notes.append("Vence em: ").append(card.getDueDate()).append("\n");
+            notes.append("Data de vencimento (para urgência): ").append(card.getDueDate()).append("\n");
         }
         
         notes.append("Card ID: ").append(card.getId());

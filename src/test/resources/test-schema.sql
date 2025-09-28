@@ -52,7 +52,7 @@ CREATE TABLE cards (
     id                BIGINT AUTO_INCREMENT PRIMARY KEY,
     title             VARCHAR(255) NOT NULL,
     description       TEXT,
-    card_type_id    BIGINT,
+    card_type_id      BIGINT,
     total_units       INT,
     current_units     INT,
     progress_type     VARCHAR(50) DEFAULT 'PERCENTAGE',

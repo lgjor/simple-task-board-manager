@@ -71,7 +71,6 @@ public class TaskManagerFacade {
     private final CardTypeService cardTypeService;
     private final CheckListItemRepository checklistItemRepository;
     private final AppMetadataConfig appMetadataConfig;
-    private final CardSchedulingService cardSchedulingService;
     private final CalendarEventService calendarEventService;
     private final GoogleTaskCreationService googleTaskCreationService;
     
@@ -411,7 +410,7 @@ public class TaskManagerFacade {
     @Transactional
     public CardDetailDTO moveCard(Long cardId, Long newColumnId) {
         // Mover o card sem sincronizar progresso - progresso e status desacoplados
-        Card updatedCard = cardService.moveCardToColumn(cardId, newColumnId);
+        Card updatedCard = enhancedCardService.moveCardToColumn(cardId, newColumnId);
 
         // Obter o tipo da nova coluna
         BoardColumn newColumn = columnService.getColumnById(newColumnId)
@@ -444,7 +443,7 @@ public class TaskManagerFacade {
      */
     @Transactional
     public void deleteCard(Long cardId) {
-        cardService.deleteCard(cardId);
+        enhancedCardService.deleteCard(cardId);
     }
 
     /**
@@ -628,8 +627,8 @@ public class TaskManagerFacade {
         System.out.println("🔧 TASK MANAGER FACADE - Scheduled Date: " + scheduledDate);
         System.out.println("🔧 TASK MANAGER FACADE - Due Date: " + dueDate);
         
-        // Usar o novo serviço dedicado para salvar apenas as datas
-        cardSchedulingService.setSchedulingDates(cardId, scheduledDate, dueDate);
+        // Usar o EnhancedCardService que publica eventos de agendamento
+        enhancedCardService.setSchedulingDates(cardId, scheduledDate, dueDate);
         
         System.out.println("✅ TASK MANAGER FACADE - setSchedulingDates executado com sucesso");
     }

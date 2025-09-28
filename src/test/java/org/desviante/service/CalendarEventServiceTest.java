@@ -1,9 +1,10 @@
 package org.desviante.service;
 
 import org.desviante.calendar.CalendarService;
+import org.desviante.calendar.CalendarEventType;
+import org.desviante.calendar.CalendarEventPriority;
 import org.desviante.calendar.dto.CalendarEventDTO;
 import org.desviante.model.Card;
-import org.desviante.service.dto.CardDetailDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,8 +16,8 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
@@ -38,7 +39,6 @@ class CalendarEventServiceTest {
     private CalendarEventService calendarEventService;
 
     private Card testCard;
-    private CalendarEventDTO testEvent;
 
     @BeforeEach
     void setUp() {
@@ -49,23 +49,30 @@ class CalendarEventServiceTest {
         testCard.setDescription("Card para teste");
         testCard.setScheduledDate(LocalDateTime.now().plusDays(1));
         testCard.setDueDate(LocalDateTime.now().plusDays(2));
-
-        // Configurar evento de teste
-        testEvent = CalendarEventDTO.builder()
-                .id(1L)
-                .title("Teste Evento")
-                .description("Evento para teste")
-                .startDateTime(LocalDateTime.now().plusDays(1))
-                .endDateTime(LocalDateTime.now().plusDays(1).plusHours(1))
-                .allDay(false)
-                .active(true)
-                .build();
     }
 
     @Test
     void createCalendarEvent_Success() {
         // Arrange
         when(cardSchedulingService.getCardById(1L)).thenReturn(Optional.of(testCard));
+        
+        // Mock do CalendarService para retornar um evento criado
+        CalendarEventDTO mockEvent = CalendarEventDTO.builder()
+                .id(1L)
+                .title("Teste Card")
+                .description("Card para teste")
+                .startDateTime(testCard.getScheduledDate())
+                .endDateTime(testCard.getDueDate())
+                .allDay(false)
+                .type(CalendarEventType.CARD)
+                .priority(CalendarEventPriority.LOW)
+                .color("#00AA00")
+                .relatedEntityId(1L)
+                .relatedEntityType("CARD")
+                .active(true)
+                .build();
+        
+        when(calendarService.createEvent(any(CalendarEventDTO.class))).thenReturn(mockEvent);
 
         // Act
         boolean result = calendarEventService.createCalendarEvent(1L);
@@ -73,6 +80,7 @@ class CalendarEventServiceTest {
         // Assert
         assertTrue(result, "Criação de evento deve retornar true quando bem-sucedida");
         verify(cardSchedulingService).getCardById(1L);
+        verify(calendarService).createEvent(any(CalendarEventDTO.class));
     }
 
     @Test
@@ -196,11 +204,15 @@ class CalendarEventServiceTest {
 
     @Test
     void canDeleteCalendarEvent_ValidId() {
+        // Arrange
+        when(cardSchedulingService.getCardById(1L)).thenReturn(Optional.of(testCard));
+
         // Act
         boolean result = calendarEventService.canDeleteCalendarEvent("1");
 
         // Assert
         assertTrue(result, "Deve poder deletar evento com ID válido");
+        verify(cardSchedulingService).getCardById(1L);
     }
 
     @Test

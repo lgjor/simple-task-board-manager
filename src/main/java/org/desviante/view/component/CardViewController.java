@@ -127,7 +127,6 @@ public class CardViewController {
 
     // --- CAMPOS DE DADOS ---
     private TaskManagerFacade facade;
-    private String boardName;
     private CardDetailDTO cardData;
     private BiConsumer<Long, UpdateCardDetailsDTO> onSaveCallback;
     
@@ -615,18 +614,15 @@ public class CardViewController {
      * Define os dados do card e configura o controlador.
      * 
      * @param facade fachada principal para gerenciamento de tarefas
-     * @param boardName nome do quadro ao qual o card pertence
      * @param card dados do card a ser exibido
      * @param onSaveCallback callback para quando o card for salvo
      */
     public void setData(
             TaskManagerFacade facade,
-            String boardName,
             CardDetailDTO card,
             BiConsumer<Long, UpdateCardDetailsDTO> onSaveCallback
     ) {
         this.facade = facade;
-        this.boardName = boardName;
         this.cardData = card;
         this.onSaveCallback = onSaveCallback;
         

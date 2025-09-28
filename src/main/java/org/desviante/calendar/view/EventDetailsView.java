@@ -4,7 +4,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -40,7 +39,6 @@ import java.time.format.FormatStyle;
 public class EventDetailsView extends VBox {
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM);
-    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT);
     
     private final CalendarEventDTO eventDTO;
     
@@ -160,17 +158,4 @@ public class EventDetailsView extends VBox {
         return dateTime.format(DATE_TIME_FORMATTER);
     }
     
-    /**
-     * Formata apenas hora para exibição.
-     * 
-     * @param time hora a ser formatada
-     * @return string formatada
-     */
-    private String formatTime(java.time.LocalTime time) {
-        if (time == null) {
-            return "Não especificado";
-        }
-        
-        return time.format(TIME_FORMATTER);
-    }
 }

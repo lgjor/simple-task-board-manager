@@ -105,11 +105,12 @@ class SimpleIntegrationTest {
         assertTrue(eventLatch.await(5, TimeUnit.SECONDS), "Event should be processed within 5 seconds");
         
         // Verificar que o Google Tasks foi chamado
+        // CORREÇÃO: Agora usamos a data de agendamento como due date no Google Tasks
         verify(mockTaskService, times(1)).createTask(
                 eq("Simple Task Board Manager"),
                 eq("Integration Test Card"),
                 anyString(),
-                eq(scheduledDate.plusDays(1)),
+                eq(scheduledDate),
                 eq(1L)
         );
     }
@@ -142,11 +143,12 @@ class SimpleIntegrationTest {
         assertTrue(coordinatorLatch.await(5, TimeUnit.SECONDS), "Integration should be coordinated within 5 seconds");
         
         // Verificar que o Google Tasks foi chamado
+        // CORREÇÃO: Agora usamos a data de agendamento como due date no Google Tasks
         verify(mockTaskService, times(1)).createTask(
                 eq("Simple Task Board Manager"),
                 eq("Coordinator Test Card"),
                 anyString(),
-                eq(scheduledDate.plusDays(1)),
+                eq(scheduledDate),
                 eq(2L)
         );
     }

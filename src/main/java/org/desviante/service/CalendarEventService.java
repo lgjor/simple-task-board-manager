@@ -2,6 +2,10 @@ package org.desviante.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.desviante.calendar.CalendarEventType;
+import org.desviante.calendar.CalendarService;
+import org.desviante.calendar.dto.CalendarEventDTO;
+import org.desviante.calendar.CalendarEventPriority;
 import org.desviante.exception.ResourceNotFoundException;
 import org.desviante.model.Card;
 import org.springframework.stereotype.Service;
@@ -33,6 +37,7 @@ import java.util.Optional;
 public class CalendarEventService {
 
     private final CardSchedulingService cardSchedulingService;
+    private final CalendarService calendarService;
     private final List<CalendarEventChangeListener> listeners = new ArrayList<>();
 
     /**
@@ -111,10 +116,12 @@ public class CalendarEventService {
                 return false;
             }
             
-            // TODO: Implementar integração com serviço de calendário
-            // Por enquanto, apenas simular a criação do evento
-            log.info("Evento no calendário criado com sucesso para card {} - Título: {}, Data: {}", 
-                    cardId, card.getTitle(), card.getScheduledDate());
+            // Criar evento no calendário através do CalendarService
+            CalendarEventDTO calendarEvent = createCalendarEventDTO(card);
+            CalendarEventDTO createdEvent = calendarService.createEvent(calendarEvent);
+            
+            log.info("Evento no calendário criado com sucesso para card {} - Título: {}, Data: {}, Evento ID: {}", 
+                    cardId, card.getTitle(), card.getScheduledDate(), createdEvent.getId());
             
             // Notificar listeners sobre a criação do evento
             notifyEventCreated(cardId);
@@ -238,19 +245,129 @@ public class CalendarEventService {
     /**
      * Verifica se um evento pode ser deletado.
      * 
-     * @param eventId identificador do evento
+     * <p>Um evento pode ser deletado se:</p>
+     * <ul>
+     *   <li>O eventId é válido (não nulo e não vazio)</li>
+     *   <li>O eventId pode ser convertido para um ID de card válido</li>
+     *   <li>O card existe no banco de dados</li>
+     *   <li>O card possui data de agendamento (indicando que tem evento relacionado)</li>
+     * </ul>
+     * 
+     * @param eventId identificador do evento (que corresponde ao ID do card)
      * @return true se o evento pode ser deletado, false caso contrário
      */
     public boolean canDeleteCalendarEvent(String eventId) {
         try {
-            // TODO: Implementar verificação se evento pode ser deletado
-            // Por enquanto, sempre retorna true
-            return eventId != null && !eventId.trim().isEmpty();
+            // Verificar se o eventId é válido
+            if (eventId == null || eventId.trim().isEmpty()) {
+                log.debug("EventId inválido para verificação de exclusão: {}", eventId);
+                return false;
+            }
+            
+            // Tentar converter para Long (ID do card)
+            Long cardId;
+            try {
+                cardId = Long.parseLong(eventId.trim());
+            } catch (NumberFormatException e) {
+                log.debug("EventId não é um ID de card válido: {}", eventId);
+                return false;
+            }
+            
+            // Verificar se o card existe
+            Optional<Card> cardOpt = cardSchedulingService.getCardById(cardId);
+            if (cardOpt.isEmpty()) {
+                log.debug("Card com ID {} não encontrado para verificação de exclusão de evento", cardId);
+                return false;
+            }
+            
+            Card card = cardOpt.get();
+            
+            // Verificar se o card tem data de agendamento (indicando que tem evento relacionado)
+            boolean canDelete = card.getScheduledDate() != null;
+            
+            if (canDelete) {
+                log.debug("Evento pode ser deletado para card {}: tem data de agendamento", cardId);
+            } else {
+                log.debug("Evento não pode ser deletado para card {}: não tem data de agendamento", cardId);
+            }
+            
+            return canDelete;
             
         } catch (Exception e) {
             log.error("Erro ao verificar se evento {} pode ser deletado: {}", eventId, e.getMessage());
             return false;
         }
+    }
+
+    /**
+     * Cria um DTO de evento do calendário baseado nas informações do card.
+     * 
+     * @param card card para criação do evento
+     * @return DTO do evento do calendário
+     */
+    private CalendarEventDTO createCalendarEventDTO(Card card) {
+        LocalDateTime scheduledDate = card.getScheduledDate();
+        LocalDateTime dueDate = card.getDueDate();
+        
+        // Determinar se é evento de dia inteiro (meia-noite)
+        boolean allDay = scheduledDate.getHour() == 0 && scheduledDate.getMinute() == 0;
+        
+        // Calcular prioridade baseada na urgência do card
+        CalendarEventPriority priority = calculateEventPriority(card);
+        
+        // Determinar cor baseada na urgência
+        String color = calculateEventColor(card);
+        
+        return CalendarEventDTO.builder()
+                .id(card.getId())
+                .title(card.getTitle())
+                .description(card.getDescription())
+                .startDateTime(scheduledDate)
+                .endDateTime(allDay ? scheduledDate.plusHours(1) : (dueDate != null ? dueDate : scheduledDate.plusHours(1)))
+                .allDay(allDay)
+                .type(CalendarEventType.CARD)
+                .priority(priority)
+                .color(color)
+                .relatedEntityId(card.getId())
+                .relatedEntityType("CARD")
+                .active(true)
+                .build();
+    }
+
+    /**
+     * Calcula a prioridade do evento baseada na urgência do card.
+     * 
+     * @param card card para cálculo da prioridade
+     * @return prioridade do evento
+     */
+    private CalendarEventPriority calculateEventPriority(Card card) {
+        int urgencyLevel = card.getUrgencyLevel();
+        
+        return switch (urgencyLevel) {
+            case 4 -> CalendarEventPriority.URGENT;      // Vencido
+            case 3 -> CalendarEventPriority.HIGH;        // Vence hoje
+            case 2 -> CalendarEventPriority.HIGH;        // Vence em 1 dia
+            case 1 -> CalendarEventPriority.STANDARD;    // Vence em 2-3 dias
+            default -> CalendarEventPriority.LOW;        // Sem urgência
+        };
+    }
+
+    /**
+     * Calcula a cor do evento baseada na urgência do card.
+     * 
+     * @param card card para cálculo da cor
+     * @return cor em formato hexadecimal
+     */
+    private String calculateEventColor(Card card) {
+        int urgencyLevel = card.getUrgencyLevel();
+        
+        return switch (urgencyLevel) {
+            case 4 -> "#FF0000";  // Vermelho - vencido
+            case 3 -> "#FF6600";  // Laranja - vence hoje
+            case 2 -> "#FFAA00";  // Amarelo - vence em 1 dia
+            case 1 -> "#00AAFF";  // Azul - vence em 2-3 dias
+            default -> "#00AA00"; // Verde - sem urgência
+        };
     }
 
     /**

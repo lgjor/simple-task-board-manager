@@ -45,7 +45,6 @@ public class ColumnViewController {
     private VBox cardsContainer;
 
     private TaskManagerFacade facade;
-    private String boardName;
     private BoardColumnDetailDTO columnData;
     private BiConsumer<Long, Long> onCardDrop;
     private Runnable onDataChange;
@@ -76,7 +75,6 @@ public class ColumnViewController {
      * Define os dados da coluna e configura o controlador.
      * 
      * @param facade fachada principal para gerenciamento de tarefas
-     * @param boardName nome do quadro ao qual a coluna pertence
      * @param columnData dados da coluna
      * @param onCardDrop callback para quando um card é solto na coluna
      * @param onDataChange callback para quando os dados mudam
@@ -84,14 +82,12 @@ public class ColumnViewController {
      */
     public void setData(
             TaskManagerFacade facade,
-            String boardName,
             BoardColumnDetailDTO columnData,
             BiConsumer<Long, Long> onCardDrop,
             Runnable onDataChange,
             BiConsumer<Long, UpdateCardDetailsDTO> onCardUpdate
     ) {
         this.facade = facade;
-        this.boardName = boardName; // <--- ARMAZENA O NOME DO BOARD
         this.columnData = columnData;
         this.onCardDrop = onCardDrop;
         this.onDataChange = onDataChange;
@@ -346,7 +342,6 @@ public class ColumnViewController {
 
                 cardController.setData(
                         this.facade,
-                        this.boardName,
                         newCardDTO,
                         this.onCardUpdate
                 );

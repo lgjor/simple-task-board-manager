@@ -179,8 +179,13 @@ public class EnhancedCardService {
             // Data de agendamento foi alterada
             processCardRescheduled(updatedCard, previousScheduledDate);
         } else if (scheduledDate == null && previousScheduledDate != null) {
-            // Card foi desagendado
-            processCardUnscheduled(updatedCard, previousScheduledDate);
+            // Card foi desagendado (apenas se não tiver data de vencimento)
+            if (updatedCard.getDueDate() == null) {
+                processCardUnscheduled(updatedCard, previousScheduledDate);
+            } else {
+                // Card tem data de vencimento, apenas atualizar
+                publishCardUpdatedEvent(updatedCard, currentCard);
+            }
         } else {
             // Apenas atualização normal
             publishCardUpdatedEvent(updatedCard, currentCard);
@@ -323,8 +328,13 @@ public class EnhancedCardService {
                 // Data de agendamento foi alterada
                 processCardRescheduled(updatedCard, previousScheduledDate);
             } else if (scheduledDate == null && previousScheduledDate != null) {
-                // Card foi desagendado
-                processCardUnscheduled(updatedCard, previousScheduledDate);
+                // Card foi desagendado (apenas se não tiver data de vencimento)
+                if (updatedCard.getDueDate() == null) {
+                    processCardUnscheduled(updatedCard, previousScheduledDate);
+                } else {
+                    // Card tem data de vencimento, apenas atualizar
+                    publishCardUpdatedEvent(updatedCard, currentCard);
+                }
             } else {
                 // Apenas atualização normal
                 publishCardUpdatedEvent(updatedCard, currentCard);

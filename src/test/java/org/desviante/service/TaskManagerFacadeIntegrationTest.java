@@ -30,6 +30,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.assertj.core.api.Assertions.assertThat;
 import org.desviante.config.AppMetadataConfig;
+import org.desviante.integration.event.EventPublisher;
+import org.desviante.integration.coordinator.IntegrationCoordinator;
+import org.desviante.integration.sync.IntegrationSyncService;
 
 /**
  * Teste de integração para a TaskManagerFacade.
@@ -131,8 +134,8 @@ class TaskManagerFacadeIntegrationTest {
         }
         
         @Bean
-        public EnhancedCardService enhancedCardService() {
-            return mock(EnhancedCardService.class);
+        public EnhancedCardService enhancedCardService(CardService cardService) {
+            return new EnhancedCardService(cardService, mock(EventPublisher.class), mock(IntegrationCoordinator.class), mock(IntegrationSyncService.class));
         }
         
         @Bean
@@ -140,7 +143,7 @@ class TaskManagerFacadeIntegrationTest {
                                                    CardService cardService, EnhancedCardService enhancedCardService, TaskService taskService, 
                                                    BoardGroupService boardGroupService, CardTypeService cardTypeService,
                                                    CheckListItemRepository checkListItemRepository) {
-            return new TaskManagerFacade(boardService, boardColumnService, cardService, enhancedCardService, taskService, boardGroupService, cardTypeService, checkListItemRepository, mock(AppMetadataConfig.class), mock(CardSchedulingService.class), mock(CalendarEventService.class), mock(GoogleTaskCreationService.class));
+            return new TaskManagerFacade(boardService, boardColumnService, cardService, enhancedCardService, taskService, boardGroupService, cardTypeService, checkListItemRepository, mock(AppMetadataConfig.class), mock(CalendarEventService.class), mock(GoogleTaskCreationService.class));
         }
         
         @Bean
