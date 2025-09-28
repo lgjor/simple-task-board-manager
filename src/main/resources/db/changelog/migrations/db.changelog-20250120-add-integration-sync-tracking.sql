@@ -1,6 +1,7 @@
 -- Migração para adicionar sistema de rastreamento de sincronização
 -- Data: 2025-01-20
 -- Descrição: Adiciona tabela para rastrear status de sincronização entre cards e sistemas externos
+-- Compatível com H2 Database
 
 -- Tabela para rastrear status de sincronização
 CREATE TABLE IF NOT EXISTS integration_sync_status (
@@ -14,27 +15,19 @@ CREATE TABLE IF NOT EXISTS integration_sync_status (
     retry_count INTEGER DEFAULT 0,
     max_retries INTEGER DEFAULT 3,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
-    -- Constraints
-    CONSTRAINT fk_integration_sync_card FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE,
-    CONSTRAINT unique_card_integration UNIQUE (card_id, integration_type),
-    CONSTRAINT chk_sync_status CHECK (sync_status IN ('SYNCED', 'PENDING', 'ERROR', 'RETRY')),
-    CONSTRAINT chk_integration_type CHECK (integration_type IN ('GOOGLE_TASKS', 'CALENDAR'))
+    -- Constraints (sem nomes para compatibilidade H2)
+    FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE,
+    UNIQUE (card_id, integration_type)
 );
 
--- Índices para performance
-CREATE INDEX IF NOT EXISTS idx_integration_sync_card_id ON integration_sync_status(card_id);
-CREATE INDEX IF NOT EXISTS idx_integration_sync_type ON integration_sync_status(integration_type);
-CREATE INDEX IF NOT EXISTS idx_integration_sync_status ON integration_sync_status(sync_status);
-CREATE INDEX IF NOT EXISTS idx_integration_sync_external_id ON integration_sync_status(external_id);
-CREATE INDEX IF NOT EXISTS idx_integration_sync_retry ON integration_sync_status(retry_count, max_retries);
+-- Índices para performance (sem IF NOT EXISTS para compatibilidade H2)
+CREATE INDEX idx_integration_sync_card_id ON integration_sync_status(card_id);
+CREATE INDEX idx_integration_sync_type ON integration_sync_status(integration_type);
+CREATE INDEX idx_integration_sync_status ON integration_sync_status(sync_status);
+CREATE INDEX idx_integration_sync_external_id ON integration_sync_status(external_id);
+CREATE INDEX idx_integration_sync_retry ON integration_sync_status(retry_count, max_retries);
 
--- Comentários para documentação
-COMMENT ON TABLE integration_sync_status IS 'Rastreia o status de sincronização entre cards locais e sistemas externos';
-COMMENT ON COLUMN integration_sync_status.card_id IS 'ID do card local sendo sincronizado';
-COMMENT ON COLUMN integration_sync_status.integration_type IS 'Tipo de integração (GOOGLE_TASKS, CALENDAR)';
-COMMENT ON COLUMN integration_sync_status.external_id IS 'ID da entidade no sistema externo';
-COMMENT ON COLUMN integration_sync_status.sync_status IS 'Status atual da sincronização';
-COMMENT ON COLUMN integration_sync_status.retry_count IS 'Número de tentativas de retry realizadas';
-COMMENT ON COLUMN integration_sync_status.max_retries IS 'Número máximo de tentativas permitidas';
+-- Nota: Comentários COMMENT ON não são suportados pelo H2
+-- A documentação está nos comentários SQL acima

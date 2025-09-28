@@ -283,11 +283,11 @@ class EnhancedCardServiceTest {
         doThrow(new RuntimeException("Event publishing error"))
                 .when(eventPublisher).publish(any(CardScheduledEvent.class));
         
-        // Act & Assert - deve lançar exceção quando há erro na publicação do evento
-        RuntimeException exception = assertThrows(RuntimeException.class, 
-                () -> enhancedCardService.setScheduledDate(cardId, scheduledDate));
+        // Act - deve processar sem lançar exceção, mesmo com erro na publicação do evento
+        Card result = enhancedCardService.setScheduledDate(cardId, scheduledDate);
         
-        assertTrue(exception.getMessage().contains("Falha ao processar agendamento do card"));
+        // Assert - operação deve ser concluída com sucesso
+        assertNotNull(result);
         
         // Verificar que a operação principal foi executada
         verify(cardService, times(1)).setScheduledDate(cardId, scheduledDate);

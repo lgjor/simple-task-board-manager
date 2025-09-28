@@ -71,12 +71,9 @@ public class CardService {
      * @return card criado com ID gerado
      * @throws ResourceNotFoundException se a coluna pai não for encontrada
      */
-    @Transactional
     public Card createCard(String title, String description, Long parentColumnId, Long cardTypeId) {
         return createCard(title, description, parentColumnId, cardTypeId, ProgressType.NONE);
     }
-    
-    @Transactional
     public Card createCard(String title, String description, Long parentColumnId, Long cardTypeId, ProgressType progressType) {
         // Valida se o título não está vazio
         if (title == null || title.trim().isEmpty()) {
@@ -153,7 +150,6 @@ public class CardService {
      * @return card atualizado com nova coluna e datas
      * @throws ResourceNotFoundException se o card ou a coluna não forem encontrados
      */
-    @Transactional
     public Card moveCardToColumn(Long cardId, Long newColumnId) {
         Card card = cardRepository.findById(cardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Card com ID " + cardId + " não encontrado."));
@@ -195,7 +191,6 @@ public class CardService {
      * @return card atualizado
      * @throws ResourceNotFoundException se o card não for encontrado
      */
-    @Transactional
     public Card updateCardDetails(Long cardId, String newTitle, String newDescription) {
         return updateCardDetails(cardId, newTitle, newDescription, null, null);
     }
@@ -220,12 +215,9 @@ public class CardService {
      * @return card atualizado
      * @throws ResourceNotFoundException se o card não for encontrado
      */
-    @Transactional
     public Card updateCardDetails(Long cardId, String newTitle, String newDescription, Integer totalUnits, Integer currentUnits) {
         return updateCardDetails(cardId, newTitle, newDescription, totalUnits, currentUnits, null);
     }
-    
-    @Transactional
     public Card updateCardDetails(Long cardId, String newTitle, String newDescription, Integer totalUnits, Integer currentUnits, ProgressType progressType) {
         // 1. Encontra o card ou lança uma exceção se não existir.
         Card card = cardRepository.findById(cardId)
@@ -288,7 +280,6 @@ public class CardService {
      * @throws ResourceNotFoundException se o card não for encontrado
      * @throws IllegalArgumentException se o cardTypeId for inválido
      */
-    @Transactional
     public Card updateCardType(Long cardId, Long newCardTypeId) {
         // 1. Encontra o card ou lança uma exceção se não existir
         Card card = cardRepository.findById(cardId)
@@ -319,7 +310,6 @@ public class CardService {
      * @param id identificador único do card
      * @return Optional contendo o card se encontrado, vazio caso contrário
      */
-    @Transactional(readOnly = true)
     public Optional<Card> getCardById(Long id) {
         Optional<Card> cardOpt = cardRepository.findById(id);
         if (cardOpt.isPresent()) {
@@ -347,7 +337,6 @@ public class CardService {
      * @param columnIds lista de identificadores das colunas
      * @return lista de cards pertencentes às colunas especificadas
      */
-    @Transactional(readOnly = true)
     public List<Card> getCardsForColumns(List<Long> columnIds) {
         // O repositório já trata a lista vazia, então a delegação direta é segura.
         List<Card> cards = cardRepository.findByBoardColumnIdIn(columnIds);
@@ -377,7 +366,6 @@ public class CardService {
      * @param id identificador do card a ser removido
      * @throws ResourceNotFoundException se o card não for encontrado
      */
-    @Transactional
     public void deleteCard(Long id) {
         // Garante que o card exista antes de tentar deletar.
         // Isso torna a operação mais segura e o comportamento da API mais previsível.
@@ -386,8 +374,6 @@ public class CardService {
         }
         cardRepository.deleteById(id);
     }
-
-
 
     /**
      * Move um card para cima na mesma coluna.
@@ -399,7 +385,6 @@ public class CardService {
      * @return true se o card foi movido, false se já estava no topo
      * @throws ResourceNotFoundException se o card não for encontrado
      */
-    @Transactional
     public boolean moveCardUp(Long cardId) {
         Card currentCard = getCardById(cardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Card com ID " + cardId + " não encontrado."));
@@ -435,7 +420,6 @@ public class CardService {
      * @return true se o card foi movido, false se já estava na base
      * @throws ResourceNotFoundException se o card não for encontrado
      */
-    @Transactional
     public boolean moveCardDown(Long cardId) {
         Card currentCard = getCardById(cardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Card com ID " + cardId + " não encontrado."));
@@ -467,7 +451,6 @@ public class CardService {
      * @param cardId ID do card
      * @return true se o card pode ser movido para cima, false caso contrário
      */
-    @Transactional(readOnly = true)
     public boolean canMoveCardUp(Long cardId) {
         Optional<Card> cardOpt = getCardById(cardId);
         if (cardOpt.isEmpty()) {
@@ -484,7 +467,6 @@ public class CardService {
      * @param cardId ID do card
      * @return true se o card pode ser movido para baixo, false caso contrário
      */
-    @Transactional(readOnly = true)
     public boolean canMoveCardDown(Long cardId) {
         Optional<Card> cardOpt = getCardById(cardId);
         if (cardOpt.isEmpty()) {
@@ -506,7 +488,6 @@ public class CardService {
      * @return card atualizado
      * @throws ResourceNotFoundException se o card não for encontrado
      */
-    @Transactional
     public Card setScheduledDate(Long cardId, LocalDateTime scheduledDate) {
         System.out.println("🔍 CARD SERVICE - setScheduledDate chamado para card ID: " + cardId + ", scheduledDate: " + scheduledDate);
         
@@ -550,7 +531,6 @@ public class CardService {
      * @throws ResourceNotFoundException se o card não for encontrado
      * @throws IllegalArgumentException se a data de vencimento for anterior à data de agendamento
      */
-    @Transactional
     public Card setDueDate(Long cardId, LocalDateTime dueDate) {
         Card card = cardRepository.findById(cardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Card com ID " + cardId + " não encontrado."));
@@ -579,7 +559,6 @@ public class CardService {
      * @throws ResourceNotFoundException se o card não for encontrado
      * @throws IllegalArgumentException se as datas forem inválidas
      */
-    @Transactional
     public Card setSchedulingDates(Long cardId, LocalDateTime scheduledDate, LocalDateTime dueDate) {
         System.out.println("🔧 CARD SERVICE - setSchedulingDates chamado para card ID: " + cardId);
         System.out.println("🔧 CARD SERVICE - Scheduled Date: " + scheduledDate);
@@ -624,7 +603,6 @@ public class CardService {
      * @param date data para busca
      * @return lista de cards agendados para a data
      */
-    @Transactional(readOnly = true)
     public List<Card> getCardsScheduledForDate(java.time.LocalDate date) {
         return cardRepository.findByScheduledDate(date);
     }
@@ -635,7 +613,6 @@ public class CardService {
      * @param daysThreshold número de dias para considerar "próximo do vencimento"
      * @return lista de cards próximos do vencimento
      */
-    @Transactional(readOnly = true)
     public List<Card> getCardsNearDue(int daysThreshold) {
         return cardRepository.findNearDue(daysThreshold);
     }
@@ -645,7 +622,6 @@ public class CardService {
      * 
      * @return lista de cards vencidos
      */
-    @Transactional(readOnly = true)
     public List<Card> getOverdueCards() {
         return cardRepository.findOverdue();
     }
@@ -656,7 +632,6 @@ public class CardService {
      * @param urgencyLevel nível de urgência (0-4)
      * @return lista de cards com o nível de urgência especificado
      */
-    @Transactional(readOnly = true)
     public List<Card> getCardsByUrgencyLevel(int urgencyLevel) {
         return cardRepository.findByUrgencyLevel(urgencyLevel);
     }
@@ -668,7 +643,6 @@ public class CardService {
      * @param endDate data de fim do período
      * @return lista de cards agendados no período
      */
-    @Transactional(readOnly = true)
     public List<Card> getCardsScheduledBetween(java.time.LocalDate startDate, java.time.LocalDate endDate) {
         return cardRepository.findByScheduledDateBetween(startDate, endDate);
     }
@@ -680,7 +654,6 @@ public class CardService {
      * @param endDate data de fim do período
      * @return lista de cards com vencimento no período
      */
-    @Transactional(readOnly = true)
     public List<Card> getCardsDueBetween(java.time.LocalDate startDate, java.time.LocalDate endDate) {
         return cardRepository.findByDueDateBetween(startDate, endDate);
     }
@@ -690,7 +663,6 @@ public class CardService {
      * 
      * @return lista de cards com data de agendamento
      */
-    @Transactional(readOnly = true)
     public List<Card> getAllCardsWithScheduledDate() {
         return cardRepository.findByScheduledDateNotNull();
     }
@@ -700,7 +672,6 @@ public class CardService {
      * 
      * @return estatísticas de urgência
      */
-    @Transactional(readOnly = true)
     public UrgencyStats getUrgencyStats() {
         List<Card> overdueCards = getOverdueCards();
         List<Card> nearDueCards = getCardsNearDue(3);

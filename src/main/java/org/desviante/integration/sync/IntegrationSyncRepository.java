@@ -5,7 +5,6 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.sql.ResultSet;
@@ -102,7 +101,6 @@ public class IntegrationSyncRepository {
      * @param status status a ser salvo ou atualizado
      * @return status com ID definido (se for novo)
      */
-    @Transactional
     public IntegrationSyncStatus save(IntegrationSyncStatus status) {
         var params = new MapSqlParameterSource()
                 .addValue("card_id", status.getCardId())
@@ -243,7 +241,6 @@ public class IntegrationSyncRepository {
      * 
      * @param id ID do status a ser removido
      */
-    @Transactional
     public void deleteById(Long id) {
         String sql = "DELETE FROM integration_sync_status WHERE id = :id";
         var params = new MapSqlParameterSource("id", id);
@@ -255,7 +252,6 @@ public class IntegrationSyncRepository {
      * 
      * @param cardId ID do card
      */
-    @Transactional
     public void deleteByCardId(Long cardId) {
         String sql = "DELETE FROM integration_sync_status WHERE card_id = :card_id";
         var params = new MapSqlParameterSource("card_id", cardId);

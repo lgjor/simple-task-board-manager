@@ -537,7 +537,7 @@ class CardServiceTest {
         
         when(cardRepository.findById(cardId)).thenReturn(Optional.of(card));
         when(cardRepository.save(any(Card.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(calendarEventManager.findByRelatedEntity(cardId, "CARD")).thenReturn(java.util.Collections.emptyList());
+        when(calendarEventManager.findByRelatedEntity(cardId, "Card")).thenReturn(java.util.Collections.emptyList());
         
         // Act - Definir data de agendamento como null (remover)
         Card result = cardService.setScheduledDate(cardId, null);
@@ -547,7 +547,7 @@ class CardServiceTest {
         assertNull(result.getScheduledDate()); // Data deve ser null
         
         // Verificar se o método de busca de eventos foi chamado
-        verify(calendarEventManager, times(1)).findByRelatedEntity(cardId, "CARD");
+        verify(calendarEventManager, times(1)).findByRelatedEntity(cardId, "Card");
         verify(cardRepository, times(1)).findById(cardId);
         verify(cardRepository, times(1)).save(any(Card.class));
     }

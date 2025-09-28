@@ -11,7 +11,6 @@ import org.desviante.integration.sync.IntegrationSyncService;
 import org.desviante.integration.sync.IntegrationType;
 import org.desviante.model.Card;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -70,7 +69,6 @@ public class EnhancedCardService {
      * @param cardTypeId ID do tipo de card
      * @return card criado
      */
-    @Transactional
     public Card createCard(String title, String description, Long parentColumnId, Long cardTypeId) {
         log.debug("Criando card: {}", title);
         
@@ -90,7 +88,6 @@ public class EnhancedCardService {
      * @param newColumnId ID da nova coluna
      * @return card movido
      */
-    @Transactional
     public Card moveCardToColumn(Long cardId, Long newColumnId) {
         log.debug("Movendo card {} para coluna {}", cardId, newColumnId);
         
@@ -126,7 +123,6 @@ public class EnhancedCardService {
      * @param newDescription nova descrição
      * @return card atualizado
      */
-    @Transactional
     public Card updateCardDetails(Long cardId, String newTitle, String newDescription) {
         log.debug("Atualizando detalhes do card {}", cardId);
         
@@ -155,7 +151,6 @@ public class EnhancedCardService {
      * @param scheduledDate nova data de agendamento
      * @return card atualizado
      */
-    @Transactional
     public Card setScheduledDate(Long cardId, LocalDateTime scheduledDate) {
         log.debug("Definindo data de agendamento para card {}: {}", cardId, scheduledDate);
         
@@ -201,7 +196,6 @@ public class EnhancedCardService {
      * @param cardId ID do card
      * @return card atualizado
      */
-    @Transactional
     public Card removeScheduledDate(Long cardId) {
         return setScheduledDate(cardId, null);
     }
@@ -213,7 +207,6 @@ public class EnhancedCardService {
      * @param dueDate nova data de vencimento
      * @return card atualizado
      */
-    @Transactional
     public Card setDueDate(Long cardId, LocalDateTime dueDate) {
         log.debug("Definindo data de vencimento para card {}: {}", cardId, dueDate);
         
@@ -243,7 +236,6 @@ public class EnhancedCardService {
      * @param dueDate nova data de vencimento
      * @return card atualizado
      */
-    @Transactional
     public Card setSchedulingDates(Long cardId, LocalDateTime scheduledDate, LocalDateTime dueDate) {
         log.debug("Definindo datas de agendamento e vencimento para card {}: {} / {}", cardId, scheduledDate, dueDate);
         
@@ -259,8 +251,14 @@ public class EnhancedCardService {
         // Atualizar o card PRIMEIRO - esta é a operação principal que deve sempre funcionar
         Card updatedCard = cardService.setSchedulingDates(cardId, scheduledDate, dueDate);
         
-        // Processar eventos de agendamento em transação separada para evitar rollback
-        processSchedulingEventsInSeparateTransaction(updatedCard, currentCard, scheduledDate, previousScheduledDate);
+        // Processar eventos de agendamento na mesma transação
+        try {
+            processSchedulingEvents(updatedCard, currentCard, scheduledDate, previousScheduledDate);
+        } catch (Exception e) {
+            log.error("Erro ao processar eventos de agendamento para card {}: {}", 
+                     updatedCard.getId(), e.getMessage(), e);
+            // Não re-lançar a exceção para não afetar a operação principal
+        }
         
         log.debug("Datas do card {} definidas - Agendamento: {}, Vencimento: {}", cardId, scheduledDate, dueDate);
         return updatedCard;
@@ -271,7 +269,6 @@ public class EnhancedCardService {
      * 
      * @param cardId ID do card
      */
-    @Transactional
     public void deleteCard(Long cardId) {
         log.debug("Excluindo card {}", cardId);
         
@@ -305,20 +302,15 @@ public class EnhancedCardService {
     }
     
     /**
-     * Processa eventos de agendamento de forma segura em transação separada.
-     * 
-     * <p>Este método executa a integração em uma transação independente para evitar
-     * que falhas de integração causem rollback na operação principal de salvamento
-     * do card no banco de dados.</p>
+     * Processa eventos de agendamento.
      * 
      * @param updatedCard card atualizado
      * @param currentCard card anterior
      * @param scheduledDate nova data de agendamento
      * @param previousScheduledDate data anterior de agendamento
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void processSchedulingEventsInSeparateTransaction(Card updatedCard, Card currentCard, 
-                                                           LocalDateTime scheduledDate, LocalDateTime previousScheduledDate) {
+    private void processSchedulingEvents(Card updatedCard, Card currentCard, 
+                                       LocalDateTime scheduledDate, LocalDateTime previousScheduledDate) {
         try {
             // Processar eventos de agendamento baseado no estado
             if (scheduledDate != null && previousScheduledDate == null) {
@@ -378,7 +370,8 @@ public class EnhancedCardService {
             
         } catch (Exception e) {
             log.error("Erro ao processar agendamento do card {}: {}", card.getId(), e.getMessage(), e);
-            throw new RuntimeException("Falha ao processar agendamento do card " + card.getId(), e);
+            // Não lançar exceção para não causar rollback da transação principal
+            log.warn("Card {} foi salvo com sucesso, mas o processamento de eventos falhou", card.getId());
         }
     }
     

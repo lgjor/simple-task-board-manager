@@ -1,5 +1,6 @@
 -- Garante que as tabelas sejam recriadas do zero a cada inicialização,
 -- evitando erros de "tabela já existe" e garantindo um ambiente limpo para testes.
+DROP TABLE IF EXISTS integration_sync_status CASCADE;
 DROP TABLE IF EXISTS calendar_events CASCADE;
 DROP TABLE IF EXISTS tasks CASCADE;
 DROP TABLE IF EXISTS checklist_items CASCADE;
@@ -120,6 +121,24 @@ CREATE TABLE calendar_events (
     CONSTRAINT fk_calendar_events_to_cards FOREIGN KEY (related_entity_id) REFERENCES cards(id) ON DELETE CASCADE
 );
 
+-- Definição da tabela 'integration_sync_status' (para rastrear sincronização com sistemas externos)
+CREATE TABLE integration_sync_status (
+    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
+    card_id             BIGINT NOT NULL,
+    integration_type    VARCHAR(50) NOT NULL,
+    external_id         VARCHAR(255),
+    sync_status         VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    last_sync_date      TIMESTAMP,
+    error_message       TEXT,
+    retry_count         INTEGER DEFAULT 0,
+    max_retries         INTEGER DEFAULT 3,
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE,
+    UNIQUE (card_id, integration_type)
+);
+
 -- Cria índices para as chaves estrangeiras, melhorando a performance de joins e buscas.
 CREATE INDEX idx_board_columns_board_id ON board_columns(board_id);
 CREATE INDEX idx_cards_board_column_id ON cards(board_column_id);
@@ -132,6 +151,10 @@ CREATE INDEX idx_boards_group_id ON boards(group_id);
 CREATE INDEX idx_calendar_events_related_entity ON calendar_events(related_entity_id, related_entity_type);
 CREATE INDEX idx_calendar_events_start_date ON calendar_events(start_date_time);
 CREATE INDEX idx_calendar_events_active ON calendar_events(active);
+CREATE INDEX idx_integration_sync_card_id ON integration_sync_status(card_id);
+CREATE INDEX idx_integration_sync_type ON integration_sync_status(integration_type);
+CREATE INDEX idx_integration_sync_status ON integration_sync_status(sync_status);
+CREATE INDEX idx_integration_sync_last_sync ON integration_sync_status(last_sync_date);
 
 -- Dados de exemplo para testes
 -- Inserir um board de exemplo

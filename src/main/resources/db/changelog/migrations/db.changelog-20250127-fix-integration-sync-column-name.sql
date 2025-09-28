@@ -2,14 +2,15 @@
 -- Description: Renames last_sync_at to last_sync_date to match the model
 -- Author: Aú Desviante - Lucas Godoy
 -- Date: 2025-01-27
+-- Compatible with H2 Database
 
 -- For H2 database, we need to recreate the table with the correct column name
 -- First, create a backup table
 CREATE TABLE IF NOT EXISTS integration_sync_status_backup AS 
 SELECT * FROM integration_sync_status;
 
--- Drop the original table
-DROP TABLE IF EXISTS integration_sync_status;
+-- Drop the original table (sem IF EXISTS para compatibilidade H2)
+DROP TABLE integration_sync_status;
 
 -- Recreate the table with the correct column name
 CREATE TABLE integration_sync_status (
@@ -21,30 +22,28 @@ CREATE TABLE integration_sync_status (
     last_sync_date TIMESTAMP,
     error_message TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
-    -- Foreign key constraint
-    CONSTRAINT fk_integration_sync_card 
-        FOREIGN KEY (card_id) 
+    -- Foreign key constraint (sem nome para compatibilidade H2)
+    FOREIGN KEY (card_id) 
         REFERENCES cards(id) 
         ON DELETE CASCADE,
     
     -- Unique constraint to prevent duplicate sync status for same card and integration
-    CONSTRAINT uk_integration_sync_card_type 
-        UNIQUE (card_id, integration_type)
+    UNIQUE (card_id, integration_type)
 );
 
--- Create indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_integration_sync_card_id 
+-- Create indexes for better performance (sem IF NOT EXISTS para compatibilidade H2)
+CREATE INDEX idx_integration_sync_card_id 
     ON integration_sync_status(card_id);
 
-CREATE INDEX IF NOT EXISTS idx_integration_sync_type 
+CREATE INDEX idx_integration_sync_type 
     ON integration_sync_status(integration_type);
 
-CREATE INDEX IF NOT EXISTS idx_integration_sync_status 
+CREATE INDEX idx_integration_sync_status 
     ON integration_sync_status(sync_status);
 
-CREATE INDEX IF NOT EXISTS idx_integration_sync_last_sync 
+CREATE INDEX idx_integration_sync_last_sync 
     ON integration_sync_status(last_sync_date);
 
 -- Copy data from backup table, handling the column name difference

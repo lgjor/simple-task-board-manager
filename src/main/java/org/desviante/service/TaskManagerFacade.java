@@ -91,7 +91,6 @@ public class TaskManagerFacade {
  * @return Lista de resumos dos quadros com estatísticas de progresso
  * @see BoardSummaryDTO
  */
-    @Transactional(readOnly = true)
     public List<BoardSummaryDTO> getAllBoardSummaries() {
         List<Board> allBoards = boardService.getAllBoards();
         if (allBoards.isEmpty()) {
@@ -128,7 +127,6 @@ public class TaskManagerFacade {
  * @see BoardSummaryDTO
  * @see ResourceNotFoundException
  */
-    @Transactional(readOnly = true)
     public BoardSummaryDTO getBoardSummary(Long boardId) {
         Board board = boardService.getBoardById(boardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Board com ID " + boardId + " não encontrado."));
@@ -303,7 +301,6 @@ public class TaskManagerFacade {
      * @see BoardDetailDTO
      * @see ResourceNotFoundException
      */
-    @Transactional(readOnly = true)
     public BoardDetailDTO getBoardDetails(Long boardId) {
         var board = boardService.getBoardById(boardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Board com ID " + boardId + " não encontrado."));
@@ -363,7 +360,6 @@ public class TaskManagerFacade {
      * @see CardDetailDTO
      * @see ResourceNotFoundException
      */
-    @Transactional
     public CardDetailDTO createNewCard(CreateCardRequestDTO request) {
         Card newCard = cardService.createCard(
                 request.title(),
@@ -407,7 +403,6 @@ public class TaskManagerFacade {
      * @see CardDetailDTO
      * @see ResourceNotFoundException
      */
-    @Transactional
     public CardDetailDTO moveCard(Long cardId, Long newColumnId) {
         // Mover o card sem sincronizar progresso - progresso e status desacoplados
         Card updatedCard = enhancedCardService.moveCardToColumn(cardId, newColumnId);
@@ -441,7 +436,6 @@ public class TaskManagerFacade {
      * 
      * @param cardId ID do card a ser removido
      */
-    @Transactional
     public void deleteCard(Long cardId) {
         enhancedCardService.deleteCard(cardId);
     }
@@ -501,7 +495,6 @@ public class TaskManagerFacade {
      * @see CardDetailDTO
      * @see ResourceNotFoundException
      */
-    @Transactional
     public CardDetailDTO updateCardDetails(Long cardId, UpdateCardDetailsDTO request) {
         // 1. Delega a lógica de negócio para o serviço correspondente.
         Card updatedCard = cardService.updateCardDetails(
@@ -621,7 +614,6 @@ public class TaskManagerFacade {
      * @throws ResourceNotFoundException se o card não for encontrado
      * @throws IllegalArgumentException se as datas forem inválidas
      */
-    @Transactional
     public void setSchedulingDates(Long cardId, LocalDateTime scheduledDate, LocalDateTime dueDate) {
         System.out.println("🔧 TASK MANAGER FACADE - setSchedulingDates chamado para card ID: " + cardId);
         System.out.println("🔧 TASK MANAGER FACADE - Scheduled Date: " + scheduledDate);
@@ -711,7 +703,6 @@ public class TaskManagerFacade {
      * @return Lista de resumos dos quadros sem grupo
      * @see BoardSummaryDTO
      */
-    @Transactional(readOnly = true)
     public List<BoardSummaryDTO> getBoardsWithoutGroup() {
         List<Board> boardsWithoutGroup = boardService.getBoardsWithoutGroup();
         if (boardsWithoutGroup.isEmpty()) {
@@ -858,7 +849,6 @@ public class TaskManagerFacade {
      * @param cardId ID do card a ser movido
      * @return true se o card foi movido, false se já estava no topo
      */
-    @Transactional
     public boolean moveCardUp(Long cardId) {
         return cardService.moveCardUp(cardId);
     }
@@ -872,7 +862,6 @@ public class TaskManagerFacade {
      * @param cardId ID do card a ser movido
      * @return true se o card foi movido, false se já estava na base
      */
-    @Transactional
     public boolean moveCardDown(Long cardId) {
         return cardService.moveCardDown(cardId);
     }
@@ -886,7 +875,6 @@ public class TaskManagerFacade {
      * @param cardId ID do card
      * @return true se o card pode ser movido para cima, false caso contrário
      */
-    @Transactional(readOnly = true)
     public boolean canMoveCardUp(Long cardId) {
         return cardService.canMoveCardUp(cardId);
     }
@@ -900,7 +888,6 @@ public class TaskManagerFacade {
      * @param cardId ID do card
      * @return true se o card pode ser movido para baixo, false caso contrário
      */
-    @Transactional(readOnly = true)
     public boolean canMoveCardDown(Long cardId) {
         return cardService.canMoveCardDown(cardId);
     }
@@ -912,7 +899,6 @@ public class TaskManagerFacade {
      * @return Optional contendo o card se encontrado, ou vazio caso contrário
      * @see Card
      */
-    @Transactional(readOnly = true)
     public Optional<Card> getCardById(Long cardId) {
         return cardService.getCardById(cardId);
     }
@@ -927,7 +913,6 @@ public class TaskManagerFacade {
      * @return Optional contendo os detalhes do card se encontrado, ou vazio caso contrário
      * @see CardDetailDTO
      */
-    @Transactional(readOnly = true)
     public Optional<CardDetailDTO> getCardDetailById(Long cardId) {
         return cardService.getCardById(cardId)
                 .map(card -> {

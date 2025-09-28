@@ -189,7 +189,6 @@ public class CalendarEventRepository {
      * @param id ID do evento
      * @return Optional contendo o evento se encontrado, ou vazio caso contrário
      */
-    @Transactional(readOnly = true)
     public Optional<CalendarEvent> findById(Long id) {
         String sql = "SELECT * FROM calendar_events WHERE id = :id";
         var params = new MapSqlParameterSource("id", id);
@@ -205,7 +204,6 @@ public class CalendarEventRepository {
      * 
      * @return lista de todos os eventos ativos
      */
-    @Transactional(readOnly = true)
     public List<CalendarEvent> findAll() {
         String sql = "SELECT * FROM calendar_events WHERE active = true ORDER BY start_date_time";
         return jdbcTemplate.query(sql, calendarEventRowMapper);
@@ -218,7 +216,6 @@ public class CalendarEventRepository {
      * @param endDate data de fim
      * @return lista de eventos no período
      */
-    @Transactional(readOnly = true)
     public List<CalendarEvent> findByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
         String sql = """
             SELECT * FROM calendar_events 
@@ -240,7 +237,6 @@ public class CalendarEventRepository {
      * @param relatedEntityType tipo da entidade relacionada
      * @return lista de eventos relacionados à entidade
      */
-    @Transactional(readOnly = true)
     public List<CalendarEvent> findByRelatedEntity(Long relatedEntityId, String relatedEntityType) {
         System.out.println("🔍 CALENDAR EVENT REPOSITORY - Buscando eventos para relatedEntityId: " + relatedEntityId + ", relatedEntityType: " + relatedEntityType);
         
@@ -303,7 +299,6 @@ public class CalendarEventRepository {
      * @param id ID do evento
      * @return true se o evento existe
      */
-    @Transactional(readOnly = true)
     public boolean existsById(Long id) {
         String sql = "SELECT COUNT(*) FROM calendar_events WHERE id = :id";
         var params = new MapSqlParameterSource("id", id);
@@ -316,7 +311,6 @@ public class CalendarEventRepository {
      * 
      * @return número total de eventos ativos
      */
-    @Transactional(readOnly = true)
     public long count() {
         String sql = "SELECT COUNT(*) FROM calendar_events WHERE active = true";
         Integer count = jdbcTemplate.queryForObject(sql, new MapSqlParameterSource(), Integer.class);

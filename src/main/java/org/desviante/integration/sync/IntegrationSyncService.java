@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.desviante.service.DatabaseMigrationService;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -59,7 +58,8 @@ public class IntegrationSyncService {
             migrationService.ensureIntegrationSyncStatusTable();
         } catch (Exception e) {
             log.error("Erro ao garantir existência da tabela de sincronização: {}", e.getMessage(), e);
-            throw new RuntimeException("Falha ao preparar banco de dados para sincronização", e);
+            // Não lançar exceção para não causar rollback da transação principal
+            log.warn("Tabela de sincronização não pôde ser criada, mas a operação principal continuará");
         }
     }
     
@@ -71,12 +71,10 @@ public class IntegrationSyncService {
      * @param maxRetries número máximo de tentativas (opcional)
      * @return status criado
      */
-    @Transactional
     public IntegrationSyncStatus createSyncStatus(Long cardId, IntegrationType integrationType, Integer maxRetries) {
         log.info("🔧 INTEGRATION SYNC SERVICE - Criando status de sincronização para card {} e tipo {}", cardId, integrationType);
         
-        // Garantir que a tabela existe antes da operação
-        ensureTableExists();
+        // Tabela deve ser criada na inicialização da aplicação, não durante transações
         
         try {
             // Verificar se já existe um status para este card e tipo
@@ -129,12 +127,10 @@ public class IntegrationSyncService {
      * @param integrationType tipo de integração
      * @param externalId ID da entidade no sistema externo
      */
-    @Transactional
     public void markAsSynced(Long cardId, IntegrationType integrationType, String externalId) {
         log.debug("Marcando sincronização como bem-sucedida para card {} e tipo {}", cardId, integrationType);
         
-        // Garantir que a tabela existe antes da operação
-        ensureTableExists();
+        // Tabela deve ser criada na inicialização da aplicação, não durante transações
         
         Optional<IntegrationSyncStatus> statusOpt = repository.findByCardIdAndType(cardId, integrationType);
         if (statusOpt.isEmpty()) {
@@ -157,12 +153,10 @@ public class IntegrationSyncService {
      * @param integrationType tipo de integração
      * @param errorMessage mensagem de erro
      */
-    @Transactional
     public void markAsError(Long cardId, IntegrationType integrationType, String errorMessage) {
         log.debug("Marcando sincronização como erro para card {} e tipo {}", cardId, integrationType);
         
-        // Garantir que a tabela existe antes da operação
-        ensureTableExists();
+        // Tabela deve ser criada na inicialização da aplicação, não durante transações
         
         Optional<IntegrationSyncStatus> statusOpt = repository.findByCardIdAndType(cardId, integrationType);
         if (statusOpt.isEmpty()) {
@@ -185,12 +179,10 @@ public class IntegrationSyncService {
      * @param integrationType tipo de integração
      * @return true se pode fazer retry, false se atingiu limite
      */
-    @Transactional
     public boolean markForRetry(Long cardId, IntegrationType integrationType) {
         log.debug("Marcando sincronização para retry para card {} e tipo {}", cardId, integrationType);
         
-        // Garantir que a tabela existe antes da operação
-        ensureTableExists();
+        // Tabela deve ser criada na inicialização da aplicação, não durante transações
         
         Optional<IntegrationSyncStatus> statusOpt = repository.findByCardIdAndType(cardId, integrationType);
         if (statusOpt.isEmpty()) {
@@ -260,12 +252,10 @@ public class IntegrationSyncService {
      * 
      * @param cardId ID do card
      */
-    @Transactional
     public void removeSyncStatusesForCard(Long cardId) {
         log.info("Removendo todos os status de sincronização para card {}", cardId);
         
-        // Garantir que a tabela existe antes da operação
-        ensureTableExists();
+        // Tabela deve ser criada na inicialização da aplicação, não durante transações
         repository.deleteByCardId(cardId);
     }
     

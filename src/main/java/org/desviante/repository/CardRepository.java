@@ -8,7 +8,6 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.io.FileWriter;
@@ -178,7 +177,6 @@ public class CardRepository {
      * @param card card a ser salvo
      * @return card com ID atualizado (em caso de inserção)
      */
-    @Transactional
     public Card save(Card card) {
         var params = new MapSqlParameterSource()
                 .addValue("title", card.getTitle())
@@ -522,7 +520,6 @@ public class CardRepository {
      * @param card2Id ID do segundo card
      * @param card2NewOrder nova ordem do segundo card
      */
-    @Transactional
     public void swapCardPositions(Long card1Id, Integer card1NewOrder, Long card2Id, Integer card2NewOrder) {
         // Atualiza o primeiro card
         String sql = "UPDATE cards SET order_index = :newOrder WHERE id = :cardId";
@@ -543,7 +540,6 @@ public class CardRepository {
      * 
      * @param id identificador do card a ser removido
      */
-    @Transactional
     public void deleteById(Long id) {
         String sql = "DELETE FROM cards WHERE id = :id";
         var params = new MapSqlParameterSource("id", id);
