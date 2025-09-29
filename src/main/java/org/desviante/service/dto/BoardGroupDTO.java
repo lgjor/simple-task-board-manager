@@ -13,7 +13,7 @@ package org.desviante.service.dto;
  * @param color cor do grupo em formato hexadecimal
  * @param icon ícone do grupo
  * @param creationDate data de criação formatada
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

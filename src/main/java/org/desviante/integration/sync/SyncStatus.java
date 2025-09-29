@@ -26,7 +26,7 @@ package org.desviante.integration.sync;
  *   <li><strong>RETRY → RETRY:</strong> Retry falhou, tentando novamente</li>
  * </ul>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see IntegrationType

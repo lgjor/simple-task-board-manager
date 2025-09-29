@@ -46,7 +46,7 @@ import java.util.Optional;
  * para obter dados e o {@link AppMetadataConfig} para persistir as configurações
  * escolhidas pelo usuário.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see CardTypeService

@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component;
  * <p>A classe obtém o contexto Spring através de {@link SimpleTaskBoardManagerApplication}
  * e utiliza o {@link WindowManager} para gerenciar janelas secundárias da aplicação.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see Application

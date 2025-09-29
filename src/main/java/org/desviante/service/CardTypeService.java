@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
  * <p>Utiliza transações para garantir consistência dos dados, com operações
  * de leitura marcadas como readOnly para otimização de performance.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see CardType
@@ -386,7 +386,7 @@ public class CardTypeService {
      * se um tipo de card pode ser removido com segurança e quais cards seriam
      * afetados pela remoção.</p>
      * 
-     * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+     * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
      * @version 1.0
      * @since 1.0
      */

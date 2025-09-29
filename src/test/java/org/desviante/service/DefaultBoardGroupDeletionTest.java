@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
  * <p>Este teste cobre cenários críticos de integridade de dados e validação
  * quando grupos definidos como padrão são removidos do sistema.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

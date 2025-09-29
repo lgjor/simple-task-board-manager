@@ -38,7 +38,7 @@ import org.desviante.model.enums.ProgressType;
  * @param dueDate data de vencimento formatada como string (pode ser null)
  * @param columnKind tipo da coluna onde o card está localizado
  * @param progressType tipo de progresso do card (NONE, PERCENTAGE, CUSTOM)
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see org.desviante.service.dto.BoardColumnDetailDTO

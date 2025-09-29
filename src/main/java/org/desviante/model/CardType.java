@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
  * <p>Cada tipo de card possui um nome único e um label de unidade que
  * será usado na interface para mostrar o progresso dos cards deste tipo.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

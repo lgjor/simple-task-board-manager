@@ -13,7 +13,7 @@ import java.util.List;
  * <p>Esta classe define as configurações específicas para operações
  * de retry, incluindo delays, limites e estratégias personalizadas.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

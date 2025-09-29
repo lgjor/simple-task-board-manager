@@ -26,7 +26,7 @@ import java.time.LocalDateTime;
  * representar tarefas, sub-tarefas ou itens de verificação dentro de um card,
  * permitindo que usuários acompanhem o progresso de forma granular.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see LocalDateTime

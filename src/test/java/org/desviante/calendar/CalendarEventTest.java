@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *   <li>Métodos equals, hashCode e toString</li>
  * </ul>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see CalendarEvent

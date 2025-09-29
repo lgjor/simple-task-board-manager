@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *   <li>Verificam tanto casos de sucesso quanto casos de erro</li>
  * </ul>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see BoardRepository

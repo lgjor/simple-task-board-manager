@@ -28,7 +28,7 @@ import java.time.LocalDateTime;
  *   <li><strong>RETRY:</strong> Tentativa de retry em andamento</li>
  * </ul>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see IntegrationType

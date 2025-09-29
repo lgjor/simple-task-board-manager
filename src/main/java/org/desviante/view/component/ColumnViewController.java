@@ -31,7 +31,7 @@ import java.util.Optional;
  * do quadro, incluindo a exibição de cards, drag and drop, e atualizações
  * de dados em tempo real.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

@@ -18,7 +18,7 @@ import org.springframework.context.annotation.Import;
  *   <li><code>@Import</code>: Importa outras configurações específicas</li>
  * </ul>
  *
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see DataConfig

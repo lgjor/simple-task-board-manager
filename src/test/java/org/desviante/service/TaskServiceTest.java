@@ -30,7 +30,7 @@ import static org.mockito.Mockito.*;
  * <p>Foca na validação de regras de negócio, tratamento de exceções e
  * verificação da integração correta com serviços externos.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see TaskService

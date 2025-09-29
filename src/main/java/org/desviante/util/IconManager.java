@@ -18,7 +18,7 @@ import java.util.Scanner;
  * <p>Esta classe gerencia o carregamento e acesso aos ícones disponíveis
  * no sistema, incluindo ícones emoji e outros tipos de ícones.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

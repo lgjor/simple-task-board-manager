@@ -24,7 +24,7 @@ import static org.mockito.Mockito.*;
  * <p>Foca na verificação de que o grupo padrão configurado é aplicado
  * automaticamente aos novos boards criados.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

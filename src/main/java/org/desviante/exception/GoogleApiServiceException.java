@@ -19,7 +19,7 @@ package org.desviante.exception;
  * com Google Tasks, permitindo fallback para operações locais quando a
  * API externa não está disponível ou falha temporariamente.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see RuntimeException

@@ -25,7 +25,7 @@ import org.desviante.model.enums.ProgressType;
  * @param parentColumnId ID da coluna onde o card será criado
  * @param cardTypeId ID do tipo de card a ser criado
  * @param progressType tipo de progresso do card (pode ser null)
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see org.desviante.service.TaskManagerFacade

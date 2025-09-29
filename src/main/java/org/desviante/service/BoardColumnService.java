@@ -29,7 +29,7 @@ import java.util.Optional;
  * <p>Utiliza transações para garantir consistência dos dados, com operações
  * de leitura marcadas como readOnly para otimização de performance.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see BoardColumn

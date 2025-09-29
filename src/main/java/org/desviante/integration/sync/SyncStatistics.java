@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  * de sincronização executadas pelo sistema, permitindo monitoramento
  * e análise de performance das integrações.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

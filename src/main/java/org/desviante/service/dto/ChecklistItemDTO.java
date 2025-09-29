@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  * @param orderIndex posição do item na lista de checklist
  * @param createdAt data e hora de criação do item
  * @param completedAt data e hora de conclusão do item (null se não concluído)
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

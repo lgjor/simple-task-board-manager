@@ -29,7 +29,7 @@ import static org.mockito.Mockito.*;
  * sem depender de APIs complexas, focando na comunicação entre componentes
  * e na publicação/processamento de eventos.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

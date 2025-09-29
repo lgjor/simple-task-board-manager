@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component;
  * a inicialização da aplicação, permitindo que o sistema continue funcionando
  * mesmo com falhas na migração de dados.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see CommandLineRunner

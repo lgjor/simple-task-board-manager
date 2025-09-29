@@ -33,7 +33,7 @@ import java.sql.ResultSet;
  * <p><strong>Tratamento de Erros:</strong> Falhas durante migrações são registradas
  * no log mas não interrompem a inicialização da aplicação.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see CommandLineRunner

@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
  * <p>Esta classe encapsula estatísticas agregadas sobre eventos em um período
  * específico, fornecendo informações úteis para relatórios e análises.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

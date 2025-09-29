@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
  * @param notes notas detalhadas da tarefa
  * @param due data e horário de vencimento
  * @param cardId ID do card associado (para relacionamento local)
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

@@ -9,7 +9,7 @@ import java.util.*;
  * categorias e palavras-chave, facilitando a localização de ícones
  * apropriados para diferentes contextos como "casa", "trabalho", etc.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

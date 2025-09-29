@@ -20,7 +20,7 @@ import java.util.List;
  *   <li><strong>CustomEventProvider:</strong> Eventos personalizados do usuário</li>
  * </ul>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see CalendarEventDTO

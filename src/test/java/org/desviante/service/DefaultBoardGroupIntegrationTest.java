@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * <p>Verifica o fluxo completo desde a configuração das preferências
  * até a criação de boards com grupo padrão aplicado automaticamente.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

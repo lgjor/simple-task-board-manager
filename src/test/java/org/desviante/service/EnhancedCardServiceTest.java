@@ -27,7 +27,7 @@ import static org.mockito.Mockito.*;
  * <p>Estes testes verificam a integração do CardService com o sistema
  * de eventos, incluindo publicação de eventos e coordenação de integrações.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

@@ -32,7 +32,7 @@ import static org.mockito.Mockito.*;
  * <p>Foca na validação de regras de negócio, tratamento de exceções e
  * verificação de integridade referencial antes da remoção de tipos.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see CardTypeService

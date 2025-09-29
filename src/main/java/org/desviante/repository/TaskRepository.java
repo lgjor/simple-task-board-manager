@@ -29,7 +29,7 @@ import java.util.Optional;
  * <p>Utiliza JDBC direto com NamedParameterJdbcTemplate para operações
  * de banco, mantendo controle total sobre as consultas SQL.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see Task

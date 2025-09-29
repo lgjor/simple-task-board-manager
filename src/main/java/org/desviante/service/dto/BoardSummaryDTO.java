@@ -27,7 +27,7 @@ import org.desviante.model.BoardGroup;
  * @param percentFinal percentual de cards em colunas FINAL
  * @param status status geral consolidado do board
  * @param group grupo associado ao board (pode ser null)
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see BoardGroup

@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Configuration;
  *   <li><strong>DIP:</strong> Depende de abstrações (RetryStrategy)</li>
  * </ul>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see RetryExecutor

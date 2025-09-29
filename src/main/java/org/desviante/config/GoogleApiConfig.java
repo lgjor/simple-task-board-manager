@@ -35,7 +35,7 @@ import java.util.concurrent.CompletableFuture;
  * <p>Esta classe configura a integração com a API do Google Tasks através de
  * OAuth2, incluindo fluxo de autorização e serviço autenticado.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see org.springframework.context.annotation.Configuration

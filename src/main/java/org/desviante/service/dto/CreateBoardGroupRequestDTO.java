@@ -9,7 +9,7 @@ package org.desviante.service.dto;
  * @param name nome do grupo
  * @param description descrição do grupo
  * @param icon ícone do grupo
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

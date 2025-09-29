@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  * <p>Esta classe encapsula informações sobre uma tentativa específica
  * de retry, incluindo resultado, tempo de execução e detalhes do erro.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

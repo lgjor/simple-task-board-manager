@@ -18,7 +18,7 @@ import org.desviante.model.enums.ProgressType;
  *   <li>Interface específica para gerenciar itens</li>
  * </ul>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */
@@ -149,7 +149,7 @@ public class ChecklistProgressStrategy implements ProgressStrategy {
      * <p>Representa um item individual do checklist com seu texto
      * e estado de conclusão.</p>
      * 
-     * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+     * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
      * @version 1.0
      * @since 1.0
      */

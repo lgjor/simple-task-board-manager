@@ -7,7 +7,7 @@ package org.desviante.service;
  * quando eventos são criados, atualizados ou deletados, permitindo
  * atualizações em tempo real da interface do usuário.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

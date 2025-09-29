@@ -23,7 +23,7 @@ import java.util.List;
  * após a aplicação estar pronta, incluindo verificação de tabelas,
  * estrutura e dados de exemplo.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see org.springframework.context.event.EventListener

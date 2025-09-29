@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
  * <p>Esta implementação gerencia eventos criados diretamente pelo usuário
  * no calendário, independentemente de cards ou tasks do sistema.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see CalendarEventProvider

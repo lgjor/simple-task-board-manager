@@ -19,7 +19,7 @@ import java.util.List;
  * <p>Esta classe demonstra como configurar e usar o CalendarFXAdapter
  * com as novas funcionalidades de cores e opacidade personalizadas.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see CalendarFXAdapter

@@ -22,7 +22,7 @@ import java.util.List;
  * @param id identificador único da coluna do board
  * @param name nome de exibição da coluna
  * @param cards lista de cards que pertencem a esta coluna
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see BoardDetailDTO

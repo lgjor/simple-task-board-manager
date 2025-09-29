@@ -30,7 +30,7 @@ import java.util.ResourceBundle;
  * como validação de dados, navegação entre telas e sincronização com
  * o serviço de negócio.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

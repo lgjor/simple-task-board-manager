@@ -24,7 +24,7 @@ import java.time.LocalDateTime;
  * @param title título da tarefa a ser criada
  * @param notes notas detalhadas da tarefa
  * @param due data e horário de vencimento
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see org.desviante.service.TaskService

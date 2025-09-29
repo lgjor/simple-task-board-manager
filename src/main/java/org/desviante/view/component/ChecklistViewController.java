@@ -16,7 +16,7 @@ import java.util.Optional;
  * <p>Gerencia a interface de usuário para itens do checklist, incluindo
  * criação, edição, remoção e controle de estado dos itens.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

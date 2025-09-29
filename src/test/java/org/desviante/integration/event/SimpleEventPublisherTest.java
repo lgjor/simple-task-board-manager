@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * <p>Estes testes verificam o funcionamento básico do sistema de eventos,
  * incluindo publicação síncrona, assíncrona e gerenciamento de observadores.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

@@ -6,7 +6,7 @@ package org.desviante.model.enums;
  * <p>Este enum permite que os cards tenham diferentes tipos de acompanhamento
  * de progresso, desde nenhum progresso até progresso percentual detalhado.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

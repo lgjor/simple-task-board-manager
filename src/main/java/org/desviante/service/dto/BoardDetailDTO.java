@@ -21,7 +21,7 @@ import java.util.List;
  * @param id identificador único do board
  * @param name nome de exibição do board
  * @param columns lista de colunas que compõem o board
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see org.desviante.service.dto.BoardColumnDetailDTO

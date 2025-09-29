@@ -8,7 +8,7 @@ package org.desviante.integration.coordinator;
  * incluindo falhas de sincronização, problemas de configuração ou erros
  * de comunicação com APIs externas.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

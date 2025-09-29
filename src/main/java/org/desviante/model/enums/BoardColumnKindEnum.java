@@ -11,7 +11,7 @@ package org.desviante.model.enums;
  * específicas, como mover automaticamente uma tarefa para a próxima coluna
  * ou marcar uma tarefa como concluída quando chega na coluna final.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see org.desviante.model.BoardColumn

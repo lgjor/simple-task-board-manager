@@ -17,7 +17,7 @@ import java.time.OffsetDateTime;
  * com a API do Google Tasks, garantindo que as informações sejam preservadas
  * durante a sincronização.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see Card

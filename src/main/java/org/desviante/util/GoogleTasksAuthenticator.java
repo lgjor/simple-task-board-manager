@@ -9,7 +9,7 @@ import java.io.InputStream;
  * <p>Esta classe exibe instruções detalhadas sobre como configurar
  * manualmente a integração com Google Tasks.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

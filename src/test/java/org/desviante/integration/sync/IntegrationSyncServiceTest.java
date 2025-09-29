@@ -20,7 +20,7 @@ import static org.mockito.Mockito.*;
  * <p>Estes testes verificam o funcionamento do serviço de sincronização,
  * incluindo criação, atualização, retry e estatísticas.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

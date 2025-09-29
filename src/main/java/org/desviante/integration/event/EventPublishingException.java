@@ -7,7 +7,7 @@ package org.desviante.integration.event;
  * de publicação de eventos, incluindo falhas na notificação de observadores
  * ou problemas de configuração do sistema de eventos.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

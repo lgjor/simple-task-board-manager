@@ -13,7 +13,7 @@ import java.util.List;
  * <p>Esta classe encapsula o resultado final de uma operação de retry,
  * incluindo sucesso/falha, histórico de tentativas e estatísticas.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

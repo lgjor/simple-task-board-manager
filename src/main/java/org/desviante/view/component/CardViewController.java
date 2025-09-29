@@ -43,7 +43,7 @@ import java.io.PrintWriter;
  * edição e manipulação de cards, incluindo funcionalidades como
  * drag and drop, edição inline, controle de progresso e checklist.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

@@ -27,7 +27,7 @@ import static org.mockito.Mockito.*;
  * validação de tipos de progresso padrão e proteção contra alterações
  * quando tipos estão em uso.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see DefaultConfigurationService

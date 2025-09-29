@@ -25,7 +25,7 @@ import java.util.Optional;
  * <p>Utiliza Lombok para injeção de dependência automática do repositório,
  * reduzindo código boilerplate e mantendo a legibilidade.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see Board

@@ -14,7 +14,7 @@ import java.util.List;
  * controlar e monitorar operações de retry, incluindo histórico
  * de tentativas, configurações e metadados.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see RetryStrategy

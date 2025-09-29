@@ -19,7 +19,7 @@ package org.desviante.exception;
  * o estado final do card e possivelmente sugerindo visualização dos dados
  * em vez de tentar modificações.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see RuntimeException

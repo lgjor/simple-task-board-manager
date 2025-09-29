@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
  *   <li>Data de agendamento de um card é modificada</li>
  * </ul>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see DomainEvent

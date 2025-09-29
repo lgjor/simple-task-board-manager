@@ -34,7 +34,7 @@ import java.util.Optional;
  * <p><strong>Compatibilidade:</strong> Utiliza JDBC puro para máxima compatibilidade
  * com diferentes bancos de dados, especialmente H2 e SQLite.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see CheckListItem

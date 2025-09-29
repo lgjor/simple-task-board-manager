@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * <p>Esta classe testa todos os métodos e comportamentos do enum CalendarEventPriority,
  * incluindo comparações, propriedades visuais e métodos de conveniência.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see CalendarEventPriority

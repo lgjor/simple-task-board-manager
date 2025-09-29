@@ -27,7 +27,7 @@ import org.springframework.context.ConfigurableApplicationContext;
  * estejam prontos antes de lançar a interface gráfica. Isso evita problemas
  * de timing e garante que a injeção de dependências funcione corretamente.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see SpringBootApplication

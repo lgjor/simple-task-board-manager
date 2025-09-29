@@ -15,7 +15,7 @@ import java.time.format.DateTimeFormatter;
  * @param unitLabel label da unidade de progresso
  * @param creationDate data de criação formatada como string
  * @param lastUpdateDate data da última atualização formatada como string
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see CardType

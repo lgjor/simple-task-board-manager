@@ -23,7 +23,7 @@ import java.util.concurrent.Executors;
  * <p>Permite que o usuário escolha um ícone visualmente entre todos
  * os ícones disponíveis no sistema, com preview em tempo real.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

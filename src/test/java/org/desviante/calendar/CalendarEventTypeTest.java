@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * <p>Esta classe testa todos os métodos e comportamentos do enum CalendarEventType,
  * incluindo métodos de conveniência, validações e propriedades específicas.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see CalendarEventType

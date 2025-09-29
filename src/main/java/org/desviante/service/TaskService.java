@@ -29,7 +29,7 @@ import java.util.Optional;
  * <p>Utiliza transações para garantir consistência dos dados e conversões
  * adequadas de tipos de data para compatibilidade com a API do Google Tasks.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see Task

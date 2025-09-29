@@ -41,7 +41,7 @@ import java.util.List;
  * exceções para garantir que falhas na API externa sejam adequadamente
  * propagadas para o sistema local.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see CreateTaskRequest

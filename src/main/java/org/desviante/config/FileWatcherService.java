@@ -17,7 +17,7 @@ import java.util.function.Consumer;
  * <p>Esta classe monitora arquivos específicos em diretórios para detectar
  * mudanças e executar callbacks quando necessário.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

@@ -15,7 +15,7 @@ import org.springframework.context.event.EventListener;
  * <p>Esta classe configura automaticamente o registro de observers
  * no EventPublisher quando a aplicação é inicializada.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

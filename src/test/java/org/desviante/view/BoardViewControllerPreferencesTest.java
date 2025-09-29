@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
  * <p>Foca na verificação de que todos os serviços necessários são
  * injetados corretamente no PreferencesController.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  */

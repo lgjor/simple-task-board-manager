@@ -26,7 +26,7 @@ import java.io.IOException;
  *   <li>Integração com o WindowManager para controle de janelas</li>
  * </ul>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see WindowManager

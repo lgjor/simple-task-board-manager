@@ -17,7 +17,7 @@ package org.desviante.exception;
  * HTTP apropriadas (geralmente 404 Not Found), fornecendo feedback claro
  * para a interface do usuário sobre a situação do erro.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see RuntimeException

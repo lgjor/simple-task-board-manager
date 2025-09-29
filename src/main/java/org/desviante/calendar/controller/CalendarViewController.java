@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
  * <p><strong>Nota:</strong> Edições de eventos devem ser feitas através da interface
  * de cards, não diretamente no calendário.</p>
  * 
- * @author Aú Desviante - Lucas Godoy <a href="https://github.com/desviante">GitHub</a>
+ * @author Aú Desviante - Lucas Godoy <a href="https://github.com/lgjor">GitHub</a>
  * @version 1.0
  * @since 1.0
  * @see CalendarService
