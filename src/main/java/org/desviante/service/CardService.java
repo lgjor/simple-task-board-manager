@@ -12,7 +12,6 @@ import org.desviante.repository.BoardColumnRepository;
 import org.desviante.repository.CardRepository;
 import org.desviante.calendar.CalendarEventManager;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;

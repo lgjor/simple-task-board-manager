@@ -2,7 +2,6 @@ package org.desviante.integration.sync;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.desviante.service.DatabaseMigrationService;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -48,20 +47,7 @@ import java.util.Optional;
 public class IntegrationSyncService {
     
     private final IntegrationSyncRepository repository;
-    private final DatabaseMigrationService migrationService;
     
-    /**
-     * Garante que a tabela de sincronização existe antes de executar operações.
-     */
-    private void ensureTableExists() {
-        try {
-            migrationService.ensureIntegrationSyncStatusTable();
-        } catch (Exception e) {
-            log.error("Erro ao garantir existência da tabela de sincronização: {}", e.getMessage(), e);
-            // Não lançar exceção para não causar rollback da transação principal
-            log.warn("Tabela de sincronização não pôde ser criada, mas a operação principal continuará");
-        }
-    }
     
     /**
      * Cria um novo status de sincronização para um card e tipo de integração.

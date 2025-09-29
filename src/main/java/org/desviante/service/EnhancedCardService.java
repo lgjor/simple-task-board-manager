@@ -11,8 +11,6 @@ import org.desviante.integration.sync.IntegrationSyncService;
 import org.desviante.integration.sync.IntegrationType;
 import org.desviante.model.Card;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Set;

@@ -1,6 +1,5 @@
 package org.desviante.integration.sync;
 
-import org.desviante.service.DatabaseMigrationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -29,15 +28,12 @@ class IntegrationSyncServiceTest {
     @Mock
     private IntegrationSyncRepository repository;
     
-    @Mock
-    private DatabaseMigrationService migrationService;
-    
     private IntegrationSyncService service;
     
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        service = new IntegrationSyncService(repository, migrationService);
+        service = new IntegrationSyncService(repository);
     }
     
     @Test
