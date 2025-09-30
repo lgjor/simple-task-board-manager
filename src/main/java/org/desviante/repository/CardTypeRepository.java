@@ -125,8 +125,14 @@ public class CardTypeRepository {
      *
      * @param cardType tipo de card a ser salvo
      * @return tipo de card salvo com ID gerado
+     * @throws RuntimeException se já existe um tipo com o mesmo nome
      */
     public CardType save(CardType cardType) {
+        // Verificar se já existe um tipo com o mesmo nome
+        if (existsByName(cardType.getName())) {
+            throw new RuntimeException("Já existe um tipo de card com o nome: " + cardType.getName());
+        }
+        
         LocalDateTime now = LocalDateTime.now();
         cardType.setCreationDate(now);
         cardType.setLastUpdateDate(now);
@@ -195,5 +201,26 @@ public class CardTypeRepository {
             new MapSqlParameterSource("name", name), Integer.class);
         
         return count != null && count > 0;
+    }
+
+    /**
+     * Salva um novo tipo de card ou retorna o existente se já houver um com o mesmo nome.
+     * 
+     * <p>Este método evita conflitos de chave primária verificando se já existe
+     * um tipo com o mesmo nome antes de tentar inserir. Se existir, retorna
+     * o tipo existente em vez de tentar criar um novo.</p>
+     *
+     * @param cardType tipo de card a ser salvo
+     * @return tipo de card salvo (novo ou existente)
+     */
+    public CardType saveOrGetExisting(CardType cardType) {
+        // Primeiro, verificar se já existe um tipo com o mesmo nome
+        Optional<CardType> existingType = findByName(cardType.getName());
+        if (existingType.isPresent()) {
+            return existingType.get();
+        }
+        
+        // Se não existe, criar um novo
+        return save(cardType);
     }
 } 

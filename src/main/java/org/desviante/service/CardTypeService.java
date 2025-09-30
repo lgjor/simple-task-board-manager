@@ -107,6 +107,41 @@ public class CardTypeService {
     }
 
     /**
+     * Cria um novo tipo de card ou retorna o existente se já houver um com o mesmo nome.
+     * 
+     * <p>Este método é mais robusto que {@link #createCardType(String, String)} pois
+     * evita conflitos de chave primária verificando se já existe um tipo com o mesmo
+     * nome antes de tentar inserir. Se existir, retorna o tipo existente em vez de
+     * tentar criar um novo.</p>
+     *
+     * @param name nome do tipo de card
+     * @param unitLabel label da unidade de progresso
+     * @return tipo de card (novo ou existente)
+     * @throws IllegalArgumentException se o nome for inválido
+     */
+    @Transactional
+    public CardType createCardTypeOrGetExisting(String name, String unitLabel) {
+        // Validações básicas
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Nome do tipo de card não pode ser vazio");
+        }
+        
+        // Se o unitLabel estiver vazio, usar "unidade" como padrão
+        if (unitLabel == null || unitLabel.trim().isEmpty()) {
+            unitLabel = "unidade";
+        }
+        
+        // Cria um novo tipo de Card
+        CardType newType = CardType.builder()
+                .name(name.trim())
+                .unitLabel(unitLabel.trim())
+                .build();
+        
+        // Usa o método seguro que evita conflitos de ID
+        return cardTypeRepository.saveOrGetExisting(newType);
+    }
+
+    /**
      * Atualiza um tipo de card existente.
      *
      * @param id identificador do tipo de card
