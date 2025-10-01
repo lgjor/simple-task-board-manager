@@ -599,10 +599,12 @@ public class BoardViewController {
         // Se updatedDetails for null, significa que o card foi deletado ou apenas movido
         if (updatedDetails == null) {
             System.out.println("Card ID " + cardId + " foi deletado ou movido - recarregando interface");
+
             // Recarregar a interface para refletir mudanças de posição ou deleção
             BoardSummaryDTO selectedBoard = boardsTableView.getSelectionModel().getSelectedItem();
             if (selectedBoard != null) {
                 loadKanbanViewForBoard(selectedBoard.id());
+                loadBoards();
             }
             return;
         }
