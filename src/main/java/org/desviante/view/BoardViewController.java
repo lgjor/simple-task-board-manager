@@ -38,6 +38,10 @@ import java.net.URISyntaxException;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.desviante.util.WindowManager;
+import org.desviante.view.PreferencesController;
+import org.springframework.context.event.EventListener;
+import org.desviante.event.PreferencesUpdatedEvent;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Controlador principal para a visualização e gerenciamento de quadros.
@@ -51,6 +55,7 @@ import org.desviante.util.WindowManager;
  * @since 1.0
  */
 @Component
+@Slf4j
 public class BoardViewController {
 
     // Declarado como 'final' para garantir a imutabilidade após a construção.
@@ -462,7 +467,11 @@ public class BoardViewController {
             statusFilterComboBox.getItems().add("Em andamento");
             statusFilterComboBox.getItems().add("Concluído");
             statusFilterComboBox.getItems().add("Não concluídos"); // Nova opção
-            statusFilterComboBox.setValue(null); // Selecionar "Todos os Status" por padrão
+            
+            // Carregar filtro padrão das configurações
+            // Usar getCurrentMetadata() para obter o valor null diretamente (que representa "Todos os Status")
+            String defaultFilter = appMetadataConfig.getCurrentMetadata().getDefaultStatusFilter();
+            statusFilterComboBox.setValue(defaultFilter); // Aplicar filtro padrão das configurações (pode ser null)
         } catch (Exception e) {
             e.printStackTrace();
             showError("Erro ao Carregar Status", "Não foi possível carregar as opções de status: " + e.getMessage());
@@ -1310,5 +1319,30 @@ public class BoardViewController {
             e.printStackTrace(); // Adicionar stack trace para debug
             showError("Erro Inesperado", "Erro inesperado ao abrir a tela Sobre: " + e.getMessage());
         }
+    }
+    
+    /**
+     * Listener para o evento de preferências atualizadas.
+     * 
+     * <p>Este método é chamado automaticamente quando as preferências
+     * da aplicação são atualizadas. Ele recarrega os boards para aplicar
+     * as novas configurações de filtro padrão.</p>
+     * 
+     * @param event evento de preferências atualizadas
+     */
+    @EventListener
+    public void handlePreferencesUpdated(PreferencesUpdatedEvent event) {
+        // Executar no thread da UI do JavaFX
+        Platform.runLater(() -> {
+            log.info("Preferências atualizadas detectadas - recarregando boards");
+            
+            // Recarregar os status options para aplicar o novo filtro padrão
+            loadStatusOptions();
+            
+            // Recarregar os boards com os filtros atualizados
+            loadBoards();
+            
+            log.info("Boards recarregados com as novas preferências");
+        });
     }
 }

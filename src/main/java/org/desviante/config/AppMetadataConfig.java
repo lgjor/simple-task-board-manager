@@ -156,6 +156,7 @@ public class AppMetadataConfig {
                 .defaultCardTypeId(1L) // Tipo "Card" como padrão
                 .defaultProgressType(org.desviante.model.enums.ProgressType.PERCENTAGE) // Progresso percentual como padrão
                 .defaultBoardGroupId(null) // Sem grupo padrão - usuário deve configurar explicitamente
+                .defaultStatusFilter("Não concluídos") // Filtro padrão: mostrar apenas boards não concluídos
                 .installationDirectory(System.getProperty("user.dir"))
                 .userDataDirectory(System.getProperty("user.home") + "/myboards")
                 .logDirectory(System.getProperty("user.home") + "/myboards/logs")
@@ -472,6 +473,15 @@ public class AppMetadataConfig {
      */
     public Optional<Long> getDefaultBoardGroupId() {
         return Optional.ofNullable(currentMetadata.getDefaultBoardGroupId());
+    }
+    
+    /**
+     * Obtém o filtro de status padrão.
+     * 
+     * @return filtro de status padrão ou null se não definido
+     */
+    public Optional<String> getDefaultStatusFilter() {
+        return Optional.ofNullable(currentMetadata.getDefaultStatusFilter());
     }
     
     /**

@@ -74,6 +74,16 @@ public class AppMetadata {
     private Long defaultBoardGroupId;
     
     /**
+     * Filtro de status padrão ao abrir o sistema.
+     * Valores possíveis: null (todos), "Vazio", "Não iniciado", "Em andamento", "Concluído", "Não concluídos"
+     * Se null, mostra todos os boards.
+     * 
+     * @return filtro de status padrão ou null se não configurado
+     * @param defaultStatusFilter novo filtro de status padrão
+     */
+    private String defaultStatusFilter;
+    
+    /**
      * Diretório de instalação da aplicação.
      * Usado para localizar recursos e arquivos de configuração.
      * 
@@ -609,6 +619,7 @@ public class AppMetadata {
         private Long defaultCardTypeId;
         private ProgressType defaultProgressType = ProgressType.NONE;
         private Long defaultBoardGroupId;
+        private String defaultStatusFilter;
         private String installationDirectory;
         private String userDataDirectory;
         private String logDirectory;
@@ -667,6 +678,17 @@ public class AppMetadata {
          */
         public AppMetadataBuilder defaultBoardGroupId(Long defaultBoardGroupId) {
             this.defaultBoardGroupId = defaultBoardGroupId;
+            return this;
+        }
+        
+        /**
+         * Define o filtro de status padrão.
+         * 
+         * @param defaultStatusFilter novo filtro de status padrão
+         * @return builder para encadeamento
+         */
+        public AppMetadataBuilder defaultStatusFilter(String defaultStatusFilter) {
+            this.defaultStatusFilter = defaultStatusFilter;
             return this;
         }
         
@@ -853,11 +875,12 @@ public class AppMetadata {
          */
         public AppMetadata build() {
             return new AppMetadata(metadataVersion, defaultCardTypeId, defaultProgressType, 
-                                 defaultBoardGroupId, installationDirectory, userDataDirectory, 
-                                 logDirectory, defaultLogLevel, maxLogFileSizeMB, maxLogFiles, 
-                                 updateCheckIntervalHours, autoCheckUpdates, showSystemNotifications, 
-                                 databaseTimeoutSeconds, autoBackupDatabase, autoBackupIntervalHours, 
-                                 autoBackupDirectory, uiConfig, performanceConfig, securityConfig);
+                                 defaultBoardGroupId, defaultStatusFilter, installationDirectory, 
+                                 userDataDirectory, logDirectory, defaultLogLevel, maxLogFileSizeMB, 
+                                 maxLogFiles, updateCheckIntervalHours, autoCheckUpdates, 
+                                 showSystemNotifications, databaseTimeoutSeconds, autoBackupDatabase, 
+                                 autoBackupIntervalHours, autoBackupDirectory, uiConfig, 
+                                 performanceConfig, securityConfig);
         }
     }
     

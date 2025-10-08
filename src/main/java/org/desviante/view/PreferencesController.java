@@ -70,6 +70,9 @@ public class PreferencesController {
     private ComboBox<BoardGroup> defaultBoardGroupComboBox;
     
     @FXML
+    private ComboBox<String> defaultStatusFilterComboBox;
+    
+    @FXML
     private Button saveButton;
     
     @FXML
@@ -78,6 +81,7 @@ public class PreferencesController {
     private CardTypeService cardTypeService;
     private BoardGroupService boardGroupService;
     private AppMetadataConfig appMetadataConfig;
+    private org.springframework.context.ApplicationEventPublisher eventPublisher;
     
     /**
      * Construtor padrão da classe PreferencesController.
@@ -137,6 +141,10 @@ public class PreferencesController {
         defaultBoardGroupComboBox.setCellFactory(param -> new BoardGroupListCell());
         defaultBoardGroupComboBox.setButtonCell(new BoardGroupListCell());
         
+        // Configurar ComboBox de filtro de status padrão
+        defaultStatusFilterComboBox.setCellFactory(param -> new StatusFilterListCell());
+        defaultStatusFilterComboBox.setButtonCell(new StatusFilterListCell());
+        
         // Adicionar listeners para detectar mudanças
         defaultCardTypeComboBox.valueProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
@@ -151,6 +159,12 @@ public class PreferencesController {
         });
 
         defaultBoardGroupComboBox.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                updateSaveButtonState();
+            }
+        });
+        
+        defaultStatusFilterComboBox.valueProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
                 updateSaveButtonState();
             }
@@ -171,8 +185,11 @@ public class PreferencesController {
         // Grupo pode ser null (Sem Grupo) ou um grupo válido
         boolean boardGroupValid = defaultBoardGroupComboBox.getValue() != null;
         
+        // Filtro de status é sempre válido (pode ser null para "Todos")
+        boolean statusFilterValid = true; // Sempre válido
+        
         // Habilitar botão apenas se todos os campos obrigatórios estiverem preenchidos
-        saveButton.setDisable(!(cardTypeValid && progressTypeValid && boardGroupValid));
+        saveButton.setDisable(!(cardTypeValid && progressTypeValid && boardGroupValid && statusFilterValid));
     }
     
     /**
@@ -265,6 +282,33 @@ public class PreferencesController {
                 defaultBoardGroupComboBox.setValue(noGroupOption); // "Sem Grupo" está na posição 0
                 log.debug("Usando 'Sem Grupo' como padrão (nenhuma configuração anterior)");
             }
+
+            // Carregar opções de filtro de status disponíveis
+            defaultStatusFilterComboBox.getItems().clear();
+            defaultStatusFilterComboBox.getItems().add("Não concluídos");
+            defaultStatusFilterComboBox.getItems().add("Vazio");
+            defaultStatusFilterComboBox.getItems().add("Não iniciado");
+            defaultStatusFilterComboBox.getItems().add("Em andamento");
+            defaultStatusFilterComboBox.getItems().add("Concluído");
+            defaultStatusFilterComboBox.getItems().add(null); // Opção "Todos os Status" por último
+            
+            // Selecionar o filtro de status padrão atual
+            // O método getDefaultStatusFilter() retorna Optional.empty() quando o valor é null
+            // Precisamos verificar diretamente o valor raw do metadata
+            String currentFilterValue = appMetadataConfig.getCurrentMetadata().getDefaultStatusFilter();
+            
+            if (currentFilterValue != null) {
+                // Usar o valor configurado
+                defaultStatusFilterComboBox.setValue(currentFilterValue);
+                log.info("Filtro de status padrão carregado do arquivo: {}", currentFilterValue);
+            } else {
+                // Valor é null, significa "Todos os Status"
+                defaultStatusFilterComboBox.setValue(null);
+                log.info("Filtro padrão configurado como 'Todos os Status' (null)");
+            }
+            
+            // Forçar atualização do ComboBox
+            defaultStatusFilterComboBox.requestLayout();
             
             // Atualizar estado do botão de salvar
             updateSaveButtonState();
@@ -296,19 +340,29 @@ public class PreferencesController {
                 return;
             }
             
+            // Filtro de status pode ser null (Todos os Status)
+            // Não é obrigatório, então não validamos aqui
+            
             // Log das seleções para debug
             BoardGroup selectedGroup = defaultBoardGroupComboBox.getValue();
-            log.info("Preferências selecionadas - Tipo de Card: {}, Progresso: {}, Grupo: {} (ID: {})", 
+            String selectedStatusFilter = defaultStatusFilterComboBox.getValue();
+            
+            // Debug: verificar valor real do ComboBox
+            log.info("DEBUG: Valor do ComboBox de filtro de status: '{}'", selectedStatusFilter);
+            
+            log.info("Preferências selecionadas - Tipo de Card: {}, Progresso: {}, Grupo: {} (ID: {}), Filtro Status: {}", 
                     defaultCardTypeComboBox.getValue().getName(),
                     defaultProgressTypeComboBox.getValue(),
                     selectedGroup.getName(),
-                    selectedGroup.getId());
+                    selectedGroup.getId(),
+                    selectedStatusFilter);
             
             // Verificar se houve mudanças reais
             boolean hasChanges = false;
             Optional<Long> currentCardTypeId = appMetadataConfig.getDefaultCardTypeId();
             Optional<ProgressType> currentProgressType = appMetadataConfig.getDefaultProgressType();
             Optional<Long> currentBoardGroupId = appMetadataConfig.getDefaultBoardGroupId();
+            Optional<String> currentStatusFilter = appMetadataConfig.getDefaultStatusFilter();
             
             // Verificar mudanças no tipo de card
             if (!currentCardTypeId.equals(Optional.of(defaultCardTypeComboBox.getValue().getId()))) {
@@ -342,6 +396,14 @@ public class PreferencesController {
                         currentBoardGroupId.orElse(null), newGroupId);
             }
             
+            // Verificar mudanças no filtro de status padrão
+            String currentFilterValue = currentStatusFilter.orElse(null);
+            if (!java.util.Objects.equals(currentFilterValue, selectedStatusFilter)) {
+                hasChanges = true;
+                log.debug("Mudança detectada no filtro de status padrão: {} -> {}", 
+                        currentFilterValue, selectedStatusFilter);
+            }
+            
             if (!hasChanges) {
                 showAlert("Informação", "Nenhuma alteração foi feita nas preferências.");
                 return;
@@ -352,6 +414,7 @@ public class PreferencesController {
             // Capturar valores finais para uso no lambda
             final Long finalNewGroupId = newGroupId;
             final BoardGroup finalSelectedGroup = selectedGroup;
+            final String finalSelectedStatusFilter = selectedStatusFilter;
             
             // Atualizar as preferências
             appMetadataConfig.updateMetadata(metadata -> {
@@ -369,9 +432,19 @@ public class PreferencesController {
                     log.debug("Definindo grupo padrão como: {} (ID: {})", 
                              finalSelectedGroup.getName(), finalNewGroupId);
                 }
+                
+                // Aplicar o filtro de status padrão
+                metadata.setDefaultStatusFilter(finalSelectedStatusFilter);
+                log.debug("Definindo filtro de status padrão como: {}", finalSelectedStatusFilter);
             });
             
             log.info("Preferências salvas com sucesso");
+            
+            // Publicar evento para notificar outros componentes sobre a atualização
+            if (eventPublisher != null) {
+                eventPublisher.publishEvent(new org.desviante.event.PreferencesUpdatedEvent(this));
+                log.debug("Evento de preferências atualizadas publicado");
+            }
             
             // Fechar a janela - o AppMetadataConfig irá mostrar o alerta de reinicialização
             closeWindow();
@@ -449,6 +522,15 @@ public class PreferencesController {
     }
     
     /**
+     * Define o publicador de eventos da aplicação.
+     * 
+     * @param eventPublisher publicador de eventos da aplicação
+     */
+    public void setEventPublisher(org.springframework.context.ApplicationEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
+    }
+    
+    /**
      * Célula personalizada para exibir tipos de card no ComboBox.
      */
     private static class CardTypeListCell extends javafx.scene.control.ListCell<CardType> {
@@ -510,5 +592,20 @@ public class PreferencesController {
         noGroup.setName("Sem Grupo");
         noGroup.setDescription("Novos boards serão criados sem grupo específico");
         return noGroup;
+    }
+    
+    /**
+     * Célula personalizada para exibir filtros de status no ComboBox.
+     */
+    private static class StatusFilterListCell extends javafx.scene.control.ListCell<String> {
+        @Override
+        protected void updateItem(String item, boolean empty) {
+            super.updateItem(item, empty);
+            if (empty || item == null) {
+                setText("Todos os Status");
+            } else {
+                setText(item);
+            }
+        }
     }
 }
