@@ -461,6 +461,7 @@ public class BoardViewController {
             statusFilterComboBox.getItems().add("Não iniciado");
             statusFilterComboBox.getItems().add("Em andamento");
             statusFilterComboBox.getItems().add("Concluído");
+            statusFilterComboBox.getItems().add("Não concluídos"); // Nova opção
             statusFilterComboBox.setValue(null); // Selecionar "Todos os Status" por padrão
         } catch (Exception e) {
             e.printStackTrace();
@@ -529,9 +530,17 @@ public class BoardViewController {
             
             // Depois, filtrar por status
             if (selectedStatus != null) {
-                boards = boards.stream()
-                    .filter(board -> selectedStatus.equals(board.status()))
-                    .toList();
+                if ("Não concluídos".equals(selectedStatus)) {
+                    // Filtro especial: mostrar todos os boards que NÃO estão concluídos
+                    boards = boards.stream()
+                        .filter(board -> !"Concluído".equals(board.status()))
+                        .toList();
+                } else {
+                    // Filtro normal: comparação direta com o status
+                    boards = boards.stream()
+                        .filter(board -> selectedStatus.equals(board.status()))
+                        .toList();
+                }
             }
             
             boardsTableView.getItems().clear();
